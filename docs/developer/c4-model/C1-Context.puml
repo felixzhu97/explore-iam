@@ -1,0 +1,39 @@
+@startuml C1-Context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+LAYOUT_WITH_LEGEND()
+
+title 系统上下文图 — Explore IAM
+
+Person(end_user, "终端用户", "经 SSO 登录各业务应用")
+Person(developer, "应用开发者", "注册 Relying Party、集成 OIDC / 策略校验")
+Person(admin, "IAM 管理员", "管理用户、组、角色、策略与审计")
+
+System_Boundary(explore_iam, "Explore IAM") {
+    System(iam_platform, "Explore IAM 平台", "类 AWS IAM：身份、策略、STS、OIDC Provider、审计")
+}
+
+System_Ext(google_idp, "Google IdP", "外部 OIDC / OAuth 联邦")
+System_Ext(github_idp, "GitHub IdP", "外部 OAuth 联邦")
+System_Ext(explore_ai, "Explore AI", "对话 AI 平台（Relying Party）")
+System_Ext(whatsfeed, "WhatsFeed", "社交与消息（Relying Party）")
+System_Ext(shopping, "Shopping System", "电商系统（Relying Party）")
+System_Ext(low_code, "Low Code Platform", "低代码画布（Relying Party）")
+
+Rel(end_user, explore_ai, "使用业务功能", "HTTPS")
+Rel(end_user, whatsfeed, "使用业务功能", "HTTPS")
+Rel(end_user, shopping, "使用业务功能", "HTTPS")
+Rel(end_user, low_code, "使用业务功能", "HTTPS")
+Rel(end_user, iam_platform, "登录 / 授权同意", "HTTPS / OIDC")
+Rel(admin, iam_platform, "管理身份与策略", "HTTPS")
+Rel(developer, iam_platform, "注册应用与客户端", "HTTPS / API")
+
+Rel(explore_ai, iam_platform, "OIDC 登录 / Token 校验 / 鉴权", "OIDC / HTTPS")
+Rel(whatsfeed, iam_platform, "OIDC 登录 / Token 校验 / 鉴权", "OIDC / HTTPS")
+Rel(shopping, iam_platform, "OIDC 登录 / Token 校验 / 鉴权", "OIDC / HTTPS")
+Rel(low_code, iam_platform, "OIDC 登录 / Token 校验 / 鉴权", "OIDC / HTTPS")
+
+Rel(iam_platform, google_idp, "联邦认证", "OIDC")
+Rel(iam_platform, github_idp, "联邦认证", "OAuth 2.0")
+
+@enduml

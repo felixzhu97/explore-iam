@@ -1,0 +1,29 @@
+@startuml C4-Sequence-PolicyEvaluation
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Sequence.puml
+
+title 序列图 — AssumeRole 与策略求值
+
+Person(caller, "调用方", "用户或服务")
+System(api, "Control Plane API", "STS + AuthZ")
+System(sts, "STS", "临时凭证")
+System(engine, "Policy Engine", "求值")
+SystemDb(db, "元数据库", "角色与策略")
+
+Rel(caller, api, "1. AssumeRole(roleArn, sessionName)")
+Rel(api, sts, "2. 委托")
+Rel(sts, db, "3. 读取角色与信任策略")
+sts -> sts : 4. 校验调用方是否被信任策略允许
+Rel(sts, engine, "5. 求值信任策略")
+Rel(engine, sts, "6. Allow / Deny")
+Rel(sts, api, "7. 签发临时凭证（若 Allow）")
+Rel(api, caller, "8. AccessKey / Secret / SessionToken / 过期时间")
+
+Rel(caller, api, "9. 带临时凭证调用业务 Action")
+Rel(api, db, "10. 加载身份策略 + 资源策略")
+Rel(api, engine, "11. Evaluate(Principal, Action, Resource, Context)")
+engine -> engine : 12. 显式 Deny 优先；\n再匹配 Allow；默认隐式 Deny
+Rel(engine, api, "13. 决策 + 理由码")
+api -> api : 14. 写入鉴权审计
+Rel(api, caller, "15. 200 或 403")
+
+@enduml

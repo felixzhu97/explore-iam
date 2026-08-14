@@ -1,0 +1,26 @@
+@startuml C4-Sequence-SSOLogin
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Sequence.puml
+
+title 序列图 — SSO 登录（OIDC Authorization Code）
+
+Person(user, "终端用户", "浏览器")
+System(app, "业务应用", "Explore AI 等 Relying Party")
+System(oidc, "Explore IAM OIDC Provider", "授权服务器")
+System_Ext(idp, "外部 IdP", "Google / GitHub")
+
+Rel(user, app, "1. 访问受保护资源")
+Rel(app, user, "2. 重定向至授权端点")
+Rel(user, oidc, "3. /authorize（client_id, redirect_uri, scope）")
+Rel(oidc, user, "4. 若无会话：重定向联邦登录")
+Rel(user, idp, "5. 在外部 IdP 认证")
+Rel(idp, oidc, "6. 联邦回调（身份断言）")
+oidc -> oidc : 7. 映射 / 创建联邦 Principal\n写入审计
+Rel(oidc, user, "8. 同意（如需）后带 code 回应用")
+Rel(user, app, "9. redirect_uri?code=...")
+Rel(app, oidc, "10. /token 换取 tokens", "client_secret")
+Rel(oidc, app, "11. ID Token + Access Token")
+Rel(app, oidc, "12. 可选：JWKS 验签 /userinfo")
+app -> app : 13. 建立应用会话\n按策略授权业务操作
+Rel(app, user, "14. 返回业务页面")
+
+@enduml

@@ -1,0 +1,33 @@
+@startuml C3-Component-Console
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+title 组件图 — IAM Console（Explore IAM）
+
+Container_Boundary(console, "IAM Console（Angular 22）") {
+    Component(shell, "应用壳", "路由 / 布局", "导航：身份、策略、应用、审计")
+    Component(identity_ui, "身份管理 UI", "页面", "User / Group / Role 列表与详情")
+    Component(policy_ui, "策略编辑 UI", "页面", "策略 JSON、附加目标、模拟求值")
+    Component(app_reg_ui, "应用注册 UI", "页面", "OIDC 客户端、回调 URI、作用域")
+    Component(audit_ui, "审计查询 UI", "页面", "管理事件与鉴权决策检索")
+    Component(api_client, "API 客户端", "HTTP", "调用 Control Plane REST；携带会话")
+    Component(auth_guard, "会话守卫", "OIDC Client", "管理员登录 Explore IAM 自身")
+}
+
+Container_Ext(control_plane, "Control Plane API", "Spring Boot 4.1", "Identity / Policy / STS / Audit")
+Container_Ext(oidc_provider, "OIDC Provider", "Spring Authorization Server", "管理员 SSO")
+
+Rel(shell, identity_ui, "导航")
+Rel(shell, policy_ui, "导航")
+Rel(shell, app_reg_ui, "导航")
+Rel(shell, audit_ui, "导航")
+Rel(auth_guard, oidc_provider, "登录", "OIDC")
+Rel(shell, auth_guard, "保护路由")
+Rel(identity_ui, api_client, "CRUD")
+Rel(policy_ui, api_client, "CRUD / 模拟")
+Rel(app_reg_ui, api_client, "注册客户端")
+Rel(audit_ui, api_client, "查询")
+Rel(api_client, control_plane, "REST", "HTTPS")
+
+@enduml

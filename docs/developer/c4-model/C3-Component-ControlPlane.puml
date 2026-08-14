@@ -1,0 +1,67 @@
+@startuml C3-Component-ControlPlane
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+title 组件图 — Control Plane（Explore IAM）
+
+Container_Boundary(control_plane, "Control Plane API") {
+    Component(web_api, "Web / API 适配器", "web", "REST：用户、组、角色、策略、客户端、鉴权")
+    Component(identity_uc, "Identity Use Cases", "application", "创建/更新主体、组绑定、凭证生命周期")
+    Component(policy_uc, "Policy Use Cases", "application", "策略文档 CRUD、附加到身份或资源")
+    Component(sts_uc, "STS Use Cases", "application", "AssumeRole、会话标签、临时凭证")
+    Component(authz_uc, "Authorization Decision", "application", "组装 Principal + Action + Resource + Context")
+    Component(federation_uc, "Federation Use Cases", "application", "外部 IdP 链接、账户映射")
+    Component(audit_uc, "Audit Use Cases", "application", "记录管理与鉴权事件")
+
+    Component(identity_domain, "Identity 领域", "domain", "User / Group / Role / Principal")
+    Component(policy_domain, "Policy 领域", "domain", "PolicyDocument、Action、Resource、Condition")
+    Component(sts_domain, "STS 领域", "domain", "AssumedRoleSession、信任策略")
+
+    Component(identity_repo, "IdentityRepository", "domain/repository", "主体持久化端口")
+    Component(policy_repo, "PolicyRepository", "domain/repository", "策略持久化端口")
+    Component(audit_repo, "AuditRepository", "domain/repository", "审计端口")
+
+    Component(jdbc_adapters, "JDBC / SQL 适配器", "infrastructure", "实现仓储；PostgreSQL")
+    Component(policy_engine_adapter, "Policy Engine 适配器", "infrastructure", "调用求值服务")
+    Component(oidc_adapter, "OIDC / JWKS 适配器", "infrastructure", "与 OIDC Provider 协作")
+    Component(idp_adapters, "外部 IdP 适配器", "infrastructure", "Google / GitHub 联邦")
+}
+
+Container_Ext(console, "IAM Console", "Angular 22", "管理面 UI")
+Container_Ext(policy_engine, "Policy Engine", "Spring 组件 / 服务", "Deny > Allow")
+Container_Ext(oidc_provider, "OIDC Provider", "Spring Authorization Server", "令牌签发")
+ContainerDb_Ext(metadata_db, "元数据库", "PostgreSQL", "身份与策略")
+ContainerDb_Ext(audit_store, "审计存储", "PostgreSQL / 日志", "事件")
+System_Ext(external_idp, "外部 IdP", "Google / GitHub", "联邦")
+
+Rel(console, web_api, "REST", "HTTPS")
+Rel(web_api, identity_uc, "调用")
+Rel(web_api, policy_uc, "调用")
+Rel(web_api, sts_uc, "调用")
+Rel(web_api, authz_uc, "调用")
+Rel(web_api, federation_uc, "调用")
+Rel(web_api, audit_uc, "调用")
+
+Rel(identity_uc, identity_domain, "变更")
+Rel(policy_uc, policy_domain, "变更")
+Rel(sts_uc, sts_domain, "变更")
+Rel(authz_uc, policy_domain, "读取概念模型")
+
+Rel(identity_uc, identity_repo, "依赖")
+Rel(policy_uc, policy_repo, "依赖")
+Rel(authz_uc, policy_engine_adapter, "求值")
+Rel(audit_uc, audit_repo, "写入")
+Rel(federation_uc, idp_adapters, "联邦")
+Rel(sts_uc, oidc_adapter, "可选签发会话令牌")
+
+Rel(jdbc_adapters, identity_repo, "实现")
+Rel(jdbc_adapters, policy_repo, "实现")
+Rel(jdbc_adapters, audit_repo, "实现")
+Rel(jdbc_adapters, metadata_db, "SQL")
+Rel(jdbc_adapters, audit_store, "写入")
+Rel(policy_engine_adapter, policy_engine, "HTTP / 进程内")
+Rel(oidc_adapter, oidc_provider, "内部协议")
+Rel(idp_adapters, external_idp, "OIDC / OAuth")
+
+@enduml

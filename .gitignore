@@ -1,0 +1,46 @@
+# Node.js
+node_modules/
+dist/
+*.local
+
+# IDE
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# H2 embedded database files
+data/
+
+# Cache
+.cache/
+
+# Test Reports & Coverage
+coverage/
+**/coverage/
+*.lcov
+junit.xml
+test-output/
+test-results/
+
+# Java/Gradle build artifacts
+.gradle/
+**/build/
+**/.gradle/
+
+# Spring Boot
+src/main/resources/application-local.yml
+src/main/resources/application-local*.yml
+
+# Root-level build
+build/

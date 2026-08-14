@@ -1,0 +1,32 @@
+@startuml C4-Deployment
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Deployment.puml
+
+LAYOUT_WITH_LEGEND()
+
+title 部署图 — 本地开发（Explore IAM）
+
+Deployment_Node(dev_machine, "开发机", "Docker Compose / 本地进程") {
+    Deployment_Node(console_node, "Console", "ng serve") {
+        Container(console, "IAM Console", "Angular 22", "如 :4200")
+    }
+    Deployment_Node(api_node, "Control Plane", "本地 API") {
+        Container(control_plane, "Control Plane API", "Spring Boot 4.1 / Java 25", ":8080")
+        Container(policy_engine, "Policy Engine", "同进程或旁路", "求值")
+        Container(sts, "STS", "同进程", "AssumeRole")
+        Container(oidc_provider, "OIDC Provider", "Spring Authorization Server", ":8081 issuer")
+    }
+    Deployment_Node(data_node, "数据", "容器") {
+        ContainerDb(postgres, "PostgreSQL", "关系库", ":5432 元数据 + 审计")
+        ContainerDb(redis, "Redis", "可选", ":6379 会话")
+    }
+}
+
+Rel(console, control_plane, "REST", "http://localhost:8080")
+Rel(control_plane, policy_engine, "进程内 / HTTP")
+Rel(control_plane, sts, "进程内")
+Rel(control_plane, oidc_provider, "内部")
+Rel(control_plane, postgres, "JDBC / SQL")
+Rel(control_plane, redis, "可选")
+Rel(oidc_provider, postgres, "客户端与主体")
+
+@enduml

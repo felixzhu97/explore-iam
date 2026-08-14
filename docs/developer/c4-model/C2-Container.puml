@@ -1,0 +1,48 @@
+@startuml C2-Container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_WITH_LEGEND()
+
+title 容器图 — Explore IAM
+
+Person(end_user, "终端用户", "SSO 登录业务应用")
+Person(admin, "IAM 管理员", "控制台运维")
+Person(developer, "应用开发者", "集成与调试")
+
+System_Boundary(explore_iam, "Explore IAM") {
+    Container(console, "IAM Console", "Angular 22 + TypeScript", "用户 / 组 / 角色 / 策略 / 应用注册 / 审计查询")
+    Container(control_plane, "Control Plane API", "Spring Boot 4.1 / Java 25", "Identity、AuthZ Decision、Federation、Audit；Web MVC + Resource Server")
+    Container(policy_engine, "Policy Engine", "自定义领域服务", "Identity / Resource 策略；Deny > Allow（非 Spring starter）")
+    Container(sts, "STS", "自定义领域服务", "AssumeRole → 短期凭证（可复用 TokenGenerator / JWT）")
+    Container(oidc_provider, "OIDC Provider", "Spring Authorization Server", "授权码、ID Token、Access Token、JWKS")
+    ContainerDb(metadata_db, "元数据库", "PostgreSQL + JPA / Liquibase", "主体、策略、角色、客户端、组织")
+    ContainerDb(audit_store, "审计存储", "PostgreSQL / 日志", "管理事件与鉴权决策")
+    ContainerDb(session_cache, "会话缓存", "Redis（可选）", "Spring Data Redis：会话与令牌元数据")
+}
+
+System_Ext(google_idp, "Google IdP", "外部联邦")
+System_Ext(github_idp, "GitHub IdP", "外部联邦")
+System_Ext(apps, "业务应用集群", "Explore AI / WhatsFeed / Shopping / Low Code", "OIDC Relying Party")
+
+Rel(end_user, apps, "使用", "HTTPS")
+Rel(end_user, oidc_provider, "登录 / 同意", "HTTPS / OIDC")
+Rel(admin, console, "管理", "HTTPS")
+Rel(developer, console, "注册客户端", "HTTPS")
+Rel(developer, control_plane, "管理 API", "HTTPS")
+
+Rel(console, control_plane, "REST", "HTTPS")
+Rel(apps, oidc_provider, "Authorization Code / Token / JWKS", "OIDC")
+Rel(apps, control_plane, "鉴权决策（可选）", "HTTPS")
+Rel(control_plane, policy_engine, "求值策略")
+Rel(control_plane, sts, "AssumeRole")
+Rel(control_plane, oidc_provider, "签发 / 联邦编排")
+Rel(control_plane, metadata_db, "读写", "SQL")
+Rel(control_plane, audit_store, "写入审计")
+Rel(control_plane, session_cache, "读写会话", "可选")
+Rel(policy_engine, metadata_db, "读取策略")
+Rel(sts, metadata_db, "读取角色信任策略")
+Rel(oidc_provider, metadata_db, "读取客户端与主体")
+Rel(oidc_provider, google_idp, "联邦", "OIDC")
+Rel(oidc_provider, github_idp, "联邦", "OAuth 2.0")
+
+@enduml
