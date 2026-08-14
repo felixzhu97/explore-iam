@@ -17,27 +17,37 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/login")
 public class LoginContextController {
 
-    private final RegisteredClientRepository registeredClientRepository;
+  private final RegisteredClientRepository registeredClientRepository;
 
-    public LoginContextController(RegisteredClientRepository registeredClientRepository) {
-        this.registeredClientRepository = registeredClientRepository;
+  /**
+   * Creates the login-context API.
+   *
+   * @param registeredClientRepository Authorization Server client store
+   */
+  public LoginContextController(RegisteredClientRepository registeredClientRepository) {
+    this.registeredClientRepository = registeredClientRepository;
+  }
+
+  /**
+   * Returns safe client metadata for the login page.
+   *
+   * @param clientId optional OAuth client_id from the authorize redirect
+   * @return login context payload
+   */
+  @GetMapping("/context")
+  public ResponseEntity<LoginContextResponse> context(
+      @RequestParam(value = "client_id", required = false) String clientId) {
+    if (!StringUtils.hasText(clientId)) {
+      return ResponseEntity.ok(new LoginContextResponse(null, null, false));
     }
 
-    @GetMapping("/context")
-    public ResponseEntity<LoginContextResponse> context(
-            @RequestParam(value = "client_id", required = false) String clientId) {
-        if (!StringUtils.hasText(clientId)) {
-            return ResponseEntity.ok(new LoginContextResponse(null, null, false));
-        }
-
-        RegisteredClient client = this.registeredClientRepository.findByClientId(clientId.trim());
-        if (client == null) {
-            return ResponseEntity.ok(new LoginContextResponse(clientId.trim(), null, true));
-        }
-
-        String name = StringUtils.hasText(client.getClientName())
-                ? client.getClientName()
-                : client.getClientId();
-        return ResponseEntity.ok(new LoginContextResponse(client.getClientId(), name, true));
+    RegisteredClient client = this.registeredClientRepository.findByClientId(clientId.trim());
+    if (client == null) {
+      return ResponseEntity.ok(new LoginContextResponse(clientId.trim(), null, true));
     }
+
+    String name =
+        StringUtils.hasText(client.getClientName()) ? client.getClientName() : client.getClientId();
+    return ResponseEntity.ok(new LoginContextResponse(client.getClientId(), name, true));
+  }
 }

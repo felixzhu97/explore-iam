@@ -1,5 +1,6 @@
 plugins {
     java
+    checkstyle
     id("org.springframework.boot") version "4.1.0"
     id("io.spring.dependency-management") version "1.1.7"
     id("jacoco")
@@ -35,6 +36,20 @@ dependencies {
     testImplementation("com.tngtech.archunit:archunit-junit5:1.4.1")
 }
 
+checkstyle {
+    toolVersion = "10.21.4"
+    configFile = file("config/checkstyle/google_checks.xml")
+    isIgnoreFailures = false
+    maxWarnings = 0
+}
+
+tasks.withType<Checkstyle>().configureEach {
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+}
+
 tasks.withType<Test> {
     useJUnitPlatform()
 }
@@ -56,8 +71,22 @@ tasks.register<Exec>("npmBuild") {
     description = "Build Angular SPA into src/main/resources/static"
     workingDir = projectDir
     commandLine("pnpm", "run", "build")
-    onlyIf { file("package.json").exists() && file("src/main/web/main.ts").exists() }
+    onlyIf {
+        file("package.json").exists()
+            && file("src/main/web/main.ts").exists()
+            && isPnpmAvailable()
+    }
 }
+
+fun isPnpmAvailable(): Boolean =
+    try {
+        ProcessBuilder("pnpm", "--version")
+            .redirectErrorStream(true)
+            .start()
+            .waitFor() == 0
+    } catch (_: Exception) {
+        false
+    }
 
 tasks.bootJar {
     archiveFileName.set("app.jar")

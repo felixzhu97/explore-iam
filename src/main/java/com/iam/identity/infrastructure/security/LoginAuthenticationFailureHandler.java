@@ -16,18 +16,15 @@ import org.springframework.util.StringUtils;
  */
 final class LoginAuthenticationFailureHandler implements AuthenticationFailureHandler {
 
-    @Override
-    public void onAuthenticationFailure(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            AuthenticationException exception)
-            throws IOException, ServletException {
-        StringBuilder target = new StringBuilder("/login?error");
-        String clientId = request.getParameter("client_id");
-        if (StringUtils.hasText(clientId)) {
-            target.append("&client_id=")
-                    .append(URLEncoder.encode(clientId, StandardCharsets.UTF_8));
-        }
-        response.sendRedirect(target.toString());
+  @Override
+  public void onAuthenticationFailure(
+      HttpServletRequest request, HttpServletResponse response, AuthenticationException exception)
+      throws IOException, ServletException {
+    StringBuilder target = new StringBuilder("/login?error");
+    String clientId = request.getParameter("client_id");
+    if (StringUtils.hasText(clientId)) {
+      target.append("&client_id=").append(URLEncoder.encode(clientId, StandardCharsets.UTF_8));
     }
+    response.sendRedirect(target.toString());
+  }
 }

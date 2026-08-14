@@ -1,0 +1,59 @@
+name: "CodeQL Advanced"
+
+on:
+  push:
+    branches: [ "main", "feat/**", "feature/**", "fix/**", "refactor/**", "docs/**", "test/**", "chore/**", "perf/**", "ci/**" ]
+  pull_request:
+    branches: [ "main", "feat/**", "feature/**", "fix/**", "refactor/**", "docs/**", "test/**", "chore/**", "perf/**", "ci/**" ]
+  schedule:
+    - cron: '20 5 * * 3'
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - language: javascript-typescript
+          build-mode: none
+        - language: java-kotlin
+          build-mode: none
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Java
+      if: matrix.language == 'java-kotlin'
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '25'
+        cache: 'gradle'
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v4
+      with:
+        languages: ${{ matrix.language }}
+        build-mode: ${{ matrix.build-mode }}
+        tools: https://github.com/github/codeql-action/releases/download/codeql-bundle-v2.25.6/codeql-bundle-linux64.tar.gz
+
+    - name: Build Java/Kotlin (required for CodeQL analysis)
+      if: matrix.language == 'java-kotlin'
+      shell: bash
+      run: |
+        chmod +x ./gradlew
+        # Compile only — bootJar depends on pnpm SPA build which is not needed for CodeQL.
+        ./gradlew classes --no-daemon
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v4
+      with:
+        category: "/language:${{matrix.language}}"

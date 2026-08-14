@@ -3,11 +3,30 @@ package com.iam.identity.domain.repository;
 import com.iam.identity.domain.model.IamUser;
 import java.util.Optional;
 
+/** Persistence port for IAM users. */
 public interface IamUserRepository {
 
-    Optional<IamUser> findByUsername(String username);
+  /**
+   * Finds a user by unique username.
+   *
+   * @param username login name
+   * @return matching user when present
+   */
+  Optional<IamUser> findByUsername(String username);
 
-    Optional<IamUser> findById(String id);
+  /**
+   * Finds a user by internal identifier.
+   *
+   * @param id internal id
+   * @return matching user when present
+   */
+  Optional<IamUser> findById(String id);
 
-    IamUser save(IamUser user);
+  /**
+   * Persists a new or updated IAM user.
+   *
+   * @param user aggregate to store
+   * @return stored aggregate
+   */
+  IamUser save(IamUser user);
 }

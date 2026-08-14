@@ -12,53 +12,73 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/** Lists registered OIDC clients for the console and API. */
 @Service
 public class ListOidcClientsUseCase {
 
-    private final OidcClientRepository oidcClientRepository;
+  private final OidcClientRepository oidcClientRepository;
 
-    public ListOidcClientsUseCase(OidcClientRepository oidcClientRepository) {
-        this.oidcClientRepository = oidcClientRepository;
+  /**
+   * Creates the list-clients use case.
+   *
+   * @param oidcClientRepository client repository
+   */
+  public ListOidcClientsUseCase(OidcClientRepository oidcClientRepository) {
+    this.oidcClientRepository = oidcClientRepository;
+  }
+
+  /**
+   * Returns all clients as read models.
+   *
+   * @return client views
+   */
+  @Transactional(readOnly = true)
+  public List<OidcClientView> list() {
+    return this.oidcClientRepository.findAll().stream().map(OidcClientView::from).toList();
+  }
+
+  /**
+   * Finds one client by public client_id.
+   *
+   * @param clientId public client_id
+   * @return view when present
+   */
+  @Transactional(readOnly = true)
+  public Optional<OidcClientView> findByClientId(String clientId) {
+    return this.oidcClientRepository
+        .findByClientId(new ClientId(clientId))
+        .map(OidcClientView::from);
+  }
+
+  /** Read model for an OIDC client without the secret. */
+  public record OidcClientView(
+      String id,
+      String clientId,
+      String clientName,
+      String clientUri,
+      Set<String> redirectUris,
+      Set<String> postLogoutRedirectUris,
+      Set<String> scopes,
+      Set<String> responseTypes,
+      Set<String> authorizationGrantTypes,
+      Set<String> clientAuthenticationMethods) {
+
+    static OidcClientView from(OidcClient client) {
+      return new OidcClientView(
+          client.getId(),
+          client.getClientId().value(),
+          client.getClientName(),
+          client.getClientUri(),
+          client.getRedirectUris().stream()
+              .map(RedirectUri::value)
+              .collect(Collectors.toCollection(LinkedHashSet::new)),
+          client.getPostLogoutRedirectUris().stream()
+              .map(RedirectUri::value)
+              .collect(Collectors.toCollection(LinkedHashSet::new)),
+          client.getScopes(),
+          client.getResponseTypes(),
+          client.getAuthorizationGrantTypes(),
+          client.getClientAuthenticationMethods());
     }
-
-    @Transactional(readOnly = true)
-    public List<OidcClientView> list() {
-        return this.oidcClientRepository.findAll().stream().map(OidcClientView::from).toList();
-    }
-
-    @Transactional(readOnly = true)
-    public Optional<OidcClientView> findByClientId(String clientId) {
-        return this.oidcClientRepository.findByClientId(new ClientId(clientId)).map(OidcClientView::from);
-    }
-
-    public record OidcClientView(
-            String id,
-            String clientId,
-            String clientName,
-            String clientUri,
-            Set<String> redirectUris,
-            Set<String> postLogoutRedirectUris,
-            Set<String> scopes,
-            Set<String> responseTypes,
-            Set<String> authorizationGrantTypes,
-            Set<String> clientAuthenticationMethods) {
-
-        static OidcClientView from(OidcClient client) {
-            return new OidcClientView(
-                    client.getId(),
-                    client.getClientId().value(),
-                    client.getClientName(),
-                    client.getClientUri(),
-                    client.getRedirectUris().stream()
-                            .map(RedirectUri::value)
-                            .collect(Collectors.toCollection(LinkedHashSet::new)),
-                    client.getPostLogoutRedirectUris().stream()
-                            .map(RedirectUri::value)
-                            .collect(Collectors.toCollection(LinkedHashSet::new)),
-                    client.getScopes(),
-                    client.getResponseTypes(),
-                    client.getAuthorizationGrantTypes(),
-                    client.getClientAuthenticationMethods());
-        }
-    }
+  }
 }

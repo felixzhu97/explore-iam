@@ -17,83 +17,88 @@ import org.springframework.util.StringUtils;
 
 final class OidcClientMapper {
 
-    static final String SETTING_CLIENT_URI = "settings.client.client-uri";
-    static final String SETTING_RESPONSE_TYPES = "settings.client.response-types";
+  static final String SETTING_CLIENT_URI = "settings.client.client-uri";
+  static final String SETTING_RESPONSE_TYPES = "settings.client.response-types";
 
-    private OidcClientMapper() {}
+  private OidcClientMapper() {}
 
-    static RegisteredClient toRegisteredClient(OidcClient client) {
-        ClientSettings.Builder settings = ClientSettings.builder()
-                .requireAuthorizationConsent(client.isRequireAuthorizationConsent());
-        if (StringUtils.hasText(client.getClientUri())) {
-            settings.setting(SETTING_CLIENT_URI, client.getClientUri());
-        }
-        if (!client.getResponseTypes().isEmpty()) {
-            settings.setting(SETTING_RESPONSE_TYPES, String.join(",", client.getResponseTypes()));
-        }
-
-        RegisteredClient.Builder builder = RegisteredClient.withId(client.getId())
-                .clientId(client.getClientId().value())
-                .clientIdIssuedAt(client.getClientIdIssuedAt())
-                .clientName(client.getClientName())
-                .clientSettings(settings.build())
-                .tokenSettings(TokenSettings.builder().build());
-
-        if (StringUtils.hasText(client.getClientSecretHash())) {
-            builder.clientSecret(client.getClientSecretHash());
-        }
-
-        client.getClientAuthenticationMethods()
-                .forEach(method -> builder.clientAuthenticationMethod(new ClientAuthenticationMethod(method)));
-        client.getAuthorizationGrantTypes()
-                .forEach(grant -> builder.authorizationGrantType(new AuthorizationGrantType(grant)));
-        client.getRedirectUris().forEach(uri -> builder.redirectUri(uri.value()));
-        client.getPostLogoutRedirectUris().forEach(uri -> builder.postLogoutRedirectUri(uri.value()));
-        client.getScopes().forEach(builder::scope);
-        return builder.build();
+  static RegisteredClient toRegisteredClient(OidcClient client) {
+    ClientSettings.Builder settings =
+        ClientSettings.builder()
+            .requireAuthorizationConsent(client.isRequireAuthorizationConsent());
+    if (StringUtils.hasText(client.getClientUri())) {
+      settings.setting(SETTING_CLIENT_URI, client.getClientUri());
+    }
+    if (!client.getResponseTypes().isEmpty()) {
+      settings.setting(SETTING_RESPONSE_TYPES, String.join(",", client.getResponseTypes()));
     }
 
-    static OidcClient toDomain(RegisteredClient registeredClient) {
-        ClientSettings settings = registeredClient.getClientSettings();
-        String clientUri = settings.getSetting(SETTING_CLIENT_URI);
-        Set<String> responseTypes = splitCsv(settings.getSetting(SETTING_RESPONSE_TYPES));
-        if (responseTypes.isEmpty()) {
-            responseTypes = Set.of("code");
-        }
+    RegisteredClient.Builder builder =
+        RegisteredClient.withId(client.getId())
+            .clientId(client.getClientId().value())
+            .clientIdIssuedAt(client.getClientIdIssuedAt())
+            .clientName(client.getClientName())
+            .clientSettings(settings.build())
+            .tokenSettings(TokenSettings.builder().build());
 
-        return OidcClient.reconstitute(
-                registeredClient.getId(),
-                new ClientId(registeredClient.getClientId()),
-                registeredClient.getClientIdIssuedAt() == null
-                        ? Instant.now()
-                        : registeredClient.getClientIdIssuedAt(),
-                registeredClient.getClientName(),
-                registeredClient.getClientSecret() == null ? null : registeredClient.getClientSecret(),
-                StringUtils.hasText(clientUri) ? clientUri : null,
-                registeredClient.getRedirectUris().stream()
-                        .map(RedirectUri::new)
-                        .collect(Collectors.toCollection(LinkedHashSet::new)),
-                registeredClient.getPostLogoutRedirectUris().stream()
-                        .map(RedirectUri::new)
-                        .collect(Collectors.toCollection(LinkedHashSet::new)),
-                new LinkedHashSet<>(registeredClient.getScopes()),
-                responseTypes,
-                registeredClient.getClientAuthenticationMethods().stream()
-                        .map(ClientAuthenticationMethod::getValue)
-                        .collect(Collectors.toCollection(LinkedHashSet::new)),
-                registeredClient.getAuthorizationGrantTypes().stream()
-                        .map(AuthorizationGrantType::getValue)
-                        .collect(Collectors.toCollection(LinkedHashSet::new)),
-                settings.isRequireAuthorizationConsent());
+    if (StringUtils.hasText(client.getClientSecretHash())) {
+      builder.clientSecret(client.getClientSecretHash());
     }
 
-    static Set<String> splitCsv(String csv) {
-        if (!StringUtils.hasText(csv)) {
-            return Set.of();
-        }
-        return Arrays.stream(StringUtils.commaDelimitedListToStringArray(csv))
-                .map(String::trim)
-                .filter(StringUtils::hasText)
-                .collect(Collectors.toCollection(LinkedHashSet::new));
+    client
+        .getClientAuthenticationMethods()
+        .forEach(
+            method -> builder.clientAuthenticationMethod(new ClientAuthenticationMethod(method)));
+    client
+        .getAuthorizationGrantTypes()
+        .forEach(grant -> builder.authorizationGrantType(new AuthorizationGrantType(grant)));
+    client.getRedirectUris().forEach(uri -> builder.redirectUri(uri.value()));
+    client.getPostLogoutRedirectUris().forEach(uri -> builder.postLogoutRedirectUri(uri.value()));
+    client.getScopes().forEach(builder::scope);
+    return builder.build();
+  }
+
+  static OidcClient toDomain(RegisteredClient registeredClient) {
+    ClientSettings settings = registeredClient.getClientSettings();
+    String clientUri = settings.getSetting(SETTING_CLIENT_URI);
+    Set<String> responseTypes = splitCsv(settings.getSetting(SETTING_RESPONSE_TYPES));
+    if (responseTypes.isEmpty()) {
+      responseTypes = Set.of("code");
     }
+
+    return OidcClient.reconstitute(
+        registeredClient.getId(),
+        new ClientId(registeredClient.getClientId()),
+        registeredClient.getClientIdIssuedAt() == null
+            ? Instant.now()
+            : registeredClient.getClientIdIssuedAt(),
+        registeredClient.getClientName(),
+        registeredClient.getClientSecret() == null ? null : registeredClient.getClientSecret(),
+        StringUtils.hasText(clientUri) ? clientUri : null,
+        registeredClient.getRedirectUris().stream()
+            .map(RedirectUri::new)
+            .collect(Collectors.toCollection(LinkedHashSet::new)),
+        registeredClient.getPostLogoutRedirectUris().stream()
+            .map(RedirectUri::new)
+            .collect(Collectors.toCollection(LinkedHashSet::new)),
+        new LinkedHashSet<>(registeredClient.getScopes()),
+        responseTypes,
+        registeredClient.getClientAuthenticationMethods().stream()
+            .map(ClientAuthenticationMethod::getValue)
+            .collect(Collectors.toCollection(LinkedHashSet::new)),
+        registeredClient.getAuthorizationGrantTypes().stream()
+            .map(AuthorizationGrantType::getValue)
+            .collect(Collectors.toCollection(LinkedHashSet::new)),
+        settings.isRequireAuthorizationConsent());
+  }
+
+  static Set<String> splitCsv(String csv) {
+    if (!StringUtils.hasText(csv)) {
+      return Set.of();
+    }
+    return Arrays.stream(StringUtils.commaDelimitedListToStringArray(csv))
+        .map(String::trim)
+        .filter(StringUtils::hasText)
+        .collect(Collectors.toCollection(LinkedHashSet::new));
+  }
 }

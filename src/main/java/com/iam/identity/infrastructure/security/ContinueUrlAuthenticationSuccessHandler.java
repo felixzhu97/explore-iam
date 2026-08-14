@@ -12,33 +12,34 @@ import org.springframework.util.StringUtils;
  * Prefers an explicit safe relative {@code continue} form field (SPA deep link), otherwise the
  * saved request (e.g. OAuth authorize or {@code /clients}).
  */
-final class ContinueUrlAuthenticationSuccessHandler extends SavedRequestAwareAuthenticationSuccessHandler {
+final class ContinueUrlAuthenticationSuccessHandler
+    extends SavedRequestAwareAuthenticationSuccessHandler {
 
-    ContinueUrlAuthenticationSuccessHandler() {
-        setDefaultTargetUrl("/");
-    }
+  ContinueUrlAuthenticationSuccessHandler() {
+    setDefaultTargetUrl("/");
+  }
 
-    @Override
-    public void onAuthenticationSuccess(
-            HttpServletRequest request, HttpServletResponse response, Authentication authentication)
-            throws ServletException, IOException {
-        String continueUrl = request.getParameter("continue");
-        if (isSafeRelativePath(continueUrl)) {
-            clearAuthenticationAttributes(request);
-            getRedirectStrategy().sendRedirect(request, response, continueUrl);
-            return;
-        }
-        super.onAuthenticationSuccess(request, response, authentication);
+  @Override
+  public void onAuthenticationSuccess(
+      HttpServletRequest request, HttpServletResponse response, Authentication authentication)
+      throws ServletException, IOException {
+    String continueUrl = request.getParameter("continue");
+    if (isSafeRelativePath(continueUrl)) {
+      clearAuthenticationAttributes(request);
+      getRedirectStrategy().sendRedirect(request, response, continueUrl);
+      return;
     }
+    super.onAuthenticationSuccess(request, response, authentication);
+  }
 
-    private static boolean isSafeRelativePath(String path) {
-        if (!StringUtils.hasText(path)) {
-            return false;
-        }
-        String value = path.trim();
-        return value.startsWith("/")
-                && !value.startsWith("//")
-                && !value.contains("://")
-                && !value.contains("\\");
+  private static boolean isSafeRelativePath(String path) {
+    if (!StringUtils.hasText(path)) {
+      return false;
     }
+    String value = path.trim();
+    return value.startsWith("/")
+        && !value.startsWith("//")
+        && !value.contains("://")
+        && !value.contains("\\");
+  }
 }
