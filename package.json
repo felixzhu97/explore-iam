@@ -9,7 +9,8 @@
     "start": "ng serve --port 4201 --host 127.0.0.1",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "typecheck": "tsc -p tsconfig.app.json --noEmit"
+    "typecheck": "tsc -p tsconfig.app.json --noEmit",
+    "prepare": "husky"
   },
   "dependencies": {
     "@angular/animations": "22.1.0",
@@ -36,8 +37,11 @@
     "@angular/build": "22.1.2",
     "@angular/cli": "22.1.2",
     "@angular/compiler-cli": "22.1.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.2.0",
     "typescript": "^6.0.0"
   },
+  "lint-staged": {},
   "packageManager": "pnpm@11.8.0+sha512.c1f5e7c4cb241c8f174b743851d82f42b802324afc8b0f116b96adb15aa06664948dde36960a3ba1079ba5b4b29dd0140135b94b5b5f5263592249d68e555f26",
   "engines": {
     "node": ">=20"

@@ -8,23 +8,23 @@ import org.junit.jupiter.api.Test;
 @DisplayName("IamUser")
 class IamUserTest {
 
-    @Test
-    @DisplayName("should create enabled user when factory is used")
-    void shouldCreateEnabledUserWhenFactoryIsUsed() {
-        IamUser user = IamUser.create("demo", "demo@example.com", "hash");
+  @Test
+  @DisplayName("should create enabled user when factory is used")
+  void shouldCreateEnabledUserWhenFactoryIsUsed() {
+    IamUser user = IamUser.create("demo", "demo@example.com", "hash");
 
-        assertThat(user.getId()).isNotBlank();
-        assertThat(user.getUsername()).isEqualTo("demo");
-        assertThat(user.isEnabled()).isTrue();
-    }
+    assertThat(user.getId()).isNotBlank();
+    assertThat(user.getUsername()).isEqualTo("demo");
+    assertThat(user.isEnabled()).isTrue();
+  }
 
-    @Test
-    @DisplayName("should disable user when disable is called")
-    void shouldDisableUserWhenDisableIsCalled() {
-        IamUser user = IamUser.create("demo", "demo@example.com", "hash");
+  @Test
+  @DisplayName("should disable user when disable is called")
+  void shouldDisableUserWhenDisableIsCalled() {
+    IamUser user = IamUser.create("demo", "demo@example.com", "hash");
 
-        user.disable();
+    user.disable();
 
-        assertThat(user.isEnabled()).isFalse();
-    }
+    assertThat(user.isEnabled()).isFalse();
+  }
 }

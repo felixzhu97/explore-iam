@@ -5,5 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 interface SpringDataIamUserRepository extends JpaRepository<IamUserEntity, String> {
 
-    Optional<IamUserEntity> findByUsername(String username);
+  Optional<IamUserEntity> findByUsername(String username);
 }

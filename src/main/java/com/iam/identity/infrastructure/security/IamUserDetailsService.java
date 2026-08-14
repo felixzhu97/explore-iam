@@ -10,25 +10,32 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+/** Loads IAM users for Spring Security form login. */
 @Service
 public class IamUserDetailsService implements UserDetailsService {
 
-    private final IamUserRepository iamUserRepository;
+  private final IamUserRepository iamUserRepository;
 
-    public IamUserDetailsService(IamUserRepository iamUserRepository) {
-        this.iamUserRepository = iamUserRepository;
-    }
+  /**
+   * Creates the user-details adapter.
+   *
+   * @param iamUserRepository IAM user repository
+   */
+  public IamUserDetailsService(IamUserRepository iamUserRepository) {
+    this.iamUserRepository = iamUserRepository;
+  }
 
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        IamUser user = iamUserRepository
-                .findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
-        return User.builder()
-                .username(user.getUsername())
-                .password(user.getPasswordHash())
-                .disabled(!user.isEnabled())
-                .authorities(List.of(new SimpleGrantedAuthority("ROLE_USER")))
-                .build();
-    }
+  @Override
+  public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    IamUser user =
+        iamUserRepository
+            .findByUsername(username)
+            .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+    return User.builder()
+        .username(user.getUsername())
+        .password(user.getPasswordHash())
+        .disabled(!user.isEnabled())
+        .authorities(List.of(new SimpleGrantedAuthority("ROLE_USER")))
+        .build();
+  }
 }

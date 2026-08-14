@@ -17,23 +17,24 @@ import org.springframework.util.StringUtils;
  *
  * <p>Never forwards {@code client_secret} — secrets belong only on the token endpoint.
  */
+@SuppressWarnings("checkstyle:AbbreviationAsWordInName")
 final class OAuthAwareLoginEntryPoint implements AuthenticationEntryPoint {
 
-    private final LoginUrlAuthenticationEntryPoint delegate =
-            new LoginUrlAuthenticationEntryPoint("/login");
+  private final LoginUrlAuthenticationEntryPoint delegate =
+      new LoginUrlAuthenticationEntryPoint("/login");
 
-    @Override
-    public void commence(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            AuthenticationException authException)
-            throws IOException, ServletException {
-        String clientId = request.getParameter("client_id");
-        if (!StringUtils.hasText(clientId)) {
-            this.delegate.commence(request, response, authException);
-            return;
-        }
-        String target = "/login?client_id=" + URLEncoder.encode(clientId, StandardCharsets.UTF_8);
-        response.sendRedirect(target);
+  @Override
+  public void commence(
+      HttpServletRequest request,
+      HttpServletResponse response,
+      AuthenticationException authException)
+      throws IOException, ServletException {
+    String clientId = request.getParameter("client_id");
+    if (!StringUtils.hasText(clientId)) {
+      this.delegate.commence(request, response, authException);
+      return;
     }
+    String target = "/login?client_id=" + URLEncoder.encode(clientId, StandardCharsets.UTF_8);
+    response.sendRedirect(target);
+  }
 }
