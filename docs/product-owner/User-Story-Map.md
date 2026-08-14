@@ -80,7 +80,7 @@ journey
 | E2 策略 | [E2-policy.md](./user-stories/E2-policy.md) | US-04 – US-05 | 规划中 |
 | E3 STS | [E3-sts.md](./user-stories/E3-sts.md) | US-06 – US-07 | 规划中 |
 | E4 SSO 与联邦 | [E4-sso-federation.md](./user-stories/E4-sso-federation.md) | US-08 – US-09 | US-08 已实现 / US-09 规划中 |
-| E5 控制台与客户端 | [E5-console-clients.md](./user-stories/E5-console-clients.md) | US-10 – US-11 | 规划中 |
+| E5 控制台与客户端 | [E5-console-clients.md](./user-stories/E5-console-clients.md) | US-10 – US-11 | US-10 已实现 / US-11 规划中 |
 | E6 审计 | [E6-audit.md](./user-stories/E6-audit.md) | US-12 – US-13 | 规划中 |
 
 ## 参考
