@@ -71,8 +71,22 @@ tasks.register<Exec>("npmBuild") {
     description = "Build Angular SPA into src/main/resources/static"
     workingDir = projectDir
     commandLine("pnpm", "run", "build")
-    onlyIf { file("package.json").exists() && file("src/main/web/main.ts").exists() }
+    onlyIf {
+        file("package.json").exists()
+            && file("src/main/web/main.ts").exists()
+            && isPnpmAvailable()
+    }
 }
+
+fun isPnpmAvailable(): Boolean =
+    try {
+        ProcessBuilder("pnpm", "--version")
+            .redirectErrorStream(true)
+            .start()
+            .waitFor() == 0
+    } catch (_: Exception) {
+        false
+    }
 
 tasks.bootJar {
     archiveFileName.set("app.jar")
