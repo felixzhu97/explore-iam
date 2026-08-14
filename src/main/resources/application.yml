@@ -1,0 +1,74 @@
+server:
+  port: ${SERVER_PORT:9100}
+
+spring:
+  application:
+    name: explore-iam
+  datasource:
+    url: jdbc:h2:file:./data/explore-iam;AUTO_SERVER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+  security:
+    oauth2:
+      authorizationserver:
+        issuer: ${OIDC_ISSUER:http://localhost:9100}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+app:
+  demo-user:
+    enabled: ${APP_DEMO_USER_ENABLED:true}
+    username: ${APP_DEMO_USER_USERNAME:demo}
+    password: ${APP_DEMO_USER_PASSWORD:demo-password}
+    email: ${APP_DEMO_USER_EMAIL:demo@explore-iam.local}
+  oidc:
+    defaults:
+      scopes: [openid, profile, email]
+      response-types: [code]
+      grant-types: [authorization_code, refresh_token]
+      auth-methods: [client_secret_basic, client_secret_post]
+    allowed:
+      response-types: [code]
+      grant-types: [authorization_code, refresh_token]
+      auth-methods: [client_secret_basic, client_secret_post, none]
+    seed-clients:
+      - client-id: ${IAM_CLIENT_EXPLORE_AI_ID:explore-ai}
+        client-name: Explore AI
+        client-secret: ${IAM_CLIENT_EXPLORE_AI_SECRET:explore-ai-dev-secret}
+        redirect-uris:
+          - http://localhost:4200/login/oauth2/code/explore-iam
+          - http://127.0.0.1:4200/login/oauth2/code/explore-iam
+          - http://localhost:9000/login/oauth2/code/explore-iam
+          - http://127.0.0.1:9000/login/oauth2/code/explore-iam
+        post-logout-redirect-uris:
+          - http://localhost:4200/
+          - http://127.0.0.1:4200/
+          - http://localhost:9000/
+          - http://127.0.0.1:9000/
+        scopes:
+          - openid
+          - profile
+          - email
+
+logging:
+  level:
+    org.springframework.security: INFO
+    org.springframework.security.oauth2: DEBUG

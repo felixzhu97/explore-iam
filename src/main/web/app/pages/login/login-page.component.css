@@ -1,0 +1,192 @@
+/* Login brand panel — multi-orb aurora glow (explore-ai neutrals + soft blue) */
+@property --login-glow-x {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 40%;
+}
+
+@property --login-glow-y {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 45%;
+}
+
+@keyframes login-glow-primary {
+  0% {
+    --login-glow-x: 30%;
+    --login-glow-y: 35%;
+  }
+  33% {
+    --login-glow-x: 62%;
+    --login-glow-y: 48%;
+  }
+  66% {
+    --login-glow-x: 48%;
+    --login-glow-y: 68%;
+  }
+  100% {
+    --login-glow-x: 28%;
+    --login-glow-y: 52%;
+  }
+}
+
+@keyframes login-orb-a {
+  0% {
+    transform: translate3d(-12%, -8%, 0) scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translate3d(18%, 14%, 0) scale(1.28);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(8%, -16%, 0) scale(1.12);
+    opacity: 0.8;
+  }
+}
+
+@keyframes login-orb-b {
+  0% {
+    transform: translate3d(20%, 10%, 0) scale(1.05);
+    opacity: 0.65;
+  }
+  50% {
+    transform: translate3d(-16%, -12%, 0) scale(1.38);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(-6%, 18%, 0) scale(1.18);
+    opacity: 0.75;
+  }
+}
+
+@keyframes login-orb-c {
+  0% {
+    transform: translate3d(0, 12%, 0) scale(0.95);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translate3d(-10%, -18%, 0) scale(1.22);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate3d(14%, 4%, 0) scale(1.08);
+    opacity: 0.65;
+  }
+}
+
+@keyframes login-beam-spin {
+  0% {
+    transform: rotate(0deg) scale(1.15);
+  }
+  100% {
+    transform: rotate(360deg) scale(1.15);
+  }
+}
+
+@keyframes login-dots-drift {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-24px, 16px, 0);
+  }
+}
+
+@keyframes login-mission-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.login-brand-panel {
+  background-color: #f5f5f7;
+  background-image: radial-gradient(
+    ellipse 95% 85% at var(--login-glow-x) var(--login-glow-y),
+    #ffffff 0%,
+    #eef5ff 28%,
+    #f5f5f7 55%,
+    #ebebef 82%,
+    #e8e8ed 100%
+  );
+  animation: login-glow-primary 14s ease-in-out infinite alternate;
+}
+
+.login-brand-orb {
+  pointer-events: none;
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(48px);
+  will-change: transform, opacity;
+}
+
+.login-brand-orb-a {
+  inset: 6% 14% 24% 4%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, transparent 68%);
+  animation: login-orb-a 11s ease-in-out infinite alternate;
+}
+
+.login-brand-orb-b {
+  inset: 18% 2% 8% 22%;
+  background: radial-gradient(
+    circle,
+    rgba(0, 122, 255, 0.28) 0%,
+    rgba(100, 180, 255, 0.16) 40%,
+    transparent 72%
+  );
+  animation: login-orb-b 15s ease-in-out infinite alternate;
+}
+
+.login-brand-orb-c {
+  inset: 36% 24% 4% 8%;
+  background: radial-gradient(circle, rgba(134, 134, 139, 0.18) 0%, transparent 72%);
+  animation: login-orb-c 13s ease-in-out infinite alternate;
+}
+
+.login-brand-beam {
+  pointer-events: none;
+  position: absolute;
+  inset: -35%;
+  background: conic-gradient(
+    from 180deg at 50% 50%,
+    transparent 0deg,
+    rgba(0, 122, 255, 0.12) 40deg,
+    transparent 90deg,
+    rgba(255, 255, 255, 0.55) 150deg,
+    transparent 210deg,
+    rgba(0, 122, 255, 0.14) 280deg,
+    transparent 360deg
+  );
+  animation: login-beam-spin 28s linear infinite;
+  mix-blend-mode: multiply;
+  opacity: 0.9;
+}
+
+.login-brand-dots {
+  background-image: radial-gradient(circle, rgba(29, 29, 31, 0.18) 1.2px, transparent 1.7px);
+  background-size: 16px 16px;
+  opacity: 0.45;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, #000 15%, transparent 78%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, #000 15%, transparent 78%);
+  animation: login-dots-drift 20s linear infinite alternate;
+}
+
+.login-brand-mission {
+  color: #1d1d1f;
+  animation: login-mission-in 0.7s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-brand-panel,
+  .login-brand-orb,
+  .login-brand-beam,
+  .login-brand-dots,
+  .login-brand-mission {
+    animation: none;
+  }
+}

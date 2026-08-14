@@ -1,6 +1,7 @@
 # Node.js
 node_modules/
 dist/
+.angular/
 *.local
 
 # IDE
@@ -41,6 +42,10 @@ test-results/
 # Spring Boot
 src/main/resources/application-local.yml
 src/main/resources/application-local*.yml
+
+# Angular production build (copied into Boot static)
+src/main/resources/static/**
+!src/main/resources/static/.gitkeep
 
 # Root-level build
 build/

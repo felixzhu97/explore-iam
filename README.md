@@ -26,7 +26,7 @@ Explore IAM frees everyone to safely use any technology. Our mission is to conne
 | **Identity** | IAM User / Group / Role / federated principal |
 | **Policy** | Identity-based and resource-based policies; Action / Resource / Condition; explicit Deny over Allow |
 | **STS** | AssumeRole → temporary credentials for least-privilege sessions |
-| **SSO** | OIDC (primary) / SAML (secondary) federation into Relying Parties |
+| **SSO** | OIDC (primary) / SAML (secondary) federation into Relying Parties; Angular form login SPA |
 | **Audit** | Management events and authorization decision logs |
 | **Multi-app** | Explore AI, WhatsFeed, Shopping System, Low Code Platform as resource accounts / OIDC clients |
 
@@ -37,9 +37,9 @@ Optional product modules (console UX depth, permission boundaries, organizations
 | Layer | Choice |
 |-------|--------|
 | Runtime | Java 25, Spring Boot 4.1 |
-| Frontend | Angular 22 Console (planned; not in this slice) |
+| Frontend | Angular 22 login SPA (`src/main/web`) |
 | OIDC Provider | [Spring Authorization Server](https://docs.spring.io/spring-authorization-server/reference/getting-started.html) (`spring-boot-starter-oauth2-authorization-server`) |
-| Federation | Spring Security OAuth2 Client (planned for Google / GitHub into IAM) |
+| Federation | Google / GitHub into IAM (planned; US-09) |
 | Persistence | Spring Data JPA + Liquibase; H2 locally (PostgreSQL target) |
 | Ops | Spring Boot Actuator |
 | Custom domain | Policy Engine, STS, AuthZ API (planned) |
@@ -50,13 +50,10 @@ Suggested Control Plane starters (BOM-managed; prefer Boot 4.1 `spring-boot-star
 ```kotlin
 implementation("org.springframework.boot:spring-boot-starter-security")
 implementation("org.springframework.boot:spring-boot-starter-oauth2-authorization-server")
-implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
-implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
 implementation("org.springframework.boot:spring-boot-starter-web")
 implementation("org.springframework.boot:spring-boot-starter-validation")
 implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 implementation("org.springframework.boot:spring-boot-starter-liquibase")
-implementation("org.springframework.boot:spring-boot-starter-data-redis") // optional
 implementation("org.springframework.boot:spring-boot-starter-actuator")
 ```
 
@@ -80,14 +77,42 @@ Online alternative for diagrams: [PlantUML Online](https://www.plantuml.com/plan
 git clone https://github.com/felixzhu97/explore-iam.git
 cd explore-iam
 cp .env.example .env   # optional
+pnpm install
+pnpm build             # Angular → src/main/resources/static
 ./gradlew bootRun      # http://localhost:9100
+```
+
+Local Angular (proxies login POST / OAuth to `:9100`; avoids Explore AI on `:4200`):
+
+```bash
+pnpm start             # http://127.0.0.1:4201/login
 ```
 
 OpenID discovery: `GET http://localhost:9100/.well-known/openid-configuration`
 
 Demo form login (local): username `demo` / password `demo-password`.
 
-Registered Relying Party for Explore AI: client id `explore-ai` (see `.env.example`).
+Shared login SPA (same page for direct IAM login and OAuth authorize):
+
+| Mode | URL | Notes |
+|------|-----|--------|
+| Direct | `http://localhost:9100/login` | IAM console-style sign-in |
+| OAuth | `http://localhost:9100/login?client_id=explore-ai` | Shown after `/oauth2/authorize?...&client_id=explore-ai` when unauthenticated |
+
+Relying Parties must start at `/oauth2/authorize` (standard OIDC). **Do not put `client_secret` in browser URLs** — the secret is used only on the token endpoint by the RP backend. Safe query params: `client_id` (and OIDC `state` / PKCE on the authorize URL).
+
+Context API: `GET /api/login/context?client_id=explore-ai` → `{ clientId, clientName, oauth }`.
+
+### App registration (US-10)
+
+| | |
+|--|--|
+| UI | `http://localhost:9100/clients` list · `http://localhost:9100/clients/new` create wizard (login as `demo` first) |
+| API | `POST /api/clients`, `GET /api/clients`, `GET /api/clients/{clientId}` (session auth; secret returned **once** on create for confidential clients) |
+
+`POST` body accepts `clientName`, `redirectUris`, optional `postLogoutRedirectUris` / `clientUri` / `scopes` / `responseTypes` (`code`) / `authorizationGrantTypes` (`authorization_code` required, optional `refresh_token`) / `clientAuthenticationMethods` (`client_secret_basic` \| `client_secret_post` \| `none`).
+
+OIDC clients are stored in `oauth2_registered_client` (not hardcoded). Local Explore AI is seeded from `app.oidc.seed-clients` in `application.yml` (env: `IAM_CLIENT_EXPLORE_AI_*`).
 
 ### Diagrams
 

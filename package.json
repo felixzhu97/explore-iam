@@ -1,0 +1,45 @@
+{
+  "name": "explore-iam",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Explore IAM — shared identity and OIDC for Explore products",
+  "type": "module",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve --port 4201 --host 127.0.0.1",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit"
+  },
+  "dependencies": {
+    "@angular/animations": "22.1.0",
+    "@angular/common": "22.1.0",
+    "@angular/compiler": "22.1.0",
+    "@angular/core": "22.1.0",
+    "@angular/forms": "22.1.0",
+    "@angular/platform-browser": "22.1.0",
+    "@angular/platform-browser-dynamic": "22.1.0",
+    "@angular/router": "22.1.0",
+    "@tailwindcss/postcss": "^4.3.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "echarts": "^6.1.0",
+    "ngx-echarts": "^22.0.0",
+    "postcss": "^8.5.25",
+    "rxjs": "~7.8.0",
+    "tailwind-merge": "^3.6.0",
+    "tailwindcss": "^4.3.3",
+    "tslib": "^2.6.0",
+    "zone.js": "~0.15.0"
+  },
+  "devDependencies": {
+    "@angular/build": "22.1.2",
+    "@angular/cli": "22.1.2",
+    "@angular/compiler-cli": "22.1.0",
+    "typescript": "^6.0.0"
+  },
+  "packageManager": "pnpm@11.8.0+sha512.c1f5e7c4cb241c8f174b743851d82f42b802324afc8b0f116b96adb15aa06664948dde36960a3ba1079ba5b4b29dd0140135b94b5b5f5263592249d68e555f26",
+  "engines": {
+    "node": ">=20"
+  }
+}
