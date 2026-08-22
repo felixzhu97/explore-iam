@@ -16,6 +16,7 @@ Explore IAM frees everyone to safely use any technology. Our mission is to conne
 - [Configuration](#configuration)
 - [Testing](#testing)
 - [Documentation](#documentation)
+- [AI-assisted development](#ai-assisted-development)
 - [Deployment](#deployment)
 - [License](#license)
 
@@ -151,6 +152,20 @@ Do not commit real secrets.
 | SSO sequence | [docs/developer/c4-model/C4-Sequence-SSOLogin.puml](docs/developer/c4-model/C4-Sequence-SSOLogin.puml) |
 | Policy evaluation | [docs/developer/c4-model/C4-Sequence-PolicyEvaluation.puml](docs/developer/c4-model/C4-Sequence-PolicyEvaluation.puml) |
 | AWS IAM intro (reference) | [AWS IAM User Guide](https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html) |
+
+## AI-assisted development
+
+Cursor / Claude Code conventions align with [explore-ai](https://github.com/felixzhu97/explore-ai): **no repo-local skill or rule copies** — use global paths below.
+
+| Resource | Location |
+|----------|----------|
+| Rules | `~/.cursor/rules/` ([`.cursor/rules/README.md`](.cursor/rules/README.md)) |
+| Skills | `~/.cursor/skills/scrum-team/developers/EXPLORE_SKILLS.md` ([`.cursor/skills/README.md`](.cursor/skills/README.md)) |
+| Agents | [`.cursor/agents/`](.cursor/agents/) |
+| Claude Code | Regenerate [`CLAUDE.md`](CLAUDE.md) with `./.claude/generate-rules.sh` after global rule changes |
+| Delivery gates | Husky pre-commit (`pnpm typecheck`, `./gradlew checkstyleMain checkstyleTest`); [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
+
+**Architecture note:** This repo targets `web → application → domain ← infrastructure` (`com.iam`) — see [C4 model](docs/developer/c4-model/). The current global Cursor `architecture.mdc` describes Explore AI layering; IAM-specific rules will be added globally later.
 
 ## Deployment
 
