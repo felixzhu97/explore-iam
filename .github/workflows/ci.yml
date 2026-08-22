@@ -8,17 +8,14 @@ on:
 
 jobs:
   backend:
-    name: Backend Test & Checkstyle
+    name: Backend
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
-        with:
-          fetch-depth: 0
-          persist-credentials: false
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "25"
@@ -26,39 +23,20 @@ jobs:
 
       - run: chmod +x gradlew
 
-      - name: Test, coverage, and Checkstyle
-        run: ./gradlew test jacocoTestReport checkstyleMain checkstyleTest --no-daemon
-
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always()
-        with:
-          name: jacoco-report
-          path: build/reports/jacoco/test/html
-          retention-days: 14
-          if-no-files-found: warn
-
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always()
-        with:
-          name: checkstyle-report
-          path: build/reports/checkstyle
-          retention-days: 14
-          if-no-files-found: warn
+      - name: Lint and test
+        env:
+          GRADLE_OPTS: -Dorg.gradle.internal.test.binary.results-store=false
+        run: ./gradlew checkstyleMain checkstyleTest test --no-daemon
 
   frontend:
-    name: Frontend Typecheck & Build
+    name: Frontend
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
 
       - uses: ./.github/actions/setup-web-env
 
-      - name: Typecheck
-        run: pnpm typecheck
-
-      - name: Build
-        run: pnpm build
+      - run: pnpm typecheck
+      - run: pnpm build
