@@ -118,6 +118,15 @@ This document defines the project **Ubiquitous Language**. English terms are the
 
 ---
 
+## 9. Dev Tooling | 开发工具
+
+| Preferred Term (English) | 中文     | Definition                                              | Type    | Code Mapping              | Notes |
+| ------------------------ | -------- | ------------------------------------------------------- | ------- | ------------------------- | ----- |
+| Orchestrator             | 编排器   | Agent that delegates tasks to specialized Subagents     | Pattern | `.cursor/agents/orchestrator.md` | Cursor agent routing (dev tooling) |
+| Subagent                 | 子智能体 | Specialized Agent focused on a single responsibility    | Pattern | `.cursor/agents/*.md`     | e.g. developer, product-owner, business-analyst |
+
+---
+
 ## Reference
 
 - [AWS IAM User Guide](https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html)
