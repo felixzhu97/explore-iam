@@ -1,37 +1,62 @@
 package com.iam.policy.service;
 
+import com.iam.audit.domain.model.AuthorizationDecisionLog;
+import com.iam.audit.service.AuditService;
 import com.iam.audit.service.ManagementAuditRecorder;
 import com.iam.common.domain.vo.Action;
 import com.iam.common.domain.vo.Arn;
 import com.iam.common.domain.vo.Effect;
+import com.iam.common.domain.vo.PrincipalId;
 import com.iam.common.domain.vo.Resource;
+import com.iam.policy.domain.model.AuthorizationDecision;
+import com.iam.policy.domain.model.EvaluationContext;
 import com.iam.policy.domain.model.PolicyAttachment;
 import com.iam.policy.domain.model.PolicyDocument;
 import com.iam.policy.domain.model.PolicyStatement;
 import com.iam.policy.domain.repository.PolicyRepository;
+import com.iam.policy.domain.service.PolicyEngine;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Creates policy documents and attaches them to principals. */
+/** Policy document management and evaluation. */
 @Service
-public class CreatePolicyService {
+@Transactional(readOnly = true)
+public class PolicyService {
 
   private final PolicyRepository policyRepository;
+  private final PolicyEngine policyEngine;
+  private final AuditService auditService;
   private final ManagementAuditRecorder managementAuditRecorder;
 
   /**
-   * Creates the create-policy use case.
+   * Creates the policy service.
    *
    * @param policyRepository policy repository
+   * @param policyEngine policy evaluation engine
+   * @param auditService audit application service
    * @param managementAuditRecorder management audit recorder
    */
-  public CreatePolicyService(
-      PolicyRepository policyRepository, ManagementAuditRecorder managementAuditRecorder) {
+  public PolicyService(
+      PolicyRepository policyRepository,
+      PolicyEngine policyEngine,
+      AuditService auditService,
+      ManagementAuditRecorder managementAuditRecorder) {
     this.policyRepository = policyRepository;
+    this.policyEngine = policyEngine;
+    this.auditService = auditService;
     this.managementAuditRecorder = managementAuditRecorder;
+  }
+
+  /**
+   * Returns all policy documents.
+   *
+   * @return policy list
+   */
+  public List<PolicyDocument> findAll() {
+    return policyRepository.findAll();
   }
 
   /**
@@ -41,7 +66,7 @@ public class CreatePolicyService {
    * @return saved policy
    */
   @Transactional
-  public PolicyDocument execute(CreatePolicyCommand command) {
+  public PolicyDocument create(CreatePolicyCommand command) {
     Objects.requireNonNull(command, "command");
     List<PolicyStatement> statements =
         command.statements().stream()
@@ -77,9 +102,40 @@ public class CreatePolicyService {
     return attachment;
   }
 
+  /**
+   * Evaluates attached policies.
+   *
+   * @param command evaluation input
+   * @return authorization decision
+   */
+  public AuthorizationDecision evaluate(EvaluateCommand command) {
+    Objects.requireNonNull(command, "command");
+    Arn principalArn = new Arn(command.principalArn());
+    EvaluationContext context =
+        new EvaluationContext(
+            new PrincipalId(command.principalId()),
+            new Action(command.action()),
+            new Resource(command.resource()));
+    AuthorizationDecision decision =
+        policyEngine.evaluate(
+            context, policyRepository.findAttachedToPrincipal(principalArn));
+    auditService.save(
+        AuthorizationDecisionLog.fromEvaluation(
+            context.principalId(),
+            context.action(),
+            context.resource(),
+            decision.effect(),
+            decision.reasonCode()));
+    return decision;
+  }
+
   /** Input for creating a policy document. */
   public record CreatePolicyCommand(String name, List<StatementInput> statements) {}
 
   /** Single policy statement input. */
   public record StatementInput(String effect, List<String> actions, List<String> resources) {}
+
+  /** Input for policy evaluation. */
+  public record EvaluateCommand(
+      String principalId, String principalArn, String action, String resource) {}
 }
