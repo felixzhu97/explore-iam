@@ -3,26 +3,37 @@ package com.iam.identity.service;
 import com.iam.audit.service.ManagementAuditRecorder;
 import com.iam.identity.domain.model.IamUser;
 import com.iam.identity.domain.repository.IamUserRepository;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Disables an IAM user so form login is rejected. */
+/** IAM user listing and lifecycle operations. */
 @Service
-public class DisableUserService {
+@Transactional(readOnly = true)
+public class UserService {
 
   private final IamUserRepository iamUserRepository;
   private final ManagementAuditRecorder managementAuditRecorder;
 
   /**
-   * Creates the use case.
+   * Creates the user service.
    *
    * @param iamUserRepository IAM user repository
    * @param managementAuditRecorder management audit recorder
    */
-  public DisableUserService(
+  public UserService(
       IamUserRepository iamUserRepository, ManagementAuditRecorder managementAuditRecorder) {
     this.iamUserRepository = iamUserRepository;
     this.managementAuditRecorder = managementAuditRecorder;
+  }
+
+  /**
+   * Returns all IAM users.
+   *
+   * @return user list
+   */
+  public List<IamUser> findAll() {
+    return iamUserRepository.findAll();
   }
 
   /**
@@ -32,7 +43,7 @@ public class DisableUserService {
    * @return updated user
    */
   @Transactional
-  public IamUser execute(String userId) {
+  public IamUser disable(String userId) {
     IamUser user =
         iamUserRepository
             .findById(userId)
