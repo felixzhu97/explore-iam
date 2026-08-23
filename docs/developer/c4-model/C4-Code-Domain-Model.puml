@@ -8,6 +8,7 @@ legend right
   | <<AggregateRoot>> | Consistency boundary |
   | <<Entity>> | Identity + lifecycle |
   | <<ValueObject>> | Immutable; equality by value |
+  | <<DomainEvent>> | Append-only past-tense domain fact |
   | <<DomainService>> | Stateless domain logic |
 endlegend
 
@@ -16,7 +17,7 @@ package "com.iam.common.domain.base" as pkg_kernel {
   abstract class AbstractEntity
   abstract class AbstractEmbeddable
   abstract class AbstractNamedEntity
-  abstract class AbstractAuditEvent
+  abstract class AbstractAuditEvent <<DomainEvent>>
   class DomainStrings
 }
 
@@ -100,8 +101,20 @@ OidcClient --> RedirectUri
 FederatedIdentityLink ..> IamUser : links
 
 package "com.iam.audit.domain" as pkg_audit {
-  class ManagementEvent <<AggregateRoot>>
-  class AuthorizationDecisionLog <<AggregateRoot>>
+  class ManagementEvent <<DomainEvent>> {
+    actor
+    action
+    targetType
+    targetId
+    outcome
+  }
+  class AuthorizationDecisionLog <<DomainEvent>> {
+    principalId
+    action
+    resource
+    effect
+    reasonCode
+  }
   enum AuditOutcome <<ValueObject>> {
     SUCCESS
     FAILURE
@@ -113,6 +126,13 @@ AuthorizationDecisionLog --|> AbstractAuditEvent
 ManagementEvent --> AuditOutcome
 AuthorizationDecisionLog --> Effect
 AuthorizationDecisionLog --> ReasonCode
+AuthorizationDecisionLog ..> AuthorizationDecision : records
+
+note right of pkg_audit
+  Domain events are immutable and append-only.
+  Framework **Authentication Event** (Spring Security)
+  is not a domain event — see Glossary §4.1.
+end note
 
 note bottom of pkg_kernel
   Layering (per module): controller → service → domain ← infra

@@ -34,7 +34,7 @@ This document defines the project **Ubiquitous Language**. English terms are the
 | STS            | 临时凭证 | `com.iam.sts` | — | `/api/sts` | planned | AssumeRole + temporary JWT |
 | Federation     | 联邦   | `com.iam.federation` | — | OIDC + `/api/clients` | partial | SAS Provider done; external IdP planned |
 | Console        | 控制台 | — | `/` | — | partial | Login + client registration |
-| Audit          | 审计   | `com.iam.audit` | `/audit` | `/api/audit` | planned | Management + AuthZ decision logs |
+| Audit          | 审计   | `com.iam.audit` | `/audit` | `/api/audit` | partial | Domain events: Management + AuthZ decision logs |
 | Common         | 横切   | `com.iam.common` | — | — | partial | Shared VOs, security, web errors |
 
 **Frontend route map (canonical)**
@@ -168,7 +168,7 @@ Terms mapping Explore IAM security behavior to [Spring Security](https://docs.sp
 | Abstract Immutable | 不可变聚合基类 | Domain/JPA base: `id` + `createdAt` | `com.iam.common.domain.base.AbstractImmutable` | implemented |
 | Abstract Entity | 可变聚合基类 | Extends immutable; adds `updatedAt` + `@Version` | `AbstractEntity` | implemented |
 | Abstract Named Entity | 具名聚合基类 | Mutable aggregate with unique `name` | `AbstractNamedEntity` | implemented |
-| Abstract Audit Event | 审计事件基类 | Immutable event; `createdAt` mapped to `occurred_at` | `AbstractAuditEvent` | implemented |
+| Abstract Audit Event | 审计事件基类 | Immutable domain event; `createdAt` mapped to `occurred_at` | `AbstractAuditEvent` (`<<DomainEvent>>`) | implemented |
 | Abstract Embeddable | 可嵌入值对象基类 | Embeddable VO base preventing empty composite `null` | `AbstractEmbeddable` | implemented |
 | Domain Strings | 域字符串校验 | Shared non-blank string validation | `DomainStrings.requireNonBlank` | implemented |
 | Attribute Converter | 属性转换器 | JPA mapping between domain type and column | e.g. `ArnAttributeConverter`, `PolicyStatementsJsonConverter` | implemented |
@@ -228,7 +228,8 @@ Terms mapping Explore IAM security behavior to [Spring Security](https://docs.sp
 | Resource | 资源 | Target of an Action | Value Object | `Resource` | planned |
 | Condition | 条件 | Context keys constraining a statement | Value Object | `Condition` | planned |
 | Evaluation Context | 求值上下文 | Principal + Action + Resource + request context | Value Object | `EvaluationContext` | planned |
-| Authorization Decision | 鉴权决策 | Allow or Deny with reason | Value Object | `AuthorizationDecision` | planned |
+| Authorization Decision | 鉴权决策 | Allow or Deny with reason (ephemeral) | Value Object | `AuthorizationDecision` | implemented |
+| Authorization Decision Log | 鉴权决策日志 | Persisted domain event after evaluation | Domain Event | `AuthorizationDecisionLog` (§10) | implemented |
 | Policy Engine | 策略引擎 | Evaluates policies: Deny > Allow > Implicit Deny | Domain Service | `PolicyEngine` | planned |
 | Permission Boundary | 权限边界 | Maximum permissions cap | Entity | `PermissionBoundary` | later |
 
@@ -263,17 +264,32 @@ Terms mapping Explore IAM security behavior to [Spring Security](https://docs.sp
 
 ---
 
-## 10. Audit | 审计
+## 10. Audit & Domain Events | 审计与领域事件
+
+Explore IAM distinguishes **domain events** (ubiquitous-language facts persisted in
+`com.iam.audit`) from **framework events** (Spring Security
+`AuthenticationSuccessEvent` — see §4.1). Domain events are append-only,
+immutable, and extend `AbstractAuditEvent`.
 
 | Preferred Term (English) | 中文 | Definition | Type | Code Mapping | Status |
 | ------------------------ | ---- | ---------- | ---- | ------------ | ------ |
-| Audit Event | 审计事件 | Record of management or AuthZ action | Entity | `AuditEvent` | planned |
-| Management Event | 管理事件 | CRUD on users, roles, policies, clients | Entity | `ManagementEvent` | planned |
-| Authorization Decision Log | 鉴权决策日志 | Persisted Allow/Deny with reason code | Entity | `AuthorizationDecisionLog` | planned |
-| Audit Actor | 审计主体 | Who performed the action | Value Object | `AuditActor` | planned |
-| Audit Target | 审计目标 | Resource affected by the action | Value Object | `AuditTarget` | planned |
-| Audit Outcome | 审计结果 | Success or failure of the operation | Enum | `AuditOutcome` | planned |
-| Immutable Audit Record | 不可变审计记录 | Append-only audit row | Entity | `ManagementEvent` | planned |
+| Domain Event | 领域事件 | Past-tense fact in the domain; append-only | Concept | `AbstractAuditEvent` hierarchy | implemented |
+| Abstract Audit Event | 审计事件基类 | Kernel for immutable audit rows; `occurred_at` column | Base class | `AbstractAuditEvent` | implemented |
+| Management Event | 管理事件 | Management-plane action (actor, target, outcome) | Domain Event | `ManagementEvent` | implemented |
+| Authorization Decision Log | 鉴权决策日志 | Persisted Allow/Deny with reason code | Domain Event | `AuthorizationDecisionLog` | implemented |
+| Audit Outcome | 审计结果 | Success or failure of a management operation | Enum | `AuditOutcome` | implemented |
+| Occurred At | 发生时间 | When the domain event was recorded | Attribute | `AbstractAuditEvent.getOccurredAt()` | implemented |
+| Event Actor | 事件主体 | Principal that performed the management action | Attribute | `ManagementEvent.actor` | implemented |
+| Event Target Type | 事件目标类型 | Kind of resource affected (user, role, policy, …) | Attribute | `ManagementEvent.targetType` | implemented |
+| Event Target Id | 事件目标标识 | Identifier of the affected resource | Attribute | `ManagementEvent.targetId` | implemented |
+| Immutable Audit Record | 不可变审计记录 | Append-only audit row; no updates after insert | Pattern | `ManagementEvent`, `AuthorizationDecisionLog` | implemented |
+
+**Not domain events (do not model as aggregates):**
+
+| Preferred Term (English) | 中文 | Definition | Type | Code Mapping | Status |
+| ------------------------ | ---- | ---------- | ---- | ------------ | ------ |
+| Authentication Event | 认证事件 | Spring Security login success/failure notification | Framework Event | `AuthenticationSuccessEvent` | implemented |
+| Authorization Decision | 鉴权决策 | Ephemeral evaluation result before persistence | Value Object | `AuthorizationDecision` | implemented |
 
 ---
 
