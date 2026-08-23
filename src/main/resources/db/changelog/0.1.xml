@@ -5,8 +5,8 @@
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <changeSet id="0.1-iam-users" author="explore-iam">
-        <createTable tableName="iam_users">
+    <changeSet id="0.1-iam-user" author="explore-iam">
+        <createTable tableName="iam_user">
             <column name="id" type="varchar(36)">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -71,8 +71,8 @@
         </createIndex>
     </changeSet>
 
-    <changeSet id="0.1-iam-signing-keys" author="explore-iam">
-        <createTable tableName="iam_signing_keys">
+    <changeSet id="0.1-signing-key-entity" author="explore-iam">
+        <createTable tableName="signing_key_entity">
             <column name="id" type="varchar(36)">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -88,8 +88,8 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="0.1-iam-groups" author="explore-iam">
-        <createTable tableName="iam_groups">
+    <changeSet id="0.1-group" author="explore-iam">
+        <createTable tableName="group">
             <column name="id" type="varchar(36)">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -108,8 +108,8 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="0.1-iam-group-memberships" author="explore-iam">
-        <createTable tableName="iam_group_memberships">
+    <changeSet id="0.1-group-member" author="explore-iam">
+        <createTable tableName="group_member">
             <column name="group_id" type="varchar(36)">
                 <constraints nullable="false"/>
             </column>
@@ -117,23 +117,23 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <addPrimaryKey tableName="iam_group_memberships"
+        <addPrimaryKey tableName="group_member"
             columnNames="group_id, user_id"
-            constraintName="pk_iam_group_memberships"/>
-        <addForeignKeyConstraint baseTableName="iam_group_memberships"
+            constraintName="pk_group_member"/>
+        <addForeignKeyConstraint baseTableName="group_member"
             baseColumnNames="group_id"
-            referencedTableName="iam_groups"
+            referencedTableName="group"
             referencedColumnNames="id"
-            constraintName="fk_group_memberships_group"/>
-        <addForeignKeyConstraint baseTableName="iam_group_memberships"
+            constraintName="fk_group_member_group"/>
+        <addForeignKeyConstraint baseTableName="group_member"
             baseColumnNames="user_id"
-            referencedTableName="iam_users"
+            referencedTableName="iam_user"
             referencedColumnNames="id"
-            constraintName="fk_group_memberships_user"/>
+            constraintName="fk_group_member_user"/>
     </changeSet>
 
-    <changeSet id="0.1-iam-roles" author="explore-iam">
-        <createTable tableName="iam_roles">
+    <changeSet id="0.1-role" author="explore-iam">
+        <createTable tableName="role">
             <column name="id" type="varchar(36)">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -156,8 +156,8 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="0.1-iam-user-roles" author="explore-iam">
-        <createTable tableName="iam_user_roles">
+    <changeSet id="0.1-user-role-assignment" author="explore-iam">
+        <createTable tableName="user_role_assignment">
             <column name="user_id" type="varchar(36)">
                 <constraints nullable="false"/>
             </column>
@@ -165,23 +165,23 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <addPrimaryKey tableName="iam_user_roles"
+        <addPrimaryKey tableName="user_role_assignment"
             columnNames="user_id, role_id"
-            constraintName="pk_iam_user_roles"/>
-        <addForeignKeyConstraint baseTableName="iam_user_roles"
+            constraintName="pk_user_role_assignment"/>
+        <addForeignKeyConstraint baseTableName="user_role_assignment"
             baseColumnNames="user_id"
-            referencedTableName="iam_users"
+            referencedTableName="iam_user"
             referencedColumnNames="id"
-            constraintName="fk_user_roles_user"/>
-        <addForeignKeyConstraint baseTableName="iam_user_roles"
+            constraintName="fk_user_role_assignment_user"/>
+        <addForeignKeyConstraint baseTableName="user_role_assignment"
             baseColumnNames="role_id"
-            referencedTableName="iam_roles"
+            referencedTableName="role"
             referencedColumnNames="id"
-            constraintName="fk_user_roles_role"/>
+            constraintName="fk_user_role_assignment_role"/>
     </changeSet>
 
-    <changeSet id="0.1-iam-policy-documents" author="explore-iam">
-        <createTable tableName="iam_policy_documents">
+    <changeSet id="0.1-policy-document" author="explore-iam">
+        <createTable tableName="policy_document">
             <column name="id" type="varchar(36)">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -203,8 +203,8 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="0.1-iam-policy-attachments" author="explore-iam">
-        <createTable tableName="iam_policy_attachments">
+    <changeSet id="0.1-policy-attachment" author="explore-iam">
+        <createTable tableName="policy_attachment">
             <column name="id" type="varchar(36)">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -218,15 +218,15 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <addForeignKeyConstraint baseTableName="iam_policy_attachments"
+        <addForeignKeyConstraint baseTableName="policy_attachment"
             baseColumnNames="policy_id"
-            referencedTableName="iam_policy_documents"
+            referencedTableName="policy_document"
             referencedColumnNames="id"
-            constraintName="fk_policy_attachments_policy"/>
+            constraintName="fk_policy_attachment_policy"/>
     </changeSet>
 
-    <changeSet id="0.1-iam-assumed-role-sessions" author="explore-iam">
-        <createTable tableName="iam_assumed_role_sessions">
+    <changeSet id="0.1-assumed-role-session" author="explore-iam">
+        <createTable tableName="assumed_role_session">
             <column name="id" type="varchar(36)">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -248,8 +248,8 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="0.1-iam-federated-identity-links" author="explore-iam">
-        <createTable tableName="iam_federated_identity_links">
+    <changeSet id="0.1-federated-identity-link" author="explore-iam">
+        <createTable tableName="federated_identity_link">
             <column name="id" type="varchar(36)">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -266,18 +266,18 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <addUniqueConstraint tableName="iam_federated_identity_links"
+        <addUniqueConstraint tableName="federated_identity_link"
             columnNames="provider, external_subject"
             constraintName="uk_federated_provider_subject"/>
-        <addForeignKeyConstraint baseTableName="iam_federated_identity_links"
+        <addForeignKeyConstraint baseTableName="federated_identity_link"
             baseColumnNames="iam_user_id"
-            referencedTableName="iam_users"
+            referencedTableName="iam_user"
             referencedColumnNames="id"
             constraintName="fk_federated_identity_user"/>
     </changeSet>
 
-    <changeSet id="0.1-iam-management-events" author="explore-iam">
-        <createTable tableName="iam_management_events">
+    <changeSet id="0.1-management-event" author="explore-iam">
+        <createTable tableName="management_event">
             <column name="id" type="varchar(36)">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -302,8 +302,8 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="0.1-iam-authorization-decision-logs" author="explore-iam">
-        <createTable tableName="iam_authorization_decision_logs">
+    <changeSet id="0.1-authorization-decision-log" author="explore-iam">
+        <createTable tableName="authorization_decision_log">
             <column name="id" type="varchar(36)">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
