@@ -1,7 +1,6 @@
 package com.iam.identity.service;
 
 import com.iam.identity.domain.model.Role;
-import com.iam.identity.domain.model.TrustPolicyDocument;
 import com.iam.identity.domain.repository.RoleRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,10 +29,6 @@ public class CreateRoleService {
    */
   @Transactional
   public Role execute(String name, String trustPolicyJson) {
-    TrustPolicyDocument trust =
-        trustPolicyJson == null || trustPolicyJson.isBlank()
-            ? TrustPolicyDocument.allowAll()
-            : new TrustPolicyDocument(trustPolicyJson);
-    return roleRepository.save(Role.create(name, trust));
+    return roleRepository.save(Role.create(name, trustPolicyJson));
   }
 }

@@ -11,12 +11,9 @@ import org.springframework.stereotype.Repository;
 class JpaRoleRepository implements RoleRepository {
 
   private final SpringDataRoleRepository roleRepository;
-  private final SpringDataUserRoleRepository userRoleRepository;
 
-  JpaRoleRepository(
-      SpringDataRoleRepository roleRepository, SpringDataUserRoleRepository userRoleRepository) {
+  JpaRoleRepository(SpringDataRoleRepository roleRepository) {
     this.roleRepository = roleRepository;
-    this.userRoleRepository = userRoleRepository;
   }
 
   @Override
@@ -37,13 +34,6 @@ class JpaRoleRepository implements RoleRepository {
   @Override
   public Role save(Role role) {
     return roleRepository.save(role);
-  }
-
-  @Override
-  public void assignToUser(String userId, String roleId) {
-    if (!userRoleRepository.existsById(new UserRoleEntity.Pk(userId, roleId))) {
-      userRoleRepository.save(new UserRoleEntity(userId, roleId));
-    }
   }
 
   @Override

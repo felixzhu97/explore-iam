@@ -53,7 +53,8 @@ public class IdentityBootstrapConfig {
                     log.info("Seeded demo IAM User '{}'", properties.getUsername());
                     return saved;
                   });
-      roleRepository.assignToUser(user.getId(), adminRole.getId());
+      user.assignRole(adminRole.getId());
+      userRepository.save(user);
     };
   }
 

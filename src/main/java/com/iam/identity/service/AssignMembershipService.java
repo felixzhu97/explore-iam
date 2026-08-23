@@ -1,6 +1,9 @@
 package com.iam.identity.service;
 
+import com.iam.identity.domain.model.Group;
+import com.iam.identity.domain.model.IamUser;
 import com.iam.identity.domain.repository.GroupRepository;
+import com.iam.identity.domain.repository.IamUserRepository;
 import com.iam.identity.domain.repository.RoleRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,16 +14,22 @@ public class AssignMembershipService {
 
   private final RoleRepository roleRepository;
   private final GroupRepository groupRepository;
+  private final IamUserRepository iamUserRepository;
 
   /**
    * Creates the use case.
    *
    * @param roleRepository role repository
    * @param groupRepository group repository
+   * @param iamUserRepository IAM user repository
    */
-  public AssignMembershipService(RoleRepository roleRepository, GroupRepository groupRepository) {
+  public AssignMembershipService(
+      RoleRepository roleRepository,
+      GroupRepository groupRepository,
+      IamUserRepository iamUserRepository) {
     this.roleRepository = roleRepository;
     this.groupRepository = groupRepository;
+    this.iamUserRepository = iamUserRepository;
   }
 
   /**
@@ -34,7 +43,12 @@ public class AssignMembershipService {
     roleRepository
         .findById(roleId)
         .orElseThrow(() -> new IllegalArgumentException("role not found: " + roleId));
-    roleRepository.assignToUser(userId, roleId);
+    IamUser user =
+        iamUserRepository
+            .findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("user not found: " + userId));
+    user.assignRole(roleId);
+    iamUserRepository.save(user);
   }
 
   /**
@@ -45,9 +59,11 @@ public class AssignMembershipService {
    */
   @Transactional
   public void addToGroup(String groupId, String userId) {
-    groupRepository
-        .findById(groupId)
-        .orElseThrow(() -> new IllegalArgumentException("group not found: " + groupId));
-    groupRepository.addMember(groupId, userId);
+    Group group =
+        groupRepository
+            .findById(groupId)
+            .orElseThrow(() -> new IllegalArgumentException("group not found: " + groupId));
+    group.addMember(userId);
+    groupRepository.save(group);
   }
 }

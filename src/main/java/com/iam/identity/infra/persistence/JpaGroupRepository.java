@@ -10,13 +10,9 @@ import org.springframework.stereotype.Repository;
 class JpaGroupRepository implements GroupRepository {
 
   private final SpringDataGroupRepository groupRepository;
-  private final SpringDataGroupMembershipRepository membershipRepository;
 
-  JpaGroupRepository(
-      SpringDataGroupRepository groupRepository,
-      SpringDataGroupMembershipRepository membershipRepository) {
+  JpaGroupRepository(SpringDataGroupRepository groupRepository) {
     this.groupRepository = groupRepository;
-    this.membershipRepository = membershipRepository;
   }
 
   @Override
@@ -32,13 +28,6 @@ class JpaGroupRepository implements GroupRepository {
   @Override
   public Group save(Group group) {
     return groupRepository.save(group);
-  }
-
-  @Override
-  public void addMember(String groupId, String userId) {
-    if (!membershipRepository.existsByGroupIdAndUserId(groupId, userId)) {
-      membershipRepository.save(new GroupMembershipEntity(groupId, userId));
-    }
   }
 
   @Override

@@ -32,14 +32,6 @@ public interface GroupRepository {
   Group save(Group group);
 
   /**
-   * Adds a user to a group membership.
-   *
-   * @param groupId group id
-   * @param userId user id
-   */
-  void addMember(String groupId, String userId);
-
-  /**
    * Lists all groups.
    *
    * @return all groups

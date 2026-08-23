@@ -40,14 +40,6 @@ public interface RoleRepository {
   Role save(Role role);
 
   /**
-   * Assigns a role to a user.
-   *
-   * @param userId user id
-   * @param roleId role id
-   */
-  void assignToUser(String userId, String roleId);
-
-  /**
    * Lists roles assigned to a user.
    *
    * @param userId user id

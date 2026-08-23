@@ -5,26 +5,25 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@DisplayName("IamUser")
 class IamUserTest {
 
   @Test
-  @DisplayName("should create enabled user when factory is used")
-  void shouldCreateEnabledUserWhenFactoryIsUsed() {
-    IamUser user = IamUser.create("demo", "demo@example.com", "hash");
+  @DisplayName("should assign role idempotently when assigning same role twice")
+  void shouldAssignRoleIdempotentlyWhenAssigningSameRoleTwice() {
+    IamUser user = IamUser.create("demo", "demo@example.com", "{noop}secret");
 
-    assertThat(user.getId()).isNotBlank();
-    assertThat(user.getUsername()).isEqualTo("demo");
-    assertThat(user.isEnabled()).isTrue();
+    user.assignRole("role-1");
+    user.assignRole("role-1");
+
+    assertThat(user.assignedRoleIds()).containsExactly("role-1");
   }
 
   @Test
-  @DisplayName("should disable user when disable is called")
-  void shouldDisableUserWhenDisableIsCalled() {
-    IamUser user = IamUser.create("demo", "demo@example.com", "hash");
+  @DisplayName("should derive federated username from provider and subject")
+  void shouldDeriveFederatedUsernameFromProviderAndSubject() {
+    IamUser user = IamUser.createForFederatedLogin("google", "sub-123", "user@example.com");
 
-    user.disable();
-
-    assertThat(user.isEnabled()).isFalse();
+    assertThat(user.getUsername()).isEqualTo("google:sub-123");
+    assertThat(user.getEmail()).isEqualTo("user@example.com");
   }
 }
