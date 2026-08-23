@@ -2,7 +2,7 @@ package com.iam.identity.infra.security;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
-import com.iam.federation.infra.security.FederatedIdentityUserService;
+import com.iam.federation.infra.security.FederatedLoginService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -65,7 +65,7 @@ public class WebSecurityConfig {
   SecurityFilterChain defaultSecurityFilterChain(
       HttpSecurity http,
       ObjectProvider<ClientRegistrationRepository> clientRegistrations,
-      ObjectProvider<FederatedIdentityUserService> federatedUserService)
+      ObjectProvider<FederatedLoginService> federatedLoginService)
       throws Exception {
     CookieCsrfTokenRepository csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
     csrfTokenRepository.setCookiePath("/");
@@ -106,7 +106,7 @@ public class WebSecurityConfig {
 
     clientRegistrations.ifAvailable(
         repo ->
-            federatedUserService.ifAvailable(
+            federatedLoginService.ifAvailable(
                 service ->
                     http.oauth2Login(
                         (oauth2) ->
