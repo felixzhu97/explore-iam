@@ -1,0 +1,48 @@
+@startuml C4-Dynamic-SSOLogin
+!include style-zinc.puml
+title Dynamic — SSO login (OIDC Authorization Code)
+
+actor "End User" as user
+participant "Business App\nRelying Party" as app <<ui>>
+participant "IAM Application\nOIDC Provider :9100" as iam <<java>>
+participant "External IdP\nGoogle / GitHub" as idp <<external>>
+database "Metadata DB" as db <<db>>
+
+user -> app: 1. Access protected resource
+app --> user: 2. Redirect to /oauth2/authorize
+user -> iam: 3. GET /oauth2/authorize\n(client_id, redirect_uri, scope, state, PKCE)
+iam -> db: 4. Load RegisteredClient
+db --> iam: 5. Client settings
+alt No local session
+  iam --> user: 6. Redirect /login?client_id=…
+  user -> iam: 7. Form login or OAuth2 Login
+  opt External IdP
+    iam --> user: 8. Redirect to IdP
+    user -> idp: 9. Authenticate
+    idp --> iam: 10. OAuth2 callback
+    iam -> db: 11. Upsert FederatedIdentityLink + IamUser
+  end
+end
+iam --> user: 12. Consent (if required) + redirect with code
+user -> app: 13. redirect_uri?code=…&state=…
+app -> iam: 14. POST /oauth2/token\n(client_id, client_secret, code)
+iam -> db: 16. Persist authorization (optional)
+iam --> app: 17. ID Token + Access Token (+ Refresh Token)
+app -> iam: 18. JWKS verify / userinfo (optional)
+app --> user: 19. Application session established
+
+legend right
+  |= Role |= Color |
+  | Actor | Emerald |
+  | <<ui>> | Slate |
+  | <<java>> | Blue |
+  | <<external>> | Zinc |
+  | <<db>> | Amber |
+endlegend
+
+note right of iam
+  Demo admin: demo / demo-password
+  Discovery: /.well-known/openid-configuration
+end note
+
+@enduml
