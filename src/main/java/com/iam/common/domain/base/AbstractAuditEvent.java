@@ -8,7 +8,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/** Immutable audit record with {@code occurred_at} persisted instead of {@code created_at}. */
+/** Immutable audit aggregate base; {@code occurred_at} replaces {@code created_at}. */
 @MappedSuperclass
 @AttributeOverride(
     name = "createdAt",
@@ -30,5 +30,25 @@ public abstract class AbstractAuditEvent extends AbstractImmutable {
   /** Returns when the audit event occurred (alias for {@link #getCreatedAt()}). */
   public Instant getOccurredAt() {
     return getCreatedAt();
+  }
+
+  /**
+   * Returns true when this event occurred strictly before the given instant.
+   *
+   * @param instant point in time
+   * @return whether occurred before
+   */
+  public boolean occurredBefore(Instant instant) {
+    return getOccurredAt().isBefore(instant);
+  }
+
+  /**
+   * Returns true when this event occurred strictly after the given instant.
+   *
+   * @param instant point in time
+   * @return whether occurred after
+   */
+  public boolean occurredAfter(Instant instant) {
+    return getOccurredAt().isAfter(instant);
   }
 }

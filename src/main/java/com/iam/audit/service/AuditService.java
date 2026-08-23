@@ -1,16 +1,13 @@
 package com.iam.audit.service;
 
-import com.iam.audit.domain.model.AuditOutcome;
 import com.iam.audit.domain.model.AuthorizationDecisionLog;
 import com.iam.audit.domain.model.ManagementEvent;
 import com.iam.audit.domain.repository.AuditRepository;
-import com.iam.common.domain.vo.Effect;
-import com.iam.common.domain.vo.ReasonCode;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Application service for recording and querying audit events. */
+/** Application service for persisting and querying audit aggregates. */
 @Service
 public class AuditService {
 
@@ -26,46 +23,32 @@ public class AuditService {
   }
 
   /**
-   * Records a management-plane event.
+   * Persists a management-plane audit aggregate.
    *
-   * @param actor principal performing the action
-   * @param action action name
-   * @param targetType target resource type
-   * @param targetId target identifier
-   * @param outcome success or failure
+   * @param event management event aggregate
+   * @return stored aggregate
    */
   @Transactional
-  public void recordManagement(
-      String actor, String action, String targetType, String targetId, AuditOutcome outcome) {
-    auditRepository.saveManagementEvent(
-        ManagementEvent.record(actor, action, targetType, targetId, outcome));
+  public ManagementEvent save(ManagementEvent event) {
+    return auditRepository.saveManagementEvent(event);
   }
 
   /**
-   * Records a policy authorization decision.
+   * Persists an authorization decision audit aggregate.
    *
-   * @param principalId evaluated principal
-   * @param action requested action
-   * @param resource requested resource
-   * @param effect decision effect
-   * @param reasonCode machine-readable reason
+   * @param log authorization decision aggregate
+   * @return stored aggregate
    */
   @Transactional
-  public void recordAuthorizationDecision(
-      String principalId,
-      String action,
-      String resource,
-      Effect effect,
-      ReasonCode reasonCode) {
-    auditRepository.saveAuthorizationDecision(
-        AuthorizationDecisionLog.record(principalId, action, resource, effect, reasonCode));
+  public AuthorizationDecisionLog save(AuthorizationDecisionLog log) {
+    return auditRepository.saveAuthorizationDecision(log);
   }
 
   /**
-   * Queries recent audit events.
+   * Queries recent audit aggregates.
    *
    * @param limit maximum events per category
-   * @return management and authorization events
+   * @return management and authorization aggregates
    */
   @Transactional(readOnly = true)
   public AuditQueryResult query(int limit) {

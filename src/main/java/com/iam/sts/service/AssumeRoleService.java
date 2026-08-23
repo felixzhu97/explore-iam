@@ -1,6 +1,9 @@
 package com.iam.sts.service;
 
 import com.iam.audit.domain.model.AuditOutcome;
+import com.iam.audit.domain.model.ManagementEvent;
+import com.iam.audit.domain.vo.AuditActor;
+import com.iam.audit.domain.vo.AuditTarget;
 import com.iam.audit.service.AuditService;
 import com.iam.common.domain.vo.Arn;
 import com.iam.identity.domain.model.Role;
@@ -71,8 +74,12 @@ public class AssumeRoleService {
         sessionRepository.save(
             AssumedRoleSession.create(roleArn, command.sessionName(), caller, expiresAt));
     String accessToken = encodeToken(session, role);
-    auditService.recordManagement(
-        caller, "sts:AssumeRole", "Role", role.getId(), AuditOutcome.SUCCESS);
+    auditService.save(
+        ManagementEvent.logManagementAction(
+            new AuditActor(caller),
+            "sts:AssumeRole",
+            new AuditTarget("Role", role.getId()),
+            AuditOutcome.SUCCESS));
     return new AssumeRoleResult(accessToken, session.getExpiresAt(), session.getId());
   }
 
