@@ -6,7 +6,6 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,7 +17,6 @@ import lombok.NoArgsConstructor;
 
 /** Long-lived IAM User identity used for local form login and OIDC subject mapping. */
 @Entity
-@Table(name = "iam_users")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public class IamUser extends AbstractEntity {

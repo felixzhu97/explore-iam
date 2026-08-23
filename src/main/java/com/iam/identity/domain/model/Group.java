@@ -6,7 +6,6 @@ import com.iam.common.domain.vo.Arn;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,7 +17,6 @@ import lombok.NoArgsConstructor;
 
 /** Named collection of IAM users. */
 @Entity
-@Table(name = "iam_groups")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public class Group extends AbstractNamedEntity {

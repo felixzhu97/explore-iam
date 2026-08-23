@@ -7,7 +7,6 @@ import com.iam.identity.domain.converter.TrustPolicyDocumentConverter;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.AccessLevel;
@@ -16,7 +15,6 @@ import lombok.NoArgsConstructor;
 
 /** IAM role with an optional trust policy for STS assume-role. */
 @Entity
-@Table(name = "iam_roles")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public class Role extends AbstractNamedEntity {

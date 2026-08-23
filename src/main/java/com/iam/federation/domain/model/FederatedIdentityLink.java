@@ -4,7 +4,6 @@ import com.iam.common.domain.base.AbstractImmutable;
 import com.iam.common.domain.base.DomainStrings;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.AccessLevel;
@@ -13,7 +12,6 @@ import lombok.NoArgsConstructor;
 
 /** Maps an external IdP subject to a local IAM user. */
 @Entity
-@Table(name = "iam_federated_identity_links")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public class FederatedIdentityLink extends AbstractImmutable {
