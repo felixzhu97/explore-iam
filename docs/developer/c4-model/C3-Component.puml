@@ -1,0 +1,99 @@
+@startuml C3-Component
+!theme C4_blue_new from https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/themes
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Component Diagram (C3) — Explore IAM (backend + frontends)
+
+Container_Boundary(iam_app, "IAM Application (Spring Boot :9100)") {
+
+    Container_Boundary(console, "IAM Console") {
+        Component(console_shell, "App Shell", "Angular 22", "Routes: home, clients, login")
+        Component(clients_ui, "App Registration UI", "Angular", "Client list + create wizard")
+        Component(login_ui, "Login UI", "Angular", "Form login + OAuth client context")
+        Component(http_client, "HTTP Client", "Angular HttpClient", "REST + CSRF (X-XSRF-TOKEN)")
+    }
+
+    Container_Boundary(identity, "Identity Module") {
+        Component(identity_ctrl, "IdentityController", "controller", "/api/identity")
+        Component(identity_svc, "Identity Services", "service", "User / Group / Role orchestration")
+        Component(identity_dom, "Identity Domain", "domain", "IamUser, Group, Role")
+        Component(identity_infra, "Identity Infra", "infra", "JPA repos, WebSecurityConfig, bootstrap")
+    }
+
+    Container_Boundary(policy, "Policy Module") {
+        Component(policy_ctrl, "PolicyController", "controller", "/api/policies")
+        Component(policy_svc, "Policy Services", "service", "Create / Evaluate")
+        Component(policy_dom, "Policy Domain", "domain", "PolicyDocument, PolicyEngine")
+        Component(policy_infra, "Policy Infra", "infra", "JpaPolicyRepository, converters")
+    }
+
+    Container_Boundary(sts, "STS Module") {
+        Component(sts_ctrl, "StsController", "controller", "/api/sts")
+        Component(sts_svc, "AssumeRoleService", "service", "Temporary JWT")
+        Component(sts_dom, "STS Domain", "domain", "AssumedRoleSession")
+        Component(sts_infra, "STS Infra", "infra", "JpaAssumedRoleSessionRepository")
+    }
+
+    Container_Boundary(federation, "Federation Module") {
+        Component(fed_ctrl, "ClientController", "controller", "/api/clients")
+        Component(fed_svc, "Federation Services", "service", "Register / list OIDC clients")
+        Component(fed_dom, "Federation Domain", "domain", "OidcClient, FederatedIdentityLink")
+        Component(fed_infra, "Federation Infra", "infra", "SAS config, JWK persistence, OAuth2 client")
+    }
+
+    Container_Boundary(audit, "Audit Module") {
+        Component(audit_ctrl, "AuditController", "controller", "/api/audit")
+        Component(audit_svc, "AuditService", "service", "Management + AuthZ decision logs")
+        Component(audit_dom, "Audit Domain", "domain", "ManagementEvent, AuthorizationDecisionLog")
+        Component(audit_infra, "Audit Infra", "infra", "JpaAuditRepository, auth listener")
+    }
+
+    Container_Boundary(common, "Common") {
+        Component(common_sec, "Method Security", "security", "@PreAuthorize, SecurityRoles")
+        Component(common_vo, "Shared VOs", "domain/vo", "Arn, Action, Resource, Effect")
+    }
+}
+
+ContainerDb_Ext(metadata_db, "Metadata Database", "H2 / PostgreSQL", "Liquibase 0.1.xml")
+System_Ext(external_idp, "External IdP", "Google / GitHub", "Optional OAuth2 Login")
+
+Rel(console_shell, clients_ui, "Routes")
+Rel(console_shell, login_ui, "Routes")
+Rel(clients_ui, http_client, "REST")
+Rel(login_ui, http_client, "Form POST /login")
+
+Rel(http_client, identity_ctrl, "HTTPS /api/identity")
+Rel(http_client, policy_ctrl, "HTTPS /api/policies")
+Rel(http_client, fed_ctrl, "HTTPS /api/clients")
+Rel(http_client, audit_ctrl, "HTTPS /api/audit")
+
+Rel(identity_ctrl, identity_svc, "Delegates")
+Rel(identity_svc, identity_dom, "Rich model")
+Rel(identity_svc, identity_infra, "Persists")
+Rel(policy_ctrl, policy_svc, "Delegates")
+Rel(policy_svc, policy_dom, "PolicyEngine.evaluate")
+Rel(policy_svc, policy_infra, "Persists")
+Rel(sts_ctrl, sts_svc, "Delegates")
+Rel(sts_svc, sts_dom, "Creates session")
+Rel(sts_svc, policy_dom, "Trust policy (via Role)")
+Rel(sts_svc, audit_svc, "Audit events")
+Rel(fed_ctrl, fed_svc, "Delegates")
+Rel(fed_svc, fed_infra, "SAS RegisteredClient")
+Rel(audit_ctrl, audit_svc, "Delegates")
+Rel(audit_svc, audit_dom, "Append-only")
+Rel(audit_svc, audit_infra, "Persists")
+
+Rel(identity_infra, metadata_db, "JPA / SQL")
+Rel(policy_infra, metadata_db, "JPA / SQL")
+Rel(sts_infra, metadata_db, "JPA / SQL")
+Rel(fed_infra, metadata_db, "JPA / JDBC")
+Rel(audit_infra, metadata_db, "JPA / SQL")
+Rel(identity_infra, external_idp, "oauth2Login (optional)", "OIDC")
+Rel(common_sec, identity_ctrl, "RBAC")
+Rel(common_sec, policy_ctrl, "RBAC")
+Rel(common_sec, fed_ctrl, "RBAC")
+Rel(common_sec, audit_ctrl, "RBAC")
+
+SHOW_LEGEND()
+
+@enduml
