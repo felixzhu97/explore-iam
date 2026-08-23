@@ -1,0 +1,122 @@
+@startuml C4-Code-Domain-Model
+!include style-zinc.puml
+title Code diagram (C4) — Explore IAM domain model (DDD)
+hide empty members
+
+legend right
+  |= Stereotype |= Meaning |
+  | <<AggregateRoot>> | Consistency boundary |
+  | <<Entity>> | Identity + lifecycle |
+  | <<ValueObject>> | Immutable; equality by value |
+  | <<DomainService>> | Stateless domain logic |
+endlegend
+
+package "com.iam.common.domain.base" as pkg_kernel {
+  abstract class AbstractImmutable
+  abstract class AbstractEntity
+  abstract class AbstractEmbeddable
+  abstract class AbstractNamedEntity
+  abstract class AbstractAuditEvent
+  class DomainStrings
+}
+
+AbstractEntity --|> AbstractImmutable
+AbstractNamedEntity --|> AbstractEntity
+AbstractAuditEvent --|> AbstractImmutable
+
+package "com.iam.common.domain" as pkg_common {
+  class Arn <<ValueObject>>
+  class Action <<ValueObject>>
+  class Resource <<ValueObject>>
+  class PrincipalId <<ValueObject>>
+  class ReasonCode <<ValueObject>>
+  enum Effect <<ValueObject>> {
+    ALLOW
+    DENY
+  }
+}
+
+Arn --|> AbstractEmbeddable
+Action --|> AbstractEmbeddable
+Resource --|> AbstractEmbeddable
+PrincipalId --|> AbstractEmbeddable
+ReasonCode --|> AbstractEmbeddable
+
+package "com.iam.identity.domain" as pkg_identity {
+  class IamUser <<AggregateRoot>>
+  class Group <<AggregateRoot>>
+  class Role <<AggregateRoot>>
+  class TrustPolicyDocument <<ValueObject>>
+}
+
+IamUser --|> AbstractEntity
+Group --|> AbstractNamedEntity
+Role --|> AbstractNamedEntity
+TrustPolicyDocument --|> AbstractEmbeddable
+Role --> Arn
+Role --> TrustPolicyDocument
+
+package "com.iam.policy.domain" as pkg_policy {
+  class PolicyDocument <<AggregateRoot>>
+  class PolicyStatement <<Entity>>
+  class PolicyAttachment <<AggregateRoot>>
+  class EvaluationContext <<ValueObject>>
+  class AuthorizationDecision <<ValueObject>>
+  class PolicyEngine <<DomainService>>
+}
+
+PolicyDocument --|> AbstractNamedEntity
+PolicyAttachment --|> AbstractImmutable
+PolicyDocument "1" *-- "1..*" PolicyStatement : contains
+PolicyDocument "1" o-- "0..*" PolicyAttachment : attachments
+PolicyAttachment --> Arn
+EvaluationContext --> PrincipalId
+EvaluationContext --> Action
+EvaluationContext --> Resource
+AuthorizationDecision --> Effect
+AuthorizationDecision --> ReasonCode
+PolicyEngine ..> PolicyDocument : reads
+PolicyEngine ..> AuthorizationDecision : returns
+
+package "com.iam.sts.domain" as pkg_sts {
+  class AssumedRoleSession <<AggregateRoot>>
+}
+
+AssumedRoleSession --|> AbstractImmutable
+AssumedRoleSession --> Arn
+
+package "com.iam.federation.domain" as pkg_federation {
+  class OidcClient <<AggregateRoot>>
+  class FederatedIdentityLink <<AggregateRoot>>
+  class ClientId <<ValueObject>>
+  class RedirectUri <<ValueObject>>
+}
+
+FederatedIdentityLink --|> AbstractImmutable
+ClientId --|> AbstractEmbeddable
+RedirectUri --|> AbstractEmbeddable
+OidcClient --> ClientId
+OidcClient --> RedirectUri
+FederatedIdentityLink ..> IamUser : links
+
+package "com.iam.audit.domain" as pkg_audit {
+  class ManagementEvent <<AggregateRoot>>
+  class AuthorizationDecisionLog <<AggregateRoot>>
+  enum AuditOutcome <<ValueObject>> {
+    SUCCESS
+    FAILURE
+  }
+}
+
+ManagementEvent --|> AbstractAuditEvent
+AuthorizationDecisionLog --|> AbstractAuditEvent
+ManagementEvent --> AuditOutcome
+AuthorizationDecisionLog --> Effect
+AuthorizationDecisionLog --> ReasonCode
+
+note bottom of pkg_kernel
+  Layering (per module): controller → service → domain ← infra
+  Preferred Terms: docs/Glossary.md
+end note
+
+@enduml
