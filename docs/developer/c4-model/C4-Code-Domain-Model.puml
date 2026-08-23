@@ -30,7 +30,7 @@ AbstractEntity --|> AbstractImmutable
 AbstractNamedEntity --|> AbstractEntity
 AbstractAuditEvent --|> AbstractImmutable
 
-package "com.iam.common.domain" as pkg_common {
+package "com.iam.common.domain.vo" as pkg_common {
   class Arn <<ValueObject>> {
     user()
     role()
@@ -67,17 +67,29 @@ package "com.iam.identity.domain" as pkg_identity {
     enable()
     changeEmail()
     assignRole()
+    hasRole()
+    assignedRoleIds()
+    encodedPasswordHash()
+    isLoginEnabled()
   }
   class Group <<AggregateRoot>> {
     create()
     arn()
     addMember()
     removeMember()
+    hasMember()
+    memberUserIds()
   }
-  class GroupMember <<Entity>>
-  class UserRoleAssignment <<Entity>>
+  class GroupMember <<Entity>> {
+    userId()
+  }
+  class UserRoleAssignment <<Entity>> {
+    roleId()
+  }
   class Role <<AggregateRoot>> {
     create()
+    arn()
+    trustPolicy()
     authority()
   }
   class TrustPolicyDocument <<ValueObject>> {
@@ -97,18 +109,27 @@ Role --> TrustPolicyDocument
 package "com.iam.policy.domain" as pkg_policy {
   class PolicyDocument <<AggregateRoot>> {
     create()
+    statements()
   }
-  class PolicyStatement <<Entity>> {
+  class PolicyStatement <<ValueObject>> {
     of()
+    effect()
+    actions()
+    resources()
     matches()
   }
   class PolicyAttachment <<AggregateRoot>> {
     attach()
+    policyId()
+    principalArn()
   }
   class EvaluationContext <<ValueObject>>
   class AuthorizationDecision <<ValueObject>> {
     isAllowed()
   }
+}
+
+package "com.iam.policy.domain.service" as pkg_policy_svc {
   class PolicyEngine <<DomainService>> {
     evaluate()
   }
@@ -116,8 +137,8 @@ package "com.iam.policy.domain" as pkg_policy {
 
 PolicyDocument --|> AbstractNamedEntity
 PolicyAttachment --|> AbstractImmutable
-PolicyDocument "1" *-- "1..*" PolicyStatement : contains
-PolicyDocument "1" o-- "0..*" PolicyAttachment : attachments
+PolicyDocument "1" *-- "1..*" PolicyStatement : document_json
+PolicyAttachment --> PolicyDocument : references policyId
 PolicyAttachment --> Arn
 EvaluationContext --> PrincipalId
 EvaluationContext --> Action
@@ -131,6 +152,10 @@ package "com.iam.sts.domain" as pkg_sts {
   class AssumedRoleSession <<AggregateRoot>> {
     create()
     isExpired()
+    roleArn()
+    sessionName()
+    callerPrincipal()
+    expiresAt()
   }
 }
 
@@ -142,9 +167,23 @@ package "com.iam.federation.domain" as pkg_federation {
     register()
     seed()
     isPublicClient()
+    id()
+    clientId()
+    clientIdIssuedAt()
+    clientName()
+    clientUri()
+    redirectUris()
+    postLogoutRedirectUris()
+    scopes()
+    responseTypes()
+    clientAuthenticationMethods()
+    authorizationGrantTypes()
+    requiresAuthorizationConsent()
+    storedSecretHash()
   }
   class FederatedIdentityLink <<AggregateRoot>> {
     create()
+    linkedUserId()
   }
   class ClientId <<ValueObject>>
   class RedirectUri <<ValueObject>>
