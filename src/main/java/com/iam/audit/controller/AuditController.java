@@ -59,10 +59,10 @@ public class AuditController {
     static ManagementEventResponse from(ManagementEvent event) {
       return new ManagementEventResponse(
           event.getId(),
-          event.getActor(),
+          event.getActor().getValue(),
           event.getAction(),
-          event.getTargetType(),
-          event.getTargetId(),
+          event.getTarget().getType(),
+          event.getTarget().getId(),
           event.getOutcome().name(),
           event.getOccurredAt().toString());
     }
@@ -80,9 +80,9 @@ public class AuditController {
     static AuthorizationDecisionResponse from(AuthorizationDecisionLog log) {
       return new AuthorizationDecisionResponse(
           log.getId(),
-          log.getPrincipalId(),
-          log.getAction(),
-          log.getResource(),
+          log.getPrincipalId().value(),
+          log.getAction().value(),
+          log.getResource().value(),
           log.getEffect().name(),
           log.getReasonCode().value(),
           log.getOccurredAt().toString());

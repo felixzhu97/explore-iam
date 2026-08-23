@@ -1,5 +1,6 @@
 package com.iam.policy.service;
 
+import com.iam.audit.domain.model.AuthorizationDecisionLog;
 import com.iam.audit.service.AuditService;
 import com.iam.common.domain.vo.Action;
 import com.iam.common.domain.vo.Arn;
@@ -53,12 +54,13 @@ public class EvaluatePolicyService {
     AuthorizationDecision decision =
         policyEngine.evaluate(
             context, policyRepository.findAttachedToPrincipal(principalArn));
-    auditService.recordAuthorizationDecision(
-        command.principalId(),
-        command.action(),
-        command.resource(),
-        decision.effect(),
-        decision.reasonCode());
+    auditService.save(
+        AuthorizationDecisionLog.fromEvaluation(
+            context.principalId(),
+            context.action(),
+            context.resource(),
+            decision.effect(),
+            decision.reasonCode()));
     return decision;
   }
 

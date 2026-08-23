@@ -2,8 +2,11 @@ package com.iam.audit.domain.model;
 
 import com.iam.audit.domain.converter.ReasonCodeConverter;
 import com.iam.common.domain.base.AbstractAuditEvent;
+import com.iam.common.domain.vo.Action;
 import com.iam.common.domain.vo.Effect;
+import com.iam.common.domain.vo.PrincipalId;
 import com.iam.common.domain.vo.ReasonCode;
+import com.iam.common.domain.vo.Resource;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
@@ -11,12 +14,13 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/** Immutable record of a policy authorization decision. */
+/** Immutable aggregate recording a policy authorization decision. */
 @Entity
 @Table(name = "iam_authorization_decision_logs")
 @Getter
@@ -49,40 +53,95 @@ public class AuthorizationDecisionLog extends AbstractAuditEvent {
       ReasonCode reasonCode,
       Instant occurredAt) {
     super(id, occurredAt);
-    this.principalId = principalId;
-    this.action = action;
-    this.resource = resource;
-    this.effect = effect;
-    this.reasonCode = reasonCode;
+    this.principalId = Objects.requireNonNull(principalId, "principalId");
+    this.action = Objects.requireNonNull(action, "action");
+    this.resource = Objects.requireNonNull(resource, "resource");
+    this.effect = Objects.requireNonNull(effect, "effect");
+    this.reasonCode = Objects.requireNonNull(reasonCode, "reasonCode");
   }
 
-  /** Records a new authorization decision. */
-  public static AuthorizationDecisionLog record(
-      String principalId,
-      String action,
-      String resource,
+  /** Captures an authorization decision for persistence. */
+  public static AuthorizationDecisionLog capture(
+      PrincipalId principalId,
+      Action action,
+      Resource resource,
       Effect effect,
       ReasonCode reasonCode) {
     return new AuthorizationDecisionLog(
         UUID.randomUUID().toString(),
-        principalId,
-        action,
-        resource,
+        principalId.value(),
+        action.value(),
+        resource.value(),
         effect,
         reasonCode,
         Instant.now());
   }
 
+  /**
+   * Captures a policy evaluation outcome for persistence.
+   *
+   * @param principalId evaluated principal
+   * @param action requested action
+   * @param resource requested resource
+   * @param effect decision effect
+   * @param reasonCode machine-readable reason
+   * @return new aggregate
+   */
+  public static AuthorizationDecisionLog fromEvaluation(
+      PrincipalId principalId,
+      Action action,
+      Resource resource,
+      Effect effect,
+      ReasonCode reasonCode) {
+    return capture(principalId, action, resource, effect, reasonCode);
+  }
+
   /** Rebuilds from persistence. */
   public static AuthorizationDecisionLog reconstitute(
       String id,
-      String principalId,
-      String action,
-      String resource,
+      PrincipalId principalId,
+      Action action,
+      Resource resource,
       Effect effect,
       ReasonCode reasonCode,
       Instant occurredAt) {
     return new AuthorizationDecisionLog(
-        id, principalId, action, resource, effect, reasonCode, occurredAt);
+        id,
+        principalId.value(),
+        action.value(),
+        resource.value(),
+        effect,
+        reasonCode,
+        occurredAt);
+  }
+
+  public PrincipalId getPrincipalId() {
+    return new PrincipalId(principalId);
+  }
+
+  public Action getAction() {
+    return new Action(action);
+  }
+
+  public Resource getResource() {
+    return new Resource(resource);
+  }
+
+  public boolean isAllowed() {
+    return effect == Effect.ALLOW;
+  }
+
+  public boolean isDenied() {
+    return effect == Effect.DENY;
+  }
+
+  /** Returns true when an explicit deny statement matched. */
+  public boolean wasExplicitDeny() {
+    return ReasonCode.EXPLICIT_DENY.equals(reasonCode);
+  }
+
+  /** Returns true when no allow matched (implicit deny). */
+  public boolean wasImplicitDeny() {
+    return ReasonCode.IMPLICIT_DENY.equals(reasonCode);
   }
 }

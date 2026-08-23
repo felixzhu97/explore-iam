@@ -1,6 +1,8 @@
 package com.iam.audit.infra;
 
 import com.iam.audit.domain.model.AuditOutcome;
+import com.iam.audit.domain.model.ManagementEvent;
+import com.iam.audit.domain.vo.AuditActor;
 import com.iam.audit.service.AuditService;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.authentication.event.AbstractAuthenticationFailureEvent;
@@ -25,19 +27,17 @@ public class AuthenticationAuditListener {
   /** Records successful login events. */
   @EventListener
   public void onSuccess(AuthenticationSuccessEvent event) {
-    auditService.recordManagement(
-        event.getAuthentication().getName(),
-        "auth:login",
-        "User",
-        event.getAuthentication().getName(),
-        AuditOutcome.SUCCESS);
+    auditService.save(
+        ManagementEvent.logAuthentication(
+            new AuditActor(event.getAuthentication().getName()), AuditOutcome.SUCCESS));
   }
 
   /** Records failed login events. */
   @EventListener
   public void onFailure(AbstractAuthenticationFailureEvent event) {
-    String actor =
+    String actorName =
         event.getAuthentication() == null ? "unknown" : event.getAuthentication().getName();
-    auditService.recordManagement(actor, "auth:login", "User", actor, AuditOutcome.FAILURE);
+    auditService.save(
+        ManagementEvent.logAuthentication(new AuditActor(actorName), AuditOutcome.FAILURE));
   }
 }
