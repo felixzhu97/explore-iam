@@ -1,7 +1,7 @@
 package com.iam.federation.infra.security;
 
 import com.iam.common.security.SecurityRoles;
-import com.iam.federation.service.FederatedIdentityProvisioningService;
+import com.iam.federation.service.FederationLinkService;
 import com.iam.identity.domain.model.IamUser;
 import com.iam.identity.domain.repository.RoleRepository;
 import java.util.ArrayList;
@@ -17,23 +17,23 @@ import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
-/** Resolves external IdP logins to local IAM users via federated identity links. */
+/** Maps external OAuth2 logins to local IAM users via federated identity links. */
 @Service
 @ConditionalOnBean(ClientRegistrationRepository.class)
-public class FederatedIdentityUserService extends DefaultOAuth2UserService {
+public class FederatedLoginService extends DefaultOAuth2UserService {
 
-  private final FederatedIdentityProvisioningService provisioningService;
+  private final FederationLinkService federationLinkService;
   private final RoleRepository roleRepository;
 
   /**
-   * Creates the federated user service.
+   * Creates the federated login service.
    *
-   * @param provisioningService federated identity provisioning service
+   * @param federationLinkService federation link service
    * @param roleRepository role repository
    */
-  public FederatedIdentityUserService(
-      FederatedIdentityProvisioningService provisioningService, RoleRepository roleRepository) {
-    this.provisioningService = provisioningService;
+  public FederatedLoginService(
+      FederationLinkService federationLinkService, RoleRepository roleRepository) {
+    this.federationLinkService = federationLinkService;
     this.roleRepository = roleRepository;
   }
 
@@ -44,7 +44,7 @@ public class FederatedIdentityUserService extends DefaultOAuth2UserService {
     String subject = oauthUser.getName();
     String email =
         Optional.ofNullable(oauthUser.getAttribute("email")).map(Object::toString).orElse(null);
-    IamUser iamUser = provisioningService.resolveOrProvision(provider, subject, email);
+    IamUser iamUser = federationLinkService.resolveOrProvision(provider, subject, email);
     List<SimpleGrantedAuthority> authorities = new ArrayList<>();
     authorities.add(new SimpleGrantedAuthority(SecurityRoles.USER));
     roleRepository

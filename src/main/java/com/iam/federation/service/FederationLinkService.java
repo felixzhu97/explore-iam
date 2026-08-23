@@ -8,20 +8,21 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Provisions or resolves local IAM users for federated IdP logins. */
+/** Resolves or creates IAM users and federated identity links for external IdP logins. */
 @Service
-public class FederatedIdentityProvisioningService {
+@Transactional(readOnly = true)
+public class FederationLinkService {
 
   private final FederatedIdentityLinkRepository linkRepository;
   private final IamUserRepository iamUserRepository;
 
   /**
-   * Creates the provisioning service.
+   * Creates the federation link service.
    *
    * @param linkRepository federated identity link repository
    * @param iamUserRepository IAM user repository
    */
-  public FederatedIdentityProvisioningService(
+  public FederationLinkService(
       FederatedIdentityLinkRepository linkRepository, IamUserRepository iamUserRepository) {
     this.linkRepository = linkRepository;
     this.iamUserRepository = iamUserRepository;
