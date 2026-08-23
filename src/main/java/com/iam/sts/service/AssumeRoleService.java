@@ -29,7 +29,7 @@ public class AssumeRoleService {
   private final Duration sessionTtl;
 
   /**
-   * Creates the assume-role use case.
+   * Creates the assume-role service.
    *
    * @param roleRepository role repository
    * @param sessionRepository assumed-role session repository
@@ -57,7 +57,7 @@ public class AssumeRoleService {
    * @return access token and session metadata
    */
   @Transactional
-  public AssumeRoleResult execute(AssumeRoleCommand command) {
+  public AssumeRoleResult assumeRole(AssumeRoleCommand command) {
     Objects.requireNonNull(command, "command");
     Arn roleArn = new Arn(command.roleArn());
     Role role =
