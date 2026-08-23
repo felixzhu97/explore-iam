@@ -71,7 +71,7 @@ public class AssumeRoleService {
             AssumedRoleSession.create(roleArn, command.sessionName(), caller, expiresAt));
     String accessToken = encodeToken(session, role);
     managementAuditRecorder.recordSuccess("sts:AssumeRole", "Role", role.getId());
-    return new AssumeRoleResult(accessToken, session.getExpiresAt(), session.getId());
+    return new AssumeRoleResult(accessToken, session.expiresAt(), session.getId());
   }
 
   private String encodeToken(AssumedRoleSession session, Role role) {
@@ -79,11 +79,11 @@ public class AssumeRoleService {
     JwtClaimsSet claims =
         JwtClaimsSet.builder()
             .issuer("explore-iam-sts")
-            .subject(session.getCallerPrincipal())
+            .subject(session.callerPrincipal())
             .issuedAt(now)
-            .expiresAt(session.getExpiresAt())
-            .claim("role_arn", session.getRoleArn().value())
-            .claim("session_name", session.getSessionName())
+            .expiresAt(session.expiresAt())
+            .claim("role_arn", session.roleArn().value())
+            .claim("session_name", session.sessionName())
             .claim("session_id", session.getId())
             .claim("role_name", role.getName())
             .build();

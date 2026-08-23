@@ -21,14 +21,14 @@ public class PolicyEngine {
   public AuthorizationDecision evaluate(EvaluationContext context, List<PolicyDocument> policies) {
     boolean allowMatched = false;
     for (PolicyDocument policy : policies) {
-      for (PolicyStatement statement : policy.getStatements()) {
+      for (PolicyStatement statement : policy.statements()) {
         if (!statement.matches(context.action(), context.resource())) {
           continue;
         }
-        if (statement.getEffect() == Effect.DENY) {
+        if (statement.effect() == Effect.DENY) {
           return new AuthorizationDecision(Effect.DENY, ReasonCode.EXPLICIT_DENY);
         }
-        if (statement.getEffect() == Effect.ALLOW) {
+        if (statement.effect() == Effect.ALLOW) {
           allowMatched = true;
         }
       }

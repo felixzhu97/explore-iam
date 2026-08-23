@@ -16,6 +16,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public class FederatedIdentityLink extends AbstractImmutable {
 
+  @Getter(AccessLevel.NONE)
   @Column(name = "iam_user_id", nullable = false, length = 36)
   private String iamUserId;
 
@@ -44,6 +45,11 @@ public class FederatedIdentityLink extends AbstractImmutable {
   public static FederatedIdentityLink reconstitute(
       String id, String iamUserId, String provider, String externalSubject, Instant createdAt) {
     return new FederatedIdentityLink(id, iamUserId, provider, externalSubject, createdAt);
+  }
+
+  /** Returns the linked local IAM user id. */
+  public String linkedUserId() {
+    return iamUserId;
   }
 
   private static String requireProvider(String provider) {

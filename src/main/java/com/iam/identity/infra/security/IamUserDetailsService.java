@@ -45,8 +45,8 @@ public class IamUserDetailsService implements UserDetailsService {
         .forEach(role -> authorities.add(new SimpleGrantedAuthority(role.authority())));
     return User.builder()
         .username(user.getUsername())
-        .password(user.getPasswordHash())
-        .disabled(!user.isEnabled())
+        .password(user.encodedPasswordHash())
+        .disabled(!user.isLoginEnabled())
         .authorities(authorities)
         .build();
   }

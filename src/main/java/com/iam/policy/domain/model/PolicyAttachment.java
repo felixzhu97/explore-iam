@@ -18,9 +18,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public class PolicyAttachment extends AbstractImmutable {
 
+  @Getter(AccessLevel.NONE)
   @Column(name = "policy_id", nullable = false, length = 36)
   private String policyId;
 
+  @Getter(AccessLevel.NONE)
   @Column(name = "principal_arn", nullable = false, length = 512)
   @Convert(converter = ArnAttributeConverter.class)
   private Arn principalArn;
@@ -55,5 +57,15 @@ public class PolicyAttachment extends AbstractImmutable {
   public static PolicyAttachment reconstitute(
       String id, String policyId, Arn principalArn, Instant createdAt) {
     return new PolicyAttachment(id, policyId, principalArn, createdAt);
+  }
+
+  /** Returns the attached policy document id. */
+  public String policyId() {
+    return policyId;
+  }
+
+  /** Returns the principal ARN this policy is attached to. */
+  public Arn principalArn() {
+    return principalArn;
   }
 }

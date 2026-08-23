@@ -74,7 +74,7 @@ public class RoleController {
   /** IAM role summary. */
   public record RoleResponse(String id, String name, String arn) {
     static RoleResponse from(Role role) {
-      return new RoleResponse(role.getId(), role.getName(), role.getArn().value());
+      return new RoleResponse(role.getId(), role.getName(), role.arn().value());
     }
   }
 }

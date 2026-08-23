@@ -7,13 +7,11 @@ import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import lombok.Getter;
 
 /**
  * OIDC Relying Party registered with Explore IAM (maps to Spring Authorization Server {@code
  * RegisteredClient}).
  */
-@Getter
 public class OidcClient {
 
   private final String id;
@@ -251,5 +249,74 @@ public class OidcClient {
   public boolean isPublicClient() {
     return this.clientAuthenticationMethods.size() == 1
         && this.clientAuthenticationMethods.contains("none");
+  }
+
+  /** Returns the internal persistence id. */
+  public String id() {
+    return id;
+  }
+
+  /** Returns the public client_id. */
+  public ClientId clientId() {
+    return clientId;
+  }
+
+  /** Returns when the client_id was issued. */
+  public Instant clientIdIssuedAt() {
+    return clientIdIssuedAt;
+  }
+
+  /** Returns the display name shown in consent and admin UIs. */
+  public String clientName() {
+    return clientName;
+  }
+
+  /** Returns the optional client homepage URI. */
+  public String clientUri() {
+    return clientUri;
+  }
+
+  /** Returns allowed redirect URIs. */
+  public Set<RedirectUri> redirectUris() {
+    return redirectUris;
+  }
+
+  /** Returns allowed post-logout redirect URIs. */
+  public Set<RedirectUri> postLogoutRedirectUris() {
+    return postLogoutRedirectUris;
+  }
+
+  /** Returns registered OAuth scopes. */
+  public Set<String> scopes() {
+    return scopes;
+  }
+
+  /** Returns registered OAuth response types. */
+  public Set<String> responseTypes() {
+    return responseTypes;
+  }
+
+  /** Returns token-endpoint client authentication methods. */
+  public Set<String> clientAuthenticationMethods() {
+    return clientAuthenticationMethods;
+  }
+
+  /** Returns allowed authorization grant types. */
+  public Set<String> authorizationGrantTypes() {
+    return authorizationGrantTypes;
+  }
+
+  /** Returns true when authorization consent is required. */
+  public boolean requiresAuthorizationConsent() {
+    return requireAuthorizationConsent;
+  }
+
+  /**
+   * Returns the stored client secret hash for persistence adapters only.
+   *
+   * @return encoded secret hash, or null for public clients
+   */
+  public String storedSecretHash() {
+    return clientSecretHash;
   }
 }

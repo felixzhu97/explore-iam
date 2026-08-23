@@ -74,8 +74,8 @@ class OidcClientServiceTest {
 
     ArgumentCaptor<OidcClient> captor = ArgumentCaptor.forClass(OidcClient.class);
     verify(oidcClientRepository).save(captor.capture());
-    assertThat(captor.getValue().getClientSecretHash()).isEqualTo("{bcrypt}hash");
-    assertThat(captor.getValue().getRedirectUris())
+    assertThat(captor.getValue().storedSecretHash()).isEqualTo("{bcrypt}hash");
+    assertThat(captor.getValue().redirectUris())
         .containsExactly(new RedirectUri("http://localhost:3000/callback"));
   }
 
@@ -100,7 +100,7 @@ class OidcClientServiceTest {
     verify(passwordEncoder, never()).encode(any());
     ArgumentCaptor<OidcClient> captor = ArgumentCaptor.forClass(OidcClient.class);
     verify(oidcClientRepository).save(captor.capture());
-    assertThat(captor.getValue().getClientSecretHash()).isNull();
+    assertThat(captor.getValue().storedSecretHash()).isNull();
     assertThat(captor.getValue().isPublicClient()).isTrue();
   }
 

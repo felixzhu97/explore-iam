@@ -31,9 +31,9 @@ public class PolicyStatementsJsonConverter
       for (PolicyStatement statement : attribute) {
         payload.add(
             Map.of(
-                "effect", statement.getEffect().name(),
-                "actions", statement.getActions().stream().map(Action::value).toList(),
-                "resources", statement.getResources().stream().map(Resource::value).toList()));
+                "effect", statement.effect().name(),
+                "actions", statement.actions().stream().map(Action::value).toList(),
+                "resources", statement.resources().stream().map(Resource::value).toList()));
       }
       return OBJECT_MAPPER.writeValueAsString(payload);
     } catch (JacksonException ex) {

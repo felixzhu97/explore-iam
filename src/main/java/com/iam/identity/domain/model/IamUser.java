@@ -29,12 +29,15 @@ public class IamUser extends AbstractEntity {
   @Column(length = 320)
   private String email;
 
+  @Getter(AccessLevel.NONE)
   @Column(name = "password_hash", nullable = false, length = 255)
   private String passwordHash;
 
+  @Getter(AccessLevel.NONE)
   @Column(nullable = false)
   private boolean enabled;
 
+  @Getter(AccessLevel.NONE)
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private final List<UserRoleAssignment> roleAssignments = new ArrayList<>();
 
@@ -157,6 +160,20 @@ public class IamUser extends AbstractEntity {
   public List<String> assignedRoleIds() {
     return Collections.unmodifiableList(
         roleAssignments.stream().map(UserRoleAssignment::roleId).toList());
+  }
+
+  /**
+   * Returns the encoded credential for Spring Security authentication only.
+   *
+   * @return password hash suitable for {@code UserDetails#getPassword()}
+   */
+  public String encodedPasswordHash() {
+    return passwordHash;
+  }
+
+  /** Returns true when form login is permitted for this user. */
+  public boolean isLoginEnabled() {
+    return enabled;
   }
 
   private static String requirePasswordHash(String passwordHash) {
