@@ -1,5 +1,6 @@
 package com.iam.policy.service;
 
+import com.iam.audit.service.ManagementAuditRecorder;
 import com.iam.common.domain.vo.Action;
 import com.iam.common.domain.vo.Arn;
 import com.iam.common.domain.vo.Effect;
@@ -19,14 +20,18 @@ import org.springframework.transaction.annotation.Transactional;
 public class CreatePolicyService {
 
   private final PolicyRepository policyRepository;
+  private final ManagementAuditRecorder managementAuditRecorder;
 
   /**
    * Creates the create-policy use case.
    *
    * @param policyRepository policy repository
+   * @param managementAuditRecorder management audit recorder
    */
-  public CreatePolicyService(PolicyRepository policyRepository) {
+  public CreatePolicyService(
+      PolicyRepository policyRepository, ManagementAuditRecorder managementAuditRecorder) {
     this.policyRepository = policyRepository;
+    this.managementAuditRecorder = managementAuditRecorder;
   }
 
   /**
@@ -47,7 +52,10 @@ public class CreatePolicyService {
                         s.actions().stream().map(Action::new).collect(Collectors.toSet()),
                         s.resources().stream().map(Resource::new).collect(Collectors.toSet())))
             .toList();
-    return policyRepository.save(PolicyDocument.create(command.name(), statements));
+    PolicyDocument policy =
+        policyRepository.save(PolicyDocument.create(command.name(), statements));
+    managementAuditRecorder.recordSuccess("policy:CreatePolicy", "PolicyDocument", policy.getId());
+    return policy;
   }
 
   /**
@@ -62,7 +70,11 @@ public class CreatePolicyService {
     policyRepository
         .findById(policyId)
         .orElseThrow(() -> new IllegalArgumentException("Policy not found: " + policyId));
-    return policyRepository.saveAttachment(PolicyAttachment.attach(policyId, principalArn));
+    PolicyAttachment attachment =
+        policyRepository.saveAttachment(PolicyAttachment.attach(policyId, principalArn));
+    managementAuditRecorder.recordSuccess(
+        "policy:AttachPolicy", "PolicyAttachment", attachment.getId());
+    return attachment;
   }
 
   /** Input for creating a policy document. */

@@ -1,10 +1,6 @@
 package com.iam.sts.service;
 
-import com.iam.audit.domain.model.AuditOutcome;
-import com.iam.audit.domain.model.ManagementEvent;
-import com.iam.audit.domain.vo.AuditActor;
-import com.iam.audit.domain.vo.AuditTarget;
-import com.iam.audit.service.AuditService;
+import com.iam.audit.service.ManagementAuditRecorder;
 import com.iam.common.domain.vo.Arn;
 import com.iam.identity.domain.model.Role;
 import com.iam.identity.domain.repository.RoleRepository;
@@ -29,7 +25,7 @@ public class AssumeRoleService {
   private final RoleRepository roleRepository;
   private final AssumedRoleSessionRepository sessionRepository;
   private final JwtEncoder jwtEncoder;
-  private final AuditService auditService;
+  private final ManagementAuditRecorder managementAuditRecorder;
   private final Duration sessionTtl;
 
   /**
@@ -38,19 +34,19 @@ public class AssumeRoleService {
    * @param roleRepository role repository
    * @param sessionRepository assumed-role session repository
    * @param jwtEncoder JWT encoder
-   * @param auditService audit application service
+   * @param managementAuditRecorder management audit recorder
    * @param sessionTtl session time-to-live
    */
   public AssumeRoleService(
       RoleRepository roleRepository,
       AssumedRoleSessionRepository sessionRepository,
       JwtEncoder jwtEncoder,
-      AuditService auditService,
+      ManagementAuditRecorder managementAuditRecorder,
       @Value("${app.security.token.assume-role-ttl:PT1H}") Duration sessionTtl) {
     this.roleRepository = roleRepository;
     this.sessionRepository = sessionRepository;
     this.jwtEncoder = jwtEncoder;
-    this.auditService = auditService;
+    this.managementAuditRecorder = managementAuditRecorder;
     this.sessionTtl = sessionTtl;
   }
 
@@ -74,12 +70,7 @@ public class AssumeRoleService {
         sessionRepository.save(
             AssumedRoleSession.create(roleArn, command.sessionName(), caller, expiresAt));
     String accessToken = encodeToken(session, role);
-    auditService.save(
-        ManagementEvent.logManagementAction(
-            new AuditActor(caller),
-            "sts:AssumeRole",
-            new AuditTarget("Role", role.getId()),
-            AuditOutcome.SUCCESS));
+    managementAuditRecorder.recordSuccess("sts:AssumeRole", "Role", role.getId());
     return new AssumeRoleResult(accessToken, session.getExpiresAt(), session.getId());
   }
 
