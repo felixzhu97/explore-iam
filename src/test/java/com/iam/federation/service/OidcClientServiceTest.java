@@ -23,8 +23,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("RegisterOidcClientService")
-class RegisterOidcClientServiceTest {
+@DisplayName("OidcClientService")
+class OidcClientServiceTest {
 
   @Mock private OidcClientRepository oidcClientRepository;
 
@@ -32,12 +32,12 @@ class RegisterOidcClientServiceTest {
 
   @Mock private ManagementAuditRecorder managementAuditRecorder;
 
-  private RegisterOidcClientService useCase;
+  private OidcClientService oidcClientService;
 
   @BeforeEach
   void setUp() {
-    useCase =
-        new RegisterOidcClientService(
+    oidcClientService =
+        new OidcClientService(
             oidcClientRepository,
             passwordEncoder,
             new OidcSeedClientProperties(),
@@ -51,8 +51,8 @@ class RegisterOidcClientServiceTest {
     when(oidcClientRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
     var result =
-        useCase.execute(
-            new RegisterOidcClientService.RegisterOidcClientCommand(
+        oidcClientService.register(
+            new OidcClientService.RegisterOidcClientCommand(
                 "Demo App",
                 List.of("http://localhost:3000/callback"),
                 List.of("http://localhost:3000/"),
@@ -85,8 +85,8 @@ class RegisterOidcClientServiceTest {
     when(oidcClientRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
     var result =
-        useCase.execute(
-            new RegisterOidcClientService.RegisterOidcClientCommand(
+        oidcClientService.register(
+            new OidcClientService.RegisterOidcClientCommand(
                 "SPA",
                 List.of("http://localhost:4200/callback"),
                 null,
@@ -109,8 +109,8 @@ class RegisterOidcClientServiceTest {
   void shouldRejectInvalidGrantType() {
     assertThatThrownBy(
             () ->
-                useCase.execute(
-                    new RegisterOidcClientService.RegisterOidcClientCommand(
+                oidcClientService.register(
+                    new OidcClientService.RegisterOidcClientCommand(
                         "Bad",
                         List.of("http://localhost:3000/callback"),
                         null,
@@ -128,8 +128,8 @@ class RegisterOidcClientServiceTest {
   void shouldRejectInvalidRedirectUri() {
     assertThatThrownBy(
             () ->
-                useCase.execute(
-                    new RegisterOidcClientService.RegisterOidcClientCommand(
+                oidcClientService.register(
+                    new OidcClientService.RegisterOidcClientCommand(
                         "Bad", List.of("not-a-uri"), null, null, null, null, null, null)))
         .isInstanceOf(IllegalArgumentException.class);
   }

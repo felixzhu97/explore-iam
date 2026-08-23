@@ -20,8 +20,8 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@DisplayName("Client registration API")
-class ClientControllerTest {
+@DisplayName("OIDC client registration API")
+class OidcClientControllerTest {
 
   @LocalServerPort private int port;
 
