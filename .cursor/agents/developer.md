@@ -16,18 +16,17 @@ is_background: true
 
 ### Java (后端)
 
-**包结构**（本仓库实际分层；全局 architecture rule 待后续对齐）：
+**包结构**（与全局 [architecture rule](~/.cursor/rules/architecture.mdc) 一致）：
 ```
 com.iam.{module}
+├── controller/          # REST Controller、请求/响应 DTO
+├── service/             # 应用编排（@Service）
 ├── domain/
 │   ├── model/           # 领域模型
 │   ├── vo/              # 值对象
 │   └── repository/      # Repository 接口
-├── application/
-│   └── usecase/         # 用例
-├── infrastructure/
-│   └── persistence/     # Repository 实现
-└── web/                 # Controller、DTO
+├── infra/               # Repository 实现、外部适配、配置
+└── mapper/              # DTO ↔ domain 映射（无业务规则）
 ```
 
 **关键规范**：
@@ -64,9 +63,9 @@ public class ChatSession {
 }
 ```
 
-**示例 - UseCase 接口**：
+**示例 - Service 接口**：
 ```java
-public interface ChatUseCase {
+public interface ChatService {
     String chat(String userMessage);
     Flux<String> chatStream(List<ChatMessage> messages);
     ChatSession createSession(String title);
@@ -132,7 +131,7 @@ export class ChatComponent {
 1. **XP**：先对齐客户价值 / Jira AC；小步切片可合并；见 [extreme-programming](~/.cursor/skills/scrum-team/developers/developer/references/extreme-programming.md)
 2. **BDD**：用 Given-When-Then 澄清行为（对齐 Jira AC）
 3. **TDD**：Red → Green → Refactor；测试名 `should expected result when condition`（空格，勿用下划线；Java 方法用 camelCase）
-4. **DDD**：规则落在 domain；use case 只编排
+4. **DDD**：规则落在 domain；service 只编排
 5. **领域命名**：变量/方法用术语表 Preferred Term，再套 Clean Code 形式
 6. **UI/UX**：对齐 Apple HIG，极简风格（见 apple-minimal-ux）
 7. **分支 / Commit / PR / Jira**：`<type>/<slug>`（Jira key 仅写在 commit/PR）+ Chain PR；沿用 [developer](~/.cursor/skills/scrum-team/developers/developer/SKILL.md) §6 与 [Product Owner](~/.cursor/skills/scrum-team/developers/product-owner/SKILL.md)；References 优先官方文档与 research
