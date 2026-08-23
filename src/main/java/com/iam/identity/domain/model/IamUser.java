@@ -1,19 +1,34 @@
 package com.iam.identity.domain.model;
 
+import com.iam.common.domain.base.AbstractEntity;
+import com.iam.common.domain.base.DomainStrings;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import java.time.Instant;
-import java.util.Objects;
 import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /** Long-lived IAM User identity used for local form login and OIDC subject mapping. */
-public class IamUser {
+@Entity
+@Table(name = "iam_users")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
+public class IamUser extends AbstractEntity {
 
-  private final String id;
-  private final String username;
+  @Column(nullable = false, unique = true, length = 128)
+  private String username;
+
+  @Column(length = 320)
   private String email;
+
+  @Column(name = "password_hash", nullable = false, length = 255)
   private String passwordHash;
+
+  @Column(nullable = false)
   private boolean enabled;
-  private final Instant createdAt;
-  private Instant updatedAt;
 
   private IamUser(
       String id,
@@ -23,13 +38,11 @@ public class IamUser {
       boolean enabled,
       Instant createdAt,
       Instant updatedAt) {
-    this.id = Objects.requireNonNull(id, "id");
-    this.username = Objects.requireNonNull(username, "username");
+    super(id, createdAt, updatedAt);
+    this.username = DomainStrings.requireNonBlank(username, "username");
     this.email = email;
-    this.passwordHash = Objects.requireNonNull(passwordHash, "passwordHash");
+    this.passwordHash = requirePasswordHash(passwordHash);
     this.enabled = enabled;
-    this.createdAt = Objects.requireNonNull(createdAt, "createdAt");
-    this.updatedAt = Objects.requireNonNull(updatedAt, "updatedAt");
   }
 
   /**
@@ -42,7 +55,8 @@ public class IamUser {
    */
   public static IamUser create(String username, String email, String passwordHash) {
     Instant now = Instant.now();
-    return new IamUser(UUID.randomUUID().toString(), username, email, passwordHash, true, now, now);
+    return new IamUser(
+        UUID.randomUUID().toString(), username, email, passwordHash, true, now, now);
   }
 
   /**
@@ -71,13 +85,13 @@ public class IamUser {
   /** Disables the user so form login is rejected. */
   public void disable() {
     this.enabled = false;
-    this.updatedAt = Instant.now();
+    touch();
   }
 
   /** Re-enables the user for form login. */
   public void enable() {
     this.enabled = true;
-    this.updatedAt = Instant.now();
+    touch();
   }
 
   /**
@@ -87,34 +101,10 @@ public class IamUser {
    */
   public void changeEmail(String email) {
     this.email = email;
-    this.updatedAt = Instant.now();
+    touch();
   }
 
-  public String getId() {
-    return id;
-  }
-
-  public String getUsername() {
-    return username;
-  }
-
-  public String getEmail() {
-    return email;
-  }
-
-  public String getPasswordHash() {
-    return passwordHash;
-  }
-
-  public boolean isEnabled() {
-    return enabled;
-  }
-
-  public Instant getCreatedAt() {
-    return createdAt;
-  }
-
-  public Instant getUpdatedAt() {
-    return updatedAt;
+  private static String requirePasswordHash(String passwordHash) {
+    return DomainStrings.requireNonBlank(passwordHash, "passwordHash");
   }
 }
