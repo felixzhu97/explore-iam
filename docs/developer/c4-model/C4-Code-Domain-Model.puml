@@ -8,7 +8,6 @@ legend right
   | <<AggregateRoot>> | Consistency boundary |
   | <<Entity>> | Identity + lifecycle |
   | <<ValueObject>> | Immutable; equality by value |
-  | <<DomainEvent>> | Append-only past-tense domain fact |
   | <<DomainService>> | Stateless domain logic |
 endlegend
 
@@ -17,8 +16,14 @@ package "com.iam.common.domain.base" as pkg_kernel {
   abstract class AbstractEntity
   abstract class AbstractEmbeddable
   abstract class AbstractNamedEntity
-  abstract class AbstractAuditEvent <<DomainEvent>>
-  class DomainStrings
+  abstract class AbstractAuditEvent {
+    getOccurredAt()
+    occurredBefore()
+    occurredAfter()
+  }
+  class DomainStrings {
+    requireNonBlank()
+  }
 }
 
 AbstractEntity --|> AbstractImmutable
@@ -26,14 +31,25 @@ AbstractNamedEntity --|> AbstractEntity
 AbstractAuditEvent --|> AbstractImmutable
 
 package "com.iam.common.domain" as pkg_common {
-  class Arn <<ValueObject>>
-  class Action <<ValueObject>>
-  class Resource <<ValueObject>>
-  class PrincipalId <<ValueObject>>
+  class Arn <<ValueObject>> {
+    user()
+    role()
+  }
+  class Action <<ValueObject>> {
+    matches()
+  }
+  class Resource <<ValueObject>> {
+    matches()
+  }
+  class PrincipalId <<ValueObject>> {
+    generate()
+  }
   class ReasonCode <<ValueObject>>
   enum Effect <<ValueObject>> {
     ALLOW
     DENY
+    --
+    fromString()
   }
 }
 
@@ -44,26 +60,58 @@ PrincipalId --|> AbstractEmbeddable
 ReasonCode --|> AbstractEmbeddable
 
 package "com.iam.identity.domain" as pkg_identity {
-  class IamUser <<AggregateRoot>>
-  class Group <<AggregateRoot>>
-  class Role <<AggregateRoot>>
-  class TrustPolicyDocument <<ValueObject>>
+  class IamUser <<AggregateRoot>> {
+    create()
+    createForFederatedLogin()
+    disable()
+    enable()
+    changeEmail()
+    assignRole()
+  }
+  class Group <<AggregateRoot>> {
+    create()
+    arn()
+    addMember()
+    removeMember()
+  }
+  class GroupMember <<Entity>>
+  class UserRoleAssignment <<Entity>>
+  class Role <<AggregateRoot>> {
+    create()
+    authority()
+  }
+  class TrustPolicyDocument <<ValueObject>> {
+    allowAll()
+  }
 }
 
 IamUser --|> AbstractEntity
 Group --|> AbstractNamedEntity
 Role --|> AbstractNamedEntity
 TrustPolicyDocument --|> AbstractEmbeddable
+Group "1" *-- "0..*" GroupMember : members
+IamUser "1" *-- "0..*" UserRoleAssignment : roles
 Role --> Arn
 Role --> TrustPolicyDocument
 
 package "com.iam.policy.domain" as pkg_policy {
-  class PolicyDocument <<AggregateRoot>>
-  class PolicyStatement <<Entity>>
-  class PolicyAttachment <<AggregateRoot>>
+  class PolicyDocument <<AggregateRoot>> {
+    create()
+  }
+  class PolicyStatement <<Entity>> {
+    of()
+    matches()
+  }
+  class PolicyAttachment <<AggregateRoot>> {
+    attach()
+  }
   class EvaluationContext <<ValueObject>>
-  class AuthorizationDecision <<ValueObject>>
-  class PolicyEngine <<DomainService>>
+  class AuthorizationDecision <<ValueObject>> {
+    isAllowed()
+  }
+  class PolicyEngine <<DomainService>> {
+    evaluate()
+  }
 }
 
 PolicyDocument --|> AbstractNamedEntity
@@ -80,15 +128,24 @@ PolicyEngine ..> PolicyDocument : reads
 PolicyEngine ..> AuthorizationDecision : returns
 
 package "com.iam.sts.domain" as pkg_sts {
-  class AssumedRoleSession <<AggregateRoot>>
+  class AssumedRoleSession <<AggregateRoot>> {
+    create()
+    isExpired()
+  }
 }
 
 AssumedRoleSession --|> AbstractImmutable
 AssumedRoleSession --> Arn
 
 package "com.iam.federation.domain" as pkg_federation {
-  class OidcClient <<AggregateRoot>>
-  class FederatedIdentityLink <<AggregateRoot>>
+  class OidcClient <<AggregateRoot>> {
+    register()
+    seed()
+    isPublicClient()
+  }
+  class FederatedIdentityLink <<AggregateRoot>> {
+    create()
+  }
   class ClientId <<ValueObject>>
   class RedirectUri <<ValueObject>>
 }
@@ -101,19 +158,25 @@ OidcClient --> RedirectUri
 FederatedIdentityLink ..> IamUser : links
 
 package "com.iam.audit.domain" as pkg_audit {
-  class ManagementEvent <<DomainEvent>> {
-    actor
-    action
-    targetType
-    targetId
-    outcome
+  class AuditActor <<ValueObject>>
+  class AuditTarget <<ValueObject>> {
+    matches()
   }
-  class AuthorizationDecisionLog <<DomainEvent>> {
-    principalId
-    action
-    resource
-    effect
-    reasonCode
+  class ManagementEvent <<AggregateRoot>> {
+    logManagementAction()
+    logAuthentication()
+    wasSuccessful()
+    wasFailure()
+    involvesActor()
+    targets()
+  }
+  class AuthorizationDecisionLog <<AggregateRoot>> {
+    capture()
+    fromEvaluation()
+    isAllowed()
+    isDenied()
+    wasExplicitDeny()
+    wasImplicitDeny()
   }
   enum AuditOutcome <<ValueObject>> {
     SUCCESS
@@ -123,16 +186,15 @@ package "com.iam.audit.domain" as pkg_audit {
 
 ManagementEvent --|> AbstractAuditEvent
 AuthorizationDecisionLog --|> AbstractAuditEvent
+ManagementEvent --> AuditActor
+ManagementEvent --> AuditTarget
 ManagementEvent --> AuditOutcome
+AuthorizationDecisionLog --> PrincipalId
+AuthorizationDecisionLog --> Action
+AuthorizationDecisionLog --> Resource
 AuthorizationDecisionLog --> Effect
 AuthorizationDecisionLog --> ReasonCode
-AuthorizationDecisionLog ..> AuthorizationDecision : records
-
-note right of pkg_audit
-  Domain events are immutable and append-only.
-  Framework **Authentication Event** (Spring Security)
-  is not a domain event — see Glossary §4.1.
-end note
+AuthorizationDecisionLog ..> AuthorizationDecision : captures
 
 note bottom of pkg_kernel
   Layering (per module): controller → service → domain ← infra

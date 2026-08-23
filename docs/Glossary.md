@@ -34,7 +34,7 @@ This document defines the project **Ubiquitous Language**. English terms are the
 | STS            | 临时凭证 | `com.iam.sts` | — | `/api/sts` | planned | AssumeRole + temporary JWT |
 | Federation     | 联邦   | `com.iam.federation` | — | OIDC + `/api/clients` | partial | SAS Provider done; external IdP planned |
 | Console        | 控制台 | — | `/` | — | partial | Login + client registration |
-| Audit          | 审计   | `com.iam.audit` | `/audit` | `/api/audit` | partial | Domain events: Management + AuthZ decision logs |
+| Audit          | 审计   | `com.iam.audit` | `/audit` | `/api/audit` | partial | Immutable audit aggregates (management + AuthZ) |
 | Common         | 横切   | `com.iam.common` | — | — | partial | Shared VOs, security, web errors |
 
 **Frontend route map (canonical)**
@@ -168,7 +168,7 @@ Terms mapping Explore IAM security behavior to [Spring Security](https://docs.sp
 | Abstract Immutable | 不可变聚合基类 | Domain/JPA base: `id` + `createdAt` | `com.iam.common.domain.base.AbstractImmutable` | implemented |
 | Abstract Entity | 可变聚合基类 | Extends immutable; adds `updatedAt` + `@Version` | `AbstractEntity` | implemented |
 | Abstract Named Entity | 具名聚合基类 | Mutable aggregate with unique `name` | `AbstractNamedEntity` | implemented |
-| Abstract Audit Event | 审计事件基类 | Immutable domain event; `createdAt` mapped to `occurred_at` | `AbstractAuditEvent` (`<<DomainEvent>>`) | implemented |
+| Abstract Audit Event | 不可变审计聚合基类 | Immutable audit aggregate base; `occurred_at` column | `AbstractAuditEvent` | implemented |
 | Abstract Embeddable | 可嵌入值对象基类 | Embeddable VO base preventing empty composite `null` | `AbstractEmbeddable` | implemented |
 | Domain Strings | 域字符串校验 | Shared non-blank string validation | `DomainStrings.requireNonBlank` | implemented |
 | Attribute Converter | 属性转换器 | JPA mapping between domain type and column | e.g. `ArnAttributeConverter`, `PolicyStatementsJsonConverter` | implemented |
@@ -203,14 +203,18 @@ Terms mapping Explore IAM security behavior to [Spring Security](https://docs.sp
 | Preferred Term (English) | 中文 | Definition | Type | Code Mapping | Status |
 | ------------------------ | ---- | ---------- | ---- | ------------ | ------ |
 | Principal | 主体 | Identity that can make requests | Concept | `Principal` | — |
-| IAM User | IAM 用户 | Long-lived human or service identity | Entity | `IamUser` | implemented |
+| IAM User | IAM 用户 | Long-lived human or service identity | Aggregate | `IamUser` | implemented |
 | User Status | 用户状态 | `ACTIVE` or `DISABLED` | Enum | `UserStatus` | via `enabled` flag |
-| Group | 组 | Collection of users for shared policy attachment | Entity | `Group` | planned |
-| Group Membership | 组成员关系 | User belongs to a Group | Entity | `GroupMembership` | planned |
-| Role | 角色 | Assumable identity with trust + permission policies | Entity | `Role` | planned |
-| Role ARN | 角色 ARN | Stable identifier for a Role | Value Object | `Arn` | planned |
-| Federated Principal | 联邦主体 | Principal mapped from external IdP | Entity | `FederatedPrincipal` | planned |
-| Trust Policy Document | 信任策略文档 | JSON policy defining who may assume a Role | Value Object | `TrustPolicyDocument` | planned |
+| Group | 组 | Collection of users for shared policy attachment | Aggregate | `Group` | implemented |
+| Group Member | 组成员 | Child entity linking a user to a group | Entity | `GroupMember` | implemented |
+| Group Membership | 组成员关系 | User belongs to a Group | Behavior | `Group.addMember` | implemented |
+| Role Assignment | 角色分配 | User assigned to a Role | Behavior | `IamUser.assignRole` | implemented |
+| User Role Assignment | 用户角色分配 | Child entity linking a role to a user | Entity | `UserRoleAssignment` | implemented |
+| Role | 角色 | Assumable identity with trust + permission policies | Aggregate | `Role` | implemented |
+| Role ARN | 角色 ARN | Stable identifier for a Role | Value Object | `Arn` | implemented |
+| Federated Principal | 联邦主体 | Principal mapped from external IdP | Concept | `provider:subject` username | implemented |
+| Trust Policy Document | 信任策略文档 | JSON policy defining who may assume a Role | Value Object | `TrustPolicyDocument` | implemented |
+| Create Federated User | 创建联邦用户 | Factory for external IdP login | Behavior | `IamUser.createForFederatedLogin` | implemented |
 
 ---
 
@@ -218,19 +222,18 @@ Terms mapping Explore IAM security behavior to [Spring Security](https://docs.sp
 
 | Preferred Term (English) | 中文 | Definition | Type | Code Mapping | Status |
 | ------------------------ | ---- | ---------- | ---- | ------------ | ------ |
-| Policy Document | 策略文档 | Document of statements (Effect, Action, Resource, Condition) | Aggregate | `PolicyDocument` | planned |
-| Policy Statement | 策略语句 | Single Allow or Deny rule block | Entity | `PolicyStatement` | planned |
-| Effect | 效力 | `ALLOW` or `DENY` | Enum | `Effect` | planned |
+| Policy Document | 策略文档 | Document of statements (Effect, Action, Resource, Condition) | Aggregate | `PolicyDocument` | implemented |
+| Policy Statement | 策略语句 | Single Allow or Deny rule block | Entity | `PolicyStatement` | implemented |
+| Effect | 效力 | `ALLOW` or `DENY` | Enum | `Effect` | implemented |
 | Identity-based Policy | 基于身份的策略 | Policy attached to User / Group / Role | Entity | `IdentityBasedPolicy` | planned |
 | Resource-based Policy | 基于资源的策略 | Policy attached to a resource | Entity | `ResourceBasedPolicy` | planned |
-| Policy Attachment | 策略附加 | Links Policy Document to a principal or resource | Entity | `PolicyAttachment` | planned |
-| Action | 操作 | API or resource operation identifier | Value Object | `Action` | planned |
-| Resource | 资源 | Target of an Action | Value Object | `Resource` | planned |
+| Policy Attachment | 策略附加 | Links Policy Document to a principal or resource | Aggregate | `PolicyAttachment` | implemented |
+| Action | 操作 | API or resource operation identifier | Value Object | `Action` | implemented |
+| Resource | 资源 | Target of an Action | Value Object | `Resource` | implemented |
 | Condition | 条件 | Context keys constraining a statement | Value Object | `Condition` | planned |
-| Evaluation Context | 求值上下文 | Principal + Action + Resource + request context | Value Object | `EvaluationContext` | planned |
-| Authorization Decision | 鉴权决策 | Allow or Deny with reason (ephemeral) | Value Object | `AuthorizationDecision` | implemented |
-| Authorization Decision Log | 鉴权决策日志 | Persisted domain event after evaluation | Domain Event | `AuthorizationDecisionLog` (§10) | implemented |
-| Policy Engine | 策略引擎 | Evaluates policies: Deny > Allow > Implicit Deny | Domain Service | `PolicyEngine` | planned |
+| Evaluation Context | 求值上下文 | Principal + Action + Resource + request context | Value Object | `EvaluationContext` | implemented |
+| Authorization Decision | 鉴权决策 | Allow or Deny with reason | Value Object | `AuthorizationDecision` | implemented |
+| Policy Engine | 策略引擎 | Evaluates policies: Deny > Allow > Implicit Deny | Domain Service | `PolicyEngine` | implemented |
 | Permission Boundary | 权限边界 | Maximum permissions cap | Entity | `PermissionBoundary` | later |
 
 ---
@@ -242,7 +245,7 @@ Terms mapping Explore IAM security behavior to [Spring Security](https://docs.sp
 | AssumeRole | 扮演角色 | Exchange caller identity for Role session | Use Case | `AssumeRoleService` | implemented |
 | Temporary Credentials | 临时凭证 | Short-lived token after AssumeRole | Value Object | `TemporaryCredentials` | planned |
 | Trust Policy | 信任策略 | Policy for who may assume a Role | Entity | `TrustPolicy` | planned |
-| Assumed Role Session | 扮演会话 | Active session bound to Role and expiry | Entity | `AssumedRoleSession` | planned |
+| Assumed Role Session | 扮演会话 | Active session bound to Role and expiry | Aggregate | `AssumedRoleSession` | implemented |
 | Session Name | 会话名称 | Caller-provided session identifier | Value Object | `SessionName` | planned |
 | Expiration | 过期时间 | Credential validity end | Value Object | `Expiration` | planned |
 | Caller Principal | 调用方主体 | Principal requesting AssumeRole | Value Object | `PrincipalId` | planned |
@@ -264,32 +267,37 @@ Terms mapping Explore IAM security behavior to [Spring Security](https://docs.sp
 
 ---
 
-## 10. Audit & Domain Events | 审计与领域事件
+## 10. Audit Aggregates | 审计聚合
 
-Explore IAM distinguishes **domain events** (ubiquitous-language facts persisted in
-`com.iam.audit`) from **framework events** (Spring Security
-`AuthenticationSuccessEvent` — see §4.1). Domain events are append-only,
-immutable, and extend `AbstractAuditEvent`.
+Immutable **aggregate roots** for append-only audit rows. Not Spring Security
+**Authentication Event** (framework — see §4.1).
 
 | Preferred Term (English) | 中文 | Definition | Type | Code Mapping | Status |
 | ------------------------ | ---- | ---------- | ---- | ------------ | ------ |
-| Domain Event | 领域事件 | Past-tense fact in the domain; append-only | Concept | `AbstractAuditEvent` hierarchy | implemented |
-| Abstract Audit Event | 审计事件基类 | Kernel for immutable audit rows; `occurred_at` column | Base class | `AbstractAuditEvent` | implemented |
-| Management Event | 管理事件 | Management-plane action (actor, target, outcome) | Domain Event | `ManagementEvent` | implemented |
-| Authorization Decision Log | 鉴权决策日志 | Persisted Allow/Deny with reason code | Domain Event | `AuthorizationDecisionLog` | implemented |
+| Management Event | 管理事件 | Management-plane action with actor, target, outcome | Aggregate | `ManagementEvent` | implemented |
+| Authorization Decision Log | 鉴权决策日志 | Persisted Allow/Deny with reason code | Aggregate | `AuthorizationDecisionLog` | implemented |
+| Audit Actor | 审计主体 | Principal that performed a management action | Value Object | `AuditActor` (`@Embeddable`) | implemented |
+| Audit Target | 审计目标 | Resource type and id affected by management action | Value Object | `AuditTarget` (`@Embeddable`) | implemented |
 | Audit Outcome | 审计结果 | Success or failure of a management operation | Enum | `AuditOutcome` | implemented |
-| Occurred At | 发生时间 | When the domain event was recorded | Attribute | `AbstractAuditEvent.getOccurredAt()` | implemented |
-| Event Actor | 事件主体 | Principal that performed the management action | Attribute | `ManagementEvent.actor` | implemented |
-| Event Target Type | 事件目标类型 | Kind of resource affected (user, role, policy, …) | Attribute | `ManagementEvent.targetType` | implemented |
-| Event Target Id | 事件目标标识 | Identifier of the affected resource | Attribute | `ManagementEvent.targetId` | implemented |
-| Immutable Audit Record | 不可变审计记录 | Append-only audit row; no updates after insert | Pattern | `ManagementEvent`, `AuthorizationDecisionLog` | implemented |
-
-**Not domain events (do not model as aggregates):**
-
-| Preferred Term (English) | 中文 | Definition | Type | Code Mapping | Status |
-| ------------------------ | ---- | ---------- | ---- | ------------ | ------ |
-| Authentication Event | 认证事件 | Spring Security login success/failure notification | Framework Event | `AuthenticationSuccessEvent` | implemented |
-| Authorization Decision | 鉴权决策 | Ephemeral evaluation result before persistence | Value Object | `AuthorizationDecision` | implemented |
+| Occurred At | 发生时间 | When the audit aggregate was recorded | Attribute | `AbstractAuditEvent.getOccurredAt()` | implemented |
+| Log Management Action | 记录管理操作 | Factory on `ManagementEvent` | Behavior | `ManagementEvent.logManagementAction` | implemented |
+| Log Authentication | 记录认证 | Factory for `auth:login` management events | Behavior | `ManagementEvent.logAuthentication` | implemented |
+| Capture Authorization Decision | 捕获鉴权决策 | Factory on `AuthorizationDecisionLog` | Behavior | `AuthorizationDecisionLog.capture` | implemented |
+| From Evaluation | 从求值捕获 | Factory from policy evaluation outcome | Behavior | `AuthorizationDecisionLog.fromEvaluation` | implemented |
+| Management Audit Recorder | 管理审计记录器 | Application helper persisting management events | Service | `ManagementAuditRecorder` | implemented |
+| Identity Disable User Action | 禁用用户操作 | Audited management action | Action | `identity:DisableUser` | implemented |
+| Identity Create Group Action | 创建组操作 | Audited management action | Action | `identity:CreateGroup` | implemented |
+| Identity Add Group Member Action | 添加组成员操作 | Audited management action | Action | `identity:AddGroupMember` | implemented |
+| Identity Create Role Action | 创建角色操作 | Audited management action | Action | `identity:CreateRole` | implemented |
+| Identity Assign Role Action | 分配角色操作 | Audited management action | Action | `identity:AssignRole` | implemented |
+| Federation Register Client Action | 注册客户端操作 | Audited management action | Action | `federation:RegisterClient` | implemented |
+| Policy Create Action | 创建策略操作 | Audited management action | Action | `policy:CreatePolicy` | implemented |
+| Policy Attach Action | 附加策略操作 | Audited management action | Action | `policy:AttachPolicy` | implemented |
+| STS Assume Role Action | 扮演角色操作 | Audited management action | Action | `sts:AssumeRole` | implemented |
+| Was Successful | 是否成功 | Query on management aggregate | Behavior | `ManagementEvent.wasSuccessful` | implemented |
+| Is Allowed | 是否允许 | Query on authorization aggregate | Behavior | `AuthorizationDecisionLog.isAllowed` | implemented |
+| Explicit Deny | 显式拒绝 | Query when `EXPLICIT_DENY` reason matched | Behavior | `AuthorizationDecisionLog.wasExplicitDeny` | implemented |
+| Implicit Deny | 隐式拒绝 | Query when no allow matched | Behavior | `AuthorizationDecisionLog.wasImplicitDeny` | implemented |
 
 ---
 
