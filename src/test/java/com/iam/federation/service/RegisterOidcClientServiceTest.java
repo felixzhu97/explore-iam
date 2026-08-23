@@ -110,7 +110,7 @@ class RegisterOidcClientServiceTest {
                         null,
                         List.of("openid"),
                         List.of("code"),
-                        List.of("client_credentials"),
+                        List.of("refresh_token"),
                         List.of("client_secret_basic"),
                         null)))
         .isInstanceOf(IllegalArgumentException.class)
