@@ -1,9 +1,9 @@
 package com.iam.federation.controller;
 
-import com.iam.federation.service.ListOidcClientsService;
-import com.iam.federation.service.RegisterOidcClientService;
-import com.iam.federation.service.RegisterOidcClientService.RegisterOidcClientCommand;
-import com.iam.federation.service.RegisterOidcClientService.RegisteredOidcClientResult;
+import com.iam.federation.service.OidcClientService;
+import com.iam.federation.service.OidcClientService.OidcClientView;
+import com.iam.federation.service.OidcClientService.RegisterOidcClientCommand;
+import com.iam.federation.service.OidcClientService.RegisteredOidcClientResult;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,22 +18,17 @@ import org.springframework.web.bind.annotation.RestController;
 /** HTTP API for listing and registering OIDC clients. */
 @RestController
 @RequestMapping("/api/clients")
-public class ClientController {
+public class OidcClientController {
 
-  private final RegisterOidcClientService registerOidcClientUseCase;
-  private final ListOidcClientsService listOidcClientsUseCase;
+  private final OidcClientService oidcClientService;
 
   /**
-   * Creates the clients API controller.
+   * Creates the OIDC client API controller.
    *
-   * @param registerOidcClientUseCase registration use case
-   * @param listOidcClientsUseCase listing use case
+   * @param oidcClientService OIDC client service
    */
-  public ClientController(
-      RegisterOidcClientService registerOidcClientUseCase,
-      ListOidcClientsService listOidcClientsUseCase) {
-    this.registerOidcClientUseCase = registerOidcClientUseCase;
-    this.listOidcClientsUseCase = listOidcClientsUseCase;
+  public OidcClientController(OidcClientService oidcClientService) {
+    this.oidcClientService = oidcClientService;
   }
 
   /**
@@ -46,7 +41,7 @@ public class ClientController {
   @PreAuthorize("hasRole('IAM_ADMIN')")
   public ResponseEntity<ClientResponse> register(@RequestBody RegisterClientRequest request) {
     RegisteredOidcClientResult result =
-        this.registerOidcClientUseCase.execute(
+        oidcClientService.register(
             new RegisterOidcClientCommand(
                 request.clientName(),
                 request.redirectUris(),
@@ -67,7 +62,7 @@ public class ClientController {
   @GetMapping
   @PreAuthorize("hasAnyRole('IAM_ADMIN', 'IAM_AUDITOR')")
   public List<ClientResponse> list() {
-    return this.listOidcClientsUseCase.list().stream().map(ClientController::toResponse).toList();
+    return oidcClientService.findAll().stream().map(OidcClientController::toResponse).toList();
   }
 
   /**
@@ -79,7 +74,7 @@ public class ClientController {
   @GetMapping("/{clientId}")
   @PreAuthorize("hasAnyRole('IAM_ADMIN', 'IAM_AUDITOR')")
   public ResponseEntity<ClientResponse> get(@PathVariable String clientId) {
-    return this.listOidcClientsUseCase
+    return oidcClientService
         .findByClientId(clientId)
         .map(view -> ResponseEntity.ok(toResponse(view)))
         .orElseGet(() -> ResponseEntity.notFound().build());
@@ -100,7 +95,7 @@ public class ClientController {
         result.clientAuthenticationMethods());
   }
 
-  private static ClientResponse toResponse(ListOidcClientsService.OidcClientView view) {
+  private static ClientResponse toResponse(OidcClientView view) {
     return new ClientResponse(
         view.id(),
         view.clientId(),

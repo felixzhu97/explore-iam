@@ -3,6 +3,7 @@ package com.iam.federation.service;
 import com.iam.audit.service.ManagementAuditRecorder;
 import com.iam.federation.domain.model.OidcClient;
 import com.iam.federation.domain.repository.OidcClientRepository;
+import com.iam.federation.domain.vo.ClientId;
 import com.iam.federation.domain.vo.RedirectUri;
 import com.iam.federation.infra.config.OidcSeedClientProperties;
 import java.security.SecureRandom;
@@ -10,6 +11,7 @@ import java.util.Base64;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,11 +20,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 /**
- * Registers an OIDC Relying Party and returns the plaintext client secret once (confidential
- * clients only).
+ * Registers, lists, and looks up OIDC Relying Parties. Registration returns the plaintext client
+ * secret once for confidential clients.
  */
 @Service
-public class RegisterOidcClientService {
+@Transactional(readOnly = true)
+public class OidcClientService {
 
   private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
@@ -32,14 +35,14 @@ public class RegisterOidcClientService {
   private final ManagementAuditRecorder managementAuditRecorder;
 
   /**
-   * Creates the register-client use case.
+   * Creates the OIDC client service.
    *
    * @param oidcClientRepository client repository
    * @param passwordEncoder encoder for client secrets
    * @param oidcProperties OIDC defaults and allow-lists
    * @param managementAuditRecorder management audit recorder
    */
-  public RegisterOidcClientService(
+  public OidcClientService(
       OidcClientRepository oidcClientRepository,
       PasswordEncoder passwordEncoder,
       OidcSeedClientProperties oidcProperties,
@@ -51,13 +54,32 @@ public class RegisterOidcClientService {
   }
 
   /**
+   * Returns all clients as read models.
+   *
+   * @return client views
+   */
+  public List<OidcClientView> findAll() {
+    return oidcClientRepository.findAll().stream().map(OidcClientView::from).toList();
+  }
+
+  /**
+   * Finds one client by public client_id.
+   *
+   * @param clientId public client_id
+   * @return view when present
+   */
+  public Optional<OidcClientView> findByClientId(String clientId) {
+    return oidcClientRepository.findByClientId(new ClientId(clientId)).map(OidcClientView::from);
+  }
+
+  /**
    * Registers a Relying Party and returns the plaintext secret once.
    *
    * @param command registration input
    * @return created client including one-time secret
    */
   @Transactional
-  public RegisteredOidcClientResult execute(RegisterOidcClientCommand command) {
+  public RegisteredOidcClientResult register(RegisterOidcClientCommand command) {
     Objects.requireNonNull(command, "command");
     Set<RedirectUri> redirectUris = toRedirectUris(command.redirectUris());
     Set<RedirectUri> postLogout =
@@ -75,7 +97,7 @@ public class RegisterOidcClientService {
     String secretHash = null;
     if (!publicClient) {
       plaintextSecret = generateSecret();
-      secretHash = this.passwordEncoder.encode(plaintextSecret);
+      secretHash = passwordEncoder.encode(plaintextSecret);
     }
 
     OidcClient client =
@@ -89,24 +111,22 @@ public class RegisterOidcClientService {
             responseTypes,
             authMethods,
             grantTypes);
-    OidcClient saved = this.oidcClientRepository.save(client);
+    OidcClient saved = oidcClientRepository.save(client);
     managementAuditRecorder.recordSuccess(
         "federation:RegisterClient", "OidcClient", saved.getClientId().value());
     return RegisteredOidcClientResult.from(saved, plaintextSecret);
   }
 
   private Set<String> normalizeScopes(List<String> raw) {
-    Set<String> scopes =
-        raw == null || raw.isEmpty() ? this.oidcProperties.defaultScopes() : Set.copyOf(raw);
-    return scopes;
+    return raw == null || raw.isEmpty() ? oidcProperties.defaultScopes() : Set.copyOf(raw);
   }
 
   private Set<String> normalizeResponseTypes(List<String> raw) {
     Set<String> types = toNormalizedSet(raw, "responseTypes");
     if (types.isEmpty()) {
-      types = this.oidcProperties.defaultResponseTypes();
+      types = oidcProperties.defaultResponseTypes();
     }
-    Set<String> allowed = this.oidcProperties.allowedResponseTypes();
+    Set<String> allowed = oidcProperties.allowedResponseTypes();
     for (String type : types) {
       if (!allowed.contains(type)) {
         throw new IllegalArgumentException("unsupported response_type: " + type);
@@ -118,9 +138,9 @@ public class RegisterOidcClientService {
   private Set<String> normalizeGrantTypes(List<String> raw) {
     Set<String> grants = toNormalizedSet(raw, "authorizationGrantTypes");
     if (grants.isEmpty()) {
-      grants = this.oidcProperties.defaultGrantTypes();
+      grants = oidcProperties.defaultGrantTypes();
     }
-    Set<String> allowed = this.oidcProperties.allowedGrantTypes();
+    Set<String> allowed = oidcProperties.allowedGrantTypes();
     for (String grant : grants) {
       if (!allowed.contains(grant)) {
         throw new IllegalArgumentException("unsupported authorization_grant_type: " + grant);
@@ -132,9 +152,9 @@ public class RegisterOidcClientService {
   private Set<String> normalizeAuthMethods(List<String> raw) {
     Set<String> methods = toNormalizedSet(raw, "clientAuthenticationMethods");
     if (methods.isEmpty()) {
-      methods = this.oidcProperties.defaultAuthMethods();
+      methods = oidcProperties.defaultAuthMethods();
     }
-    Set<String> allowed = this.oidcProperties.allowedAuthMethods();
+    Set<String> allowed = oidcProperties.allowedAuthMethods();
     for (String method : methods) {
       if (!allowed.contains(method)) {
         throw new IllegalArgumentException("unsupported client_authentication_method: " + method);
@@ -212,6 +232,38 @@ public class RegisterOidcClientService {
           client.getClientId().value(),
           client.getClientName(),
           plaintextSecret,
+          client.getClientUri(),
+          client.getRedirectUris().stream()
+              .map(RedirectUri::value)
+              .collect(Collectors.toCollection(LinkedHashSet::new)),
+          client.getPostLogoutRedirectUris().stream()
+              .map(RedirectUri::value)
+              .collect(Collectors.toCollection(LinkedHashSet::new)),
+          client.getScopes(),
+          client.getResponseTypes(),
+          client.getAuthorizationGrantTypes(),
+          client.getClientAuthenticationMethods());
+    }
+  }
+
+  /** Read model for an OIDC client without the secret. */
+  public record OidcClientView(
+      String id,
+      String clientId,
+      String clientName,
+      String clientUri,
+      Set<String> redirectUris,
+      Set<String> postLogoutRedirectUris,
+      Set<String> scopes,
+      Set<String> responseTypes,
+      Set<String> authorizationGrantTypes,
+      Set<String> clientAuthenticationMethods) {
+
+    static OidcClientView from(OidcClient client) {
+      return new OidcClientView(
+          client.getId(),
+          client.getClientId().value(),
+          client.getClientName(),
           client.getClientUri(),
           client.getRedirectUris().stream()
               .map(RedirectUri::value)
