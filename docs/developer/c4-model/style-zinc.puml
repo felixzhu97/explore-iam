@@ -148,6 +148,7 @@
       RoundCorner 12
     }
 
+    ' Role stereotypes for Dynamic diagrams (apply <<ui>> <<java>> …)
     .ui {
       BackgroundColor #F8FAFC
       BorderColor #64748B
@@ -196,6 +197,7 @@ skinparam sequenceMessageAlign center
 skinparam ParticipantPadding 20
 skinparam BoxPadding 12
 
+' Fallback for engines that style sequence via skinparam stereotypes
 skinparam participant {
   BackgroundColor<<ui>> #F8FAFC
   BorderColor<<ui>> #64748B
