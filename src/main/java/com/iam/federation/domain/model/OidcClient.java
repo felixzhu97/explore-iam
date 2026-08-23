@@ -7,11 +7,13 @@ import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import lombok.Getter;
 
 /**
  * OIDC Relying Party registered with Explore IAM (maps to Spring Authorization Server {@code
  * RegisteredClient}).
  */
+@Getter
 public class OidcClient {
 
   private final String id;
@@ -244,58 +246,6 @@ public class OidcClient {
       throw new IllegalArgumentException(
           "none cannot be combined with other authentication methods");
     }
-  }
-
-  public String getId() {
-    return id;
-  }
-
-  public ClientId getClientId() {
-    return clientId;
-  }
-
-  public Instant getClientIdIssuedAt() {
-    return clientIdIssuedAt;
-  }
-
-  public String getClientName() {
-    return clientName;
-  }
-
-  public String getClientSecretHash() {
-    return clientSecretHash;
-  }
-
-  public String getClientUri() {
-    return clientUri;
-  }
-
-  public Set<RedirectUri> getRedirectUris() {
-    return redirectUris;
-  }
-
-  public Set<RedirectUri> getPostLogoutRedirectUris() {
-    return postLogoutRedirectUris;
-  }
-
-  public Set<String> getScopes() {
-    return scopes;
-  }
-
-  public Set<String> getResponseTypes() {
-    return responseTypes;
-  }
-
-  public Set<String> getClientAuthenticationMethods() {
-    return clientAuthenticationMethods;
-  }
-
-  public Set<String> getAuthorizationGrantTypes() {
-    return authorizationGrantTypes;
-  }
-
-  public boolean isRequireAuthorizationConsent() {
-    return requireAuthorizationConsent;
   }
 
   public boolean isPublicClient() {
