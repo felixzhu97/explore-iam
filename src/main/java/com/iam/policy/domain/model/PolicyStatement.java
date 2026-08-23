@@ -5,10 +5,8 @@ import com.iam.common.domain.vo.Effect;
 import com.iam.common.domain.vo.Resource;
 import java.util.Objects;
 import java.util.Set;
-import lombok.Getter;
 
 /** Single Allow or Deny statement within a Policy Document. */
-@Getter
 public class PolicyStatement {
 
   private final Effect effect;
@@ -37,6 +35,21 @@ public class PolicyStatement {
    */
   public static PolicyStatement of(Effect effect, Set<Action> actions, Set<Resource> resources) {
     return new PolicyStatement(effect, actions, resources);
+  }
+
+  /** Returns the statement effect. */
+  public Effect effect() {
+    return effect;
+  }
+
+  /** Returns the actions governed by this statement. */
+  public Set<Action> actions() {
+    return actions;
+  }
+
+  /** Returns the resources governed by this statement. */
+  public Set<Resource> resources() {
+    return resources;
   }
 
   /**

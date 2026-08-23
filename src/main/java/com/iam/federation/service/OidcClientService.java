@@ -113,7 +113,7 @@ public class OidcClientService {
             grantTypes);
     OidcClient saved = oidcClientRepository.save(client);
     managementAuditRecorder.recordSuccess(
-        "federation:RegisterClient", "OidcClient", saved.getClientId().value());
+        "federation:RegisterClient", "OidcClient", saved.clientId().value());
     return RegisteredOidcClientResult.from(saved, plaintextSecret);
   }
 
@@ -228,21 +228,21 @@ public class OidcClientService {
 
     static RegisteredOidcClientResult from(OidcClient client, String plaintextSecret) {
       return new RegisteredOidcClientResult(
-          client.getId(),
-          client.getClientId().value(),
-          client.getClientName(),
+          client.id(),
+          client.clientId().value(),
+          client.clientName(),
           plaintextSecret,
-          client.getClientUri(),
-          client.getRedirectUris().stream()
+          client.clientUri(),
+          client.redirectUris().stream()
               .map(RedirectUri::value)
               .collect(Collectors.toCollection(LinkedHashSet::new)),
-          client.getPostLogoutRedirectUris().stream()
+          client.postLogoutRedirectUris().stream()
               .map(RedirectUri::value)
               .collect(Collectors.toCollection(LinkedHashSet::new)),
-          client.getScopes(),
-          client.getResponseTypes(),
-          client.getAuthorizationGrantTypes(),
-          client.getClientAuthenticationMethods());
+          client.scopes(),
+          client.responseTypes(),
+          client.authorizationGrantTypes(),
+          client.clientAuthenticationMethods());
     }
   }
 
@@ -261,20 +261,20 @@ public class OidcClientService {
 
     static OidcClientView from(OidcClient client) {
       return new OidcClientView(
-          client.getId(),
-          client.getClientId().value(),
-          client.getClientName(),
-          client.getClientUri(),
-          client.getRedirectUris().stream()
+          client.id(),
+          client.clientId().value(),
+          client.clientName(),
+          client.clientUri(),
+          client.redirectUris().stream()
               .map(RedirectUri::value)
               .collect(Collectors.toCollection(LinkedHashSet::new)),
-          client.getPostLogoutRedirectUris().stream()
+          client.postLogoutRedirectUris().stream()
               .map(RedirectUri::value)
               .collect(Collectors.toCollection(LinkedHashSet::new)),
-          client.getScopes(),
-          client.getResponseTypes(),
-          client.getAuthorizationGrantTypes(),
-          client.getClientAuthenticationMethods());
+          client.scopes(),
+          client.responseTypes(),
+          client.authorizationGrantTypes(),
+          client.clientAuthenticationMethods());
     }
   }
 }

@@ -38,7 +38,7 @@ public class JdbcOidcClientRepository implements OidcClientRepository {
   @Override
   public OidcClient save(OidcClient client) {
     this.registeredClientRepository.save(OidcClientMapper.toRegisteredClient(client));
-    return findById(client.getId()).orElse(client);
+    return findById(client.id()).orElse(client);
   }
 
   @Override

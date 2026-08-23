@@ -42,7 +42,7 @@ public class FederationLinkService {
         linkRepository.findByProviderAndExternalSubject(provider, subject);
     if (existing.isPresent()) {
       return iamUserRepository
-          .findById(existing.get().getIamUserId())
+          .findById(existing.get().linkedUserId())
           .orElseThrow(() -> new IllegalStateException("linked user missing"));
     }
     String username = provider + ":" + subject;

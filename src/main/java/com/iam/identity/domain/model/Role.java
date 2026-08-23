@@ -19,10 +19,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public class Role extends AbstractNamedEntity {
 
+  @Getter(AccessLevel.NONE)
   @Column(nullable = false, unique = true, length = 512)
   @Convert(converter = ArnAttributeConverter.class)
   private Arn arn;
 
+  @Getter(AccessLevel.NONE)
   @Column(name = "trust_policy_json", columnDefinition = "clob")
   @Convert(converter = TrustPolicyDocumentConverter.class)
   private TrustPolicyDocument trustPolicy;
@@ -87,6 +89,16 @@ public class Role extends AbstractNamedEntity {
       Instant createdAt,
       Instant updatedAt) {
     return new Role(id, name, arn, trustPolicy, createdAt, updatedAt);
+  }
+
+  /** Returns this role's ARN. */
+  public Arn arn() {
+    return arn;
+  }
+
+  /** Returns the trust policy governing who may assume this role. */
+  public TrustPolicyDocument trustPolicy() {
+    return trustPolicy;
   }
 
   /** Returns the Spring Security authority for this role. */

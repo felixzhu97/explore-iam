@@ -7,6 +7,7 @@ import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import lombok.AccessLevel;
@@ -19,6 +20,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public class PolicyDocument extends AbstractNamedEntity {
 
+  @Getter(AccessLevel.NONE)
   @Column(name = "document_json", nullable = false, columnDefinition = "clob")
   @Convert(converter = PolicyStatementsJsonConverter.class)
   private List<PolicyStatement> statements;
@@ -62,6 +64,11 @@ public class PolicyDocument extends AbstractNamedEntity {
       Instant createdAt,
       Instant updatedAt) {
     return new PolicyDocument(id, name, statements, createdAt, updatedAt);
+  }
+
+  /** Returns an unmodifiable view of policy statements. */
+  public List<PolicyStatement> statements() {
+    return Collections.unmodifiableList(statements);
   }
 
   private static List<PolicyStatement> requireStatements(List<PolicyStatement> statements) {

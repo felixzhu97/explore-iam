@@ -19,16 +19,20 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public class AssumedRoleSession extends AbstractImmutable {
 
+  @Getter(AccessLevel.NONE)
   @Column(name = "role_arn", nullable = false, length = 512)
   @Convert(converter = ArnAttributeConverter.class)
   private Arn roleArn;
 
+  @Getter(AccessLevel.NONE)
   @Column(name = "session_name", nullable = false, length = 128)
   private String sessionName;
 
+  @Getter(AccessLevel.NONE)
   @Column(name = "caller_principal", nullable = false, length = 512)
   private String callerPrincipal;
 
+  @Getter(AccessLevel.NONE)
   @Column(name = "expires_at", nullable = false)
   private Instant expiresAt;
 
@@ -73,6 +77,26 @@ public class AssumedRoleSession extends AbstractImmutable {
   /** Returns true when the session has expired. */
   public boolean isExpired(Instant now) {
     return !expiresAt.isAfter(now);
+  }
+
+  /** Returns the assumed role ARN. */
+  public Arn roleArn() {
+    return roleArn;
+  }
+
+  /** Returns the session name supplied by the caller. */
+  public String sessionName() {
+    return sessionName;
+  }
+
+  /** Returns the principal that initiated AssumeRole. */
+  public String callerPrincipal() {
+    return callerPrincipal;
+  }
+
+  /** Returns when temporary credentials expire. */
+  public Instant expiresAt() {
+    return expiresAt;
   }
 
   private static String requireSessionName(String sessionName) {

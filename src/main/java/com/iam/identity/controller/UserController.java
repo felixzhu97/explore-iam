@@ -52,7 +52,8 @@ public class UserController {
   /** IAM user summary. */
   public record UserResponse(String id, String username, String email, boolean enabled) {
     static UserResponse from(IamUser user) {
-      return new UserResponse(user.getId(), user.getUsername(), user.getEmail(), user.isEnabled());
+      return new UserResponse(
+          user.getId(), user.getUsername(), user.getEmail(), user.isLoginEnabled());
     }
   }
 }

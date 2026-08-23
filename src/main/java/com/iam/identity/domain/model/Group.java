@@ -21,6 +21,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public class Group extends AbstractNamedEntity {
 
+  @Getter(AccessLevel.NONE)
   @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
   private final List<GroupMember> members = new ArrayList<>();
 

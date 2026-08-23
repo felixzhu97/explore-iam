@@ -78,7 +78,7 @@ public class PolicyController {
       @PathVariable String policyId, @RequestBody AttachPolicyRequest request) {
     PolicyAttachment attachment =
         policyService.attach(policyId, new Arn(request.principalArn()));
-    return new PolicyAttachmentResponse(attachment.getId(), attachment.getPrincipalArn().value());
+    return new PolicyAttachmentResponse(attachment.getId(), attachment.principalArn().value());
   }
 
   /**

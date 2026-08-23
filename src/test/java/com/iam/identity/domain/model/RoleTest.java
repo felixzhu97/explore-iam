@@ -12,6 +12,6 @@ class RoleTest {
   void shouldUseAllowAllTrustPolicyWhenJsonIsBlank() {
     Role role = Role.create("IAM_ADMIN", "  ");
 
-    assertThat(role.getTrustPolicy().json()).contains("sts:AssumeRole");
+    assertThat(role.trustPolicy().json()).contains("sts:AssumeRole");
   }
 }

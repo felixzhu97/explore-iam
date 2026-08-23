@@ -24,6 +24,7 @@ public class GroupMember {
 
   @EmbeddedId private Pk id;
 
+  @Getter(AccessLevel.PACKAGE)
   @ManyToOne(fetch = FetchType.LAZY)
   @MapsId("groupId")
   @JoinColumn(name = "group_id", nullable = false)

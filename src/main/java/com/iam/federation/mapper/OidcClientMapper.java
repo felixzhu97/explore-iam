@@ -26,37 +26,36 @@ public final class OidcClientMapper {
   /** Converts a domain OIDC client to a registered client. */
   public static RegisteredClient toRegisteredClient(OidcClient client) {
     ClientSettings.Builder settings =
-        ClientSettings.builder()
-            .requireAuthorizationConsent(client.isRequireAuthorizationConsent());
-    if (StringUtils.hasText(client.getClientUri())) {
-      settings.setting(SETTING_CLIENT_URI, client.getClientUri());
+        ClientSettings.builder().requireAuthorizationConsent(client.requiresAuthorizationConsent());
+    if (StringUtils.hasText(client.clientUri())) {
+      settings.setting(SETTING_CLIENT_URI, client.clientUri());
     }
-    if (!client.getResponseTypes().isEmpty()) {
-      settings.setting(SETTING_RESPONSE_TYPES, String.join(",", client.getResponseTypes()));
+    if (!client.responseTypes().isEmpty()) {
+      settings.setting(SETTING_RESPONSE_TYPES, String.join(",", client.responseTypes()));
     }
 
     RegisteredClient.Builder builder =
-        RegisteredClient.withId(client.getId())
-            .clientId(client.getClientId().value())
-            .clientIdIssuedAt(client.getClientIdIssuedAt())
-            .clientName(client.getClientName())
+        RegisteredClient.withId(client.id())
+            .clientId(client.clientId().value())
+            .clientIdIssuedAt(client.clientIdIssuedAt())
+            .clientName(client.clientName())
             .clientSettings(settings.build())
             .tokenSettings(TokenSettings.builder().build());
 
-    if (StringUtils.hasText(client.getClientSecretHash())) {
-      builder.clientSecret(client.getClientSecretHash());
+    if (StringUtils.hasText(client.storedSecretHash())) {
+      builder.clientSecret(client.storedSecretHash());
     }
 
     client
-        .getClientAuthenticationMethods()
+        .clientAuthenticationMethods()
         .forEach(
             method -> builder.clientAuthenticationMethod(new ClientAuthenticationMethod(method)));
     client
-        .getAuthorizationGrantTypes()
+        .authorizationGrantTypes()
         .forEach(grant -> builder.authorizationGrantType(new AuthorizationGrantType(grant)));
-    client.getRedirectUris().forEach(uri -> builder.redirectUri(uri.value()));
-    client.getPostLogoutRedirectUris().forEach(uri -> builder.postLogoutRedirectUri(uri.value()));
-    client.getScopes().forEach(builder::scope);
+    client.redirectUris().forEach(uri -> builder.redirectUri(uri.value()));
+    client.postLogoutRedirectUris().forEach(uri -> builder.postLogoutRedirectUri(uri.value()));
+    client.scopes().forEach(builder::scope);
     return builder.build();
   }
 
