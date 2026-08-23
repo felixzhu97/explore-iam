@@ -1,0 +1,44 @@
+@startuml C4-Dynamic-PolicyEvaluation
+!include style-zinc.puml
+title Dynamic — AssumeRole and policy evaluation
+
+actor "Caller" as caller
+participant "IAM Application\nSTS + Policy :9100" as api <<java>>
+participant "PolicyEngine\ndomain service" as engine <<java>>
+database "Metadata DB" as db <<db>>
+
+caller -> api: 1. POST /api/sts/assume-role\n(roleArn, sessionName)
+api -> db: 2. Load Role + trust policy
+db --> api: 3. Role row
+api -> engine: 4. Evaluate trust policy\n(caller principal)
+engine --> api: 5. Allow / Deny + ReasonCode
+alt Deny
+  api --> caller: 6. 403 Forbidden
+else Allow
+  api -> db: 7. Save AssumedRoleSession
+  api -> api: 8. JwtEncoder → temporary JWT
+  api -> db: 9. Append AuthorizationDecisionLog (optional)
+  api --> caller: 10. 200 { accessToken, expiresAt }
+end
+
+caller -> api: 11. Protected API call\n(Bearer JWT or session)
+api -> db: 12. Load attached PolicyDocuments
+api -> engine: 13. Evaluate(principal, action, resource)
+engine -> engine: 14. Explicit Deny > Allow > implicit Deny
+engine --> api: 15. AuthorizationDecision
+api -> db: 16. Append audit records
+api --> caller: 17. 200 or 403
+
+legend right
+  |= Role |= Color |
+  | Actor | Emerald |
+  | <<java>> | Blue |
+  | <<db>> | Amber |
+endlegend
+
+note right of engine
+  Glossary: Deny > Allow > Implicit Deny
+  ReasonCode on every decision
+end note
+
+@enduml
