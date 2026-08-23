@@ -58,7 +58,7 @@ implementation("org.springframework.boot:spring-boot-starter-liquibase")
 implementation("org.springframework.boot:spring-boot-starter-actuator")
 ```
 
-Architecture target: `web → application → domain ← infrastructure` for the control plane (see C3). **Not implemented as application source in this catalog.** See also [Spring Security OAuth2](https://docs.spring.io/spring-security/reference/servlet/oauth2/index.html).
+Architecture: `controller → service → domain ← infra` per feature module (`com.iam.*`) — see [C4 model](docs/developer/c4-model/) and global [`architecture.mdc`](~/.cursor/rules/architecture.mdc).
 
 ## Prerequisites
 
@@ -149,8 +149,9 @@ Do not commit real secrets.
 | Glossary | [docs/Glossary.md](docs/Glossary.md) |
 | User story map | [docs/product-owner/User-Story-Map.md](docs/product-owner/User-Story-Map.md) |
 | System context (C1) | [docs/developer/c4-model/C1-Context.puml](docs/developer/c4-model/C1-Context.puml) |
-| SSO sequence | [docs/developer/c4-model/C4-Sequence-SSOLogin.puml](docs/developer/c4-model/C4-Sequence-SSOLogin.puml) |
-| Policy evaluation | [docs/developer/c4-model/C4-Sequence-PolicyEvaluation.puml](docs/developer/c4-model/C4-Sequence-PolicyEvaluation.puml) |
+| SSO dynamic diagram | [docs/developer/c4-model/C4-Dynamic-SSOLogin.puml](docs/developer/c4-model/C4-Dynamic-SSOLogin.puml) |
+| Policy evaluation dynamic | [docs/developer/c4-model/C4-Dynamic-PolicyEvaluation.puml](docs/developer/c4-model/C4-Dynamic-PolicyEvaluation.puml) |
+| Domain model (Code) | [docs/developer/c4-model/C4-Code-Domain-Model.puml](docs/developer/c4-model/C4-Code-Domain-Model.puml) |
 | AWS IAM intro (reference) | [AWS IAM User Guide](https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html) |
 
 ## AI-assisted development
@@ -159,20 +160,20 @@ Cursor / Claude Code conventions align with [explore-ai](https://github.com/feli
 
 | Resource | Location |
 |----------|----------|
-| Rules | `~/.cursor/rules/` ([`.cursor/rules/README.md`](.cursor/rules/README.md)) |
-| Skills | `~/.cursor/skills/scrum-team/developers/EXPLORE_SKILLS.md` ([`.cursor/skills/README.md`](.cursor/skills/README.md)) |
+| Rules | `~/.cursor/rules/` |
+| Skills | `~/.cursor/skills/scrum-team/developers/EXPLORE_SKILLS.md` |
 | Agents | [`.cursor/agents/`](.cursor/agents/) |
 | Claude Code | Regenerate [`CLAUDE.md`](CLAUDE.md) with `./.claude/generate-rules.sh` after global rule changes |
 | Delivery gates | Husky pre-commit (`pnpm typecheck`, `./gradlew checkstyleMain checkstyleTest`); [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
 
-**Architecture note:** This repo targets `web → application → domain ← infrastructure` (`com.iam`) — see [C4 model](docs/developer/c4-model/). The current global Cursor `architecture.mdc` describes Explore AI layering; IAM-specific rules will be added globally later.
+**Architecture note:** Source follows global `controller → service → domain ← infra` (`com.iam`) — see [C4 model](docs/developer/c4-model/) and [`architecture.mdc`](~/.cursor/rules/architecture.mdc).
 
 ## Deployment
 
 | Target | Role |
 |--------|------|
-| Local | Console + Control Plane + Postgres (+ optional Redis) — see [C4-Deployment.puml](docs/developer/c4-model/C4-Deployment.puml) |
-| Production (planned) | Separated Console / API / OIDC endpoints, managed Postgres, audit retention — see [C4-Deployment-Production.puml](docs/developer/c4-model/C4-Deployment-Production.puml) |
+| Local | Single IAM Application on `:9100`, H2 file DB — see [C4-Deployment.puml](docs/developer/c4-model/C4-Deployment.puml) |
+| Production (planned) | CDN static + replicated app tier, managed PostgreSQL, audit archive — same deployment diagram |
 
 No live deployment is claimed for Explore IAM yet; diagrams describe the intended topology.
 
