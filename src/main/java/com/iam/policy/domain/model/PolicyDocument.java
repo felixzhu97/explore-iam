@@ -5,7 +5,6 @@ import com.iam.policy.domain.converter.PolicyStatementsJsonConverter;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +15,6 @@ import lombok.NoArgsConstructor;
 
 /** Policy document aggregate: named collection of statements. */
 @Entity
-@Table(name = "iam_policy_documents")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public class PolicyDocument extends AbstractNamedEntity {

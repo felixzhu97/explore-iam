@@ -12,7 +12,6 @@ import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
@@ -22,7 +21,6 @@ import lombok.NoArgsConstructor;
 
 /** Immutable aggregate recording a policy authorization decision. */
 @Entity
-@Table(name = "iam_authorization_decision_logs")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public class AuthorizationDecisionLog extends AbstractAuditEvent {

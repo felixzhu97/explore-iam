@@ -7,7 +7,6 @@ import com.iam.common.domain.vo.Arn;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.AccessLevel;
@@ -16,7 +15,6 @@ import lombok.NoArgsConstructor;
 
 /** Temporary credentials issued by AssumeRole. */
 @Entity
-@Table(name = "iam_assumed_role_sessions")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public class AssumedRoleSession extends AbstractImmutable {

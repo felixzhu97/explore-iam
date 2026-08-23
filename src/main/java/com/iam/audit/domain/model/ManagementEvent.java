@@ -10,7 +10,6 @@ import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
@@ -20,7 +19,6 @@ import lombok.NoArgsConstructor;
 
 /** Immutable aggregate recording a management-plane API action. */
 @Entity
-@Table(name = "iam_management_events")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public class ManagementEvent extends AbstractAuditEvent {

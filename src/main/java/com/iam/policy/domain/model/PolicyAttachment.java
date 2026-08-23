@@ -6,7 +6,6 @@ import com.iam.common.domain.vo.Arn;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.AccessLevel;
@@ -15,7 +14,6 @@ import lombok.NoArgsConstructor;
 
 /** Links a Policy Document to a principal or resource ARN. */
 @Entity
-@Table(name = "iam_policy_attachments")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public class PolicyAttachment extends AbstractImmutable {

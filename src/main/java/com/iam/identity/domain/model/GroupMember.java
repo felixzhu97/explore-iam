@@ -8,7 +8,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
-import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.util.Objects;
 import lombok.AccessLevel;
@@ -19,7 +18,6 @@ import lombok.NoArgsConstructor;
 
 /** Membership linking a user to a group. */
 @Entity
-@Table(name = "iam_group_memberships")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public class GroupMember {
