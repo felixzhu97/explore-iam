@@ -5,8 +5,10 @@ import com.iam.common.domain.vo.Effect;
 import com.iam.common.domain.vo.Resource;
 import java.util.Objects;
 import java.util.Set;
+import lombok.Getter;
 
 /** Single Allow or Deny statement within a Policy Document. */
+@Getter
 public class PolicyStatement {
 
   private final Effect effect;
@@ -56,17 +58,5 @@ public class PolicyStatement {
   private boolean matchesResource(Resource resource) {
     return resources.stream()
         .anyMatch(r -> r.value().equals(resource.value()) || r.value().equals("*"));
-  }
-
-  public Effect getEffect() {
-    return effect;
-  }
-
-  public Set<Action> getActions() {
-    return actions;
-  }
-
-  public Set<Resource> getResources() {
-    return resources;
   }
 }

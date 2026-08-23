@@ -25,12 +25,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public class AuthorizationDecisionLog extends AbstractAuditEvent {
 
+  @Getter(AccessLevel.NONE)
   @Column(name = "principal_id", nullable = false, length = 256)
   private String principalId;
 
+  @Getter(AccessLevel.NONE)
   @Column(nullable = false, length = 128)
   private String action;
 
+  @Getter(AccessLevel.NONE)
   @Column(nullable = false, length = 512)
   private String resource;
 
