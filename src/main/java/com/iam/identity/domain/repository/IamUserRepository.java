@@ -1,6 +1,7 @@
 package com.iam.identity.domain.repository;
 
 import com.iam.identity.domain.model.IamUser;
+import java.util.List;
 import java.util.Optional;
 
 /** Persistence port for IAM users. */
@@ -29,4 +30,11 @@ public interface IamUserRepository {
    * @return stored aggregate
    */
   IamUser save(IamUser user);
+
+  /**
+   * Lists all IAM users.
+   *
+   * @return all users
+   */
+  List<IamUser> findAll();
 }
