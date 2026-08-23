@@ -1,5 +1,6 @@
 package com.iam.identity.service;
 
+import com.iam.audit.service.ManagementAuditRecorder;
 import com.iam.identity.domain.model.Role;
 import com.iam.identity.domain.repository.RoleRepository;
 import org.springframework.stereotype.Service;
@@ -10,14 +11,18 @@ import org.springframework.transaction.annotation.Transactional;
 public class CreateRoleService {
 
   private final RoleRepository roleRepository;
+  private final ManagementAuditRecorder managementAuditRecorder;
 
   /**
    * Creates the use case.
    *
    * @param roleRepository role repository
+   * @param managementAuditRecorder management audit recorder
    */
-  public CreateRoleService(RoleRepository roleRepository) {
+  public CreateRoleService(
+      RoleRepository roleRepository, ManagementAuditRecorder managementAuditRecorder) {
     this.roleRepository = roleRepository;
+    this.managementAuditRecorder = managementAuditRecorder;
   }
 
   /**
@@ -29,6 +34,8 @@ public class CreateRoleService {
    */
   @Transactional
   public Role execute(String name, String trustPolicyJson) {
-    return roleRepository.save(Role.create(name, trustPolicyJson));
+    Role role = roleRepository.save(Role.create(name, trustPolicyJson));
+    managementAuditRecorder.recordSuccess("identity:CreateRole", "Role", role.getId());
+    return role;
   }
 }

@@ -1,5 +1,6 @@
 package com.iam.identity.service;
 
+import com.iam.audit.service.ManagementAuditRecorder;
 import com.iam.identity.domain.model.Group;
 import com.iam.identity.domain.model.IamUser;
 import com.iam.identity.domain.repository.GroupRepository;
@@ -15,6 +16,7 @@ public class AssignMembershipService {
   private final RoleRepository roleRepository;
   private final GroupRepository groupRepository;
   private final IamUserRepository iamUserRepository;
+  private final ManagementAuditRecorder managementAuditRecorder;
 
   /**
    * Creates the use case.
@@ -22,14 +24,17 @@ public class AssignMembershipService {
    * @param roleRepository role repository
    * @param groupRepository group repository
    * @param iamUserRepository IAM user repository
+   * @param managementAuditRecorder management audit recorder
    */
   public AssignMembershipService(
       RoleRepository roleRepository,
       GroupRepository groupRepository,
-      IamUserRepository iamUserRepository) {
+      IamUserRepository iamUserRepository,
+      ManagementAuditRecorder managementAuditRecorder) {
     this.roleRepository = roleRepository;
     this.groupRepository = groupRepository;
     this.iamUserRepository = iamUserRepository;
+    this.managementAuditRecorder = managementAuditRecorder;
   }
 
   /**
@@ -49,6 +54,7 @@ public class AssignMembershipService {
             .orElseThrow(() -> new IllegalArgumentException("user not found: " + userId));
     user.assignRole(roleId);
     iamUserRepository.save(user);
+    managementAuditRecorder.recordSuccess("identity:AssignRole", "User", userId);
   }
 
   /**
@@ -65,5 +71,6 @@ public class AssignMembershipService {
             .orElseThrow(() -> new IllegalArgumentException("group not found: " + groupId));
     group.addMember(userId);
     groupRepository.save(group);
+    managementAuditRecorder.recordSuccess("identity:AddGroupMember", "Group", groupId);
   }
 }

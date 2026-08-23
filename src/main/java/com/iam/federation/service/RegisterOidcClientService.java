@@ -1,5 +1,6 @@
 package com.iam.federation.service;
 
+import com.iam.audit.service.ManagementAuditRecorder;
 import com.iam.federation.domain.model.OidcClient;
 import com.iam.federation.domain.repository.OidcClientRepository;
 import com.iam.federation.domain.vo.RedirectUri;
@@ -28,6 +29,7 @@ public class RegisterOidcClientService {
   private final OidcClientRepository oidcClientRepository;
   private final PasswordEncoder passwordEncoder;
   private final OidcSeedClientProperties oidcProperties;
+  private final ManagementAuditRecorder managementAuditRecorder;
 
   /**
    * Creates the register-client use case.
@@ -35,14 +37,17 @@ public class RegisterOidcClientService {
    * @param oidcClientRepository client repository
    * @param passwordEncoder encoder for client secrets
    * @param oidcProperties OIDC defaults and allow-lists
+   * @param managementAuditRecorder management audit recorder
    */
   public RegisterOidcClientService(
       OidcClientRepository oidcClientRepository,
       PasswordEncoder passwordEncoder,
-      OidcSeedClientProperties oidcProperties) {
+      OidcSeedClientProperties oidcProperties,
+      ManagementAuditRecorder managementAuditRecorder) {
     this.oidcClientRepository = oidcClientRepository;
     this.passwordEncoder = passwordEncoder;
     this.oidcProperties = oidcProperties;
+    this.managementAuditRecorder = managementAuditRecorder;
   }
 
   /**
@@ -85,6 +90,8 @@ public class RegisterOidcClientService {
             authMethods,
             grantTypes);
     OidcClient saved = this.oidcClientRepository.save(client);
+    managementAuditRecorder.recordSuccess(
+        "federation:RegisterClient", "OidcClient", saved.getClientId().value());
     return RegisteredOidcClientResult.from(saved, plaintextSecret);
   }
 

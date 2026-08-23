@@ -7,6 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.iam.audit.service.ManagementAuditRecorder;
 import com.iam.federation.domain.model.OidcClient;
 import com.iam.federation.domain.repository.OidcClientRepository;
 import com.iam.federation.domain.vo.RedirectUri;
@@ -29,13 +30,18 @@ class RegisterOidcClientServiceTest {
 
   @Mock private PasswordEncoder passwordEncoder;
 
+  @Mock private ManagementAuditRecorder managementAuditRecorder;
+
   private RegisterOidcClientService useCase;
 
   @BeforeEach
   void setUp() {
     useCase =
         new RegisterOidcClientService(
-            oidcClientRepository, passwordEncoder, new OidcSeedClientProperties());
+            oidcClientRepository,
+            passwordEncoder,
+            new OidcSeedClientProperties(),
+            managementAuditRecorder);
   }
 
   @Test
