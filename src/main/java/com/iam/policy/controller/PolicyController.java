@@ -4,12 +4,10 @@ import com.iam.common.domain.vo.Arn;
 import com.iam.policy.domain.model.AuthorizationDecision;
 import com.iam.policy.domain.model.PolicyAttachment;
 import com.iam.policy.domain.model.PolicyDocument;
-import com.iam.policy.domain.repository.PolicyRepository;
-import com.iam.policy.service.CreatePolicyService;
-import com.iam.policy.service.CreatePolicyService.CreatePolicyCommand;
-import com.iam.policy.service.CreatePolicyService.StatementInput;
-import com.iam.policy.service.EvaluatePolicyService;
-import com.iam.policy.service.EvaluatePolicyService.EvaluateCommand;
+import com.iam.policy.service.PolicyService;
+import com.iam.policy.service.PolicyService.CreatePolicyCommand;
+import com.iam.policy.service.PolicyService.EvaluateCommand;
+import com.iam.policy.service.PolicyService.StatementInput;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,24 +24,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/policies")
 public class PolicyController {
 
-  private final CreatePolicyService createPolicyUseCase;
-  private final EvaluatePolicyService evaluatePolicyUseCase;
-  private final PolicyRepository policyRepository;
+  private final PolicyService policyService;
 
   /**
    * Creates the policy API controller.
    *
-   * @param createPolicyUseCase create policy use case
-   * @param evaluatePolicyUseCase evaluate policy use case
-   * @param policyRepository policy repository
+   * @param policyService policy service
    */
-  public PolicyController(
-      CreatePolicyService createPolicyUseCase,
-      EvaluatePolicyService evaluatePolicyUseCase,
-      PolicyRepository policyRepository) {
-    this.createPolicyUseCase = createPolicyUseCase;
-    this.evaluatePolicyUseCase = evaluatePolicyUseCase;
-    this.policyRepository = policyRepository;
+  public PolicyController(PolicyService policyService) {
+    this.policyService = policyService;
   }
 
   /**
@@ -56,7 +45,7 @@ public class PolicyController {
   @PreAuthorize("hasRole('IAM_ADMIN')")
   public ResponseEntity<PolicyResponse> create(@RequestBody CreatePolicyRequest request) {
     PolicyDocument policy =
-        createPolicyUseCase.execute(
+        policyService.create(
             new CreatePolicyCommand(
                 request.name(),
                 request.statements().stream()
@@ -73,7 +62,7 @@ public class PolicyController {
   @GetMapping
   @PreAuthorize("hasAnyRole('IAM_ADMIN', 'IAM_AUDITOR')")
   public List<PolicyResponse> list() {
-    return policyRepository.findAll().stream().map(PolicyResponse::from).toList();
+    return policyService.findAll().stream().map(PolicyResponse::from).toList();
   }
 
   /**
@@ -88,7 +77,7 @@ public class PolicyController {
   public PolicyAttachmentResponse attach(
       @PathVariable String policyId, @RequestBody AttachPolicyRequest request) {
     PolicyAttachment attachment =
-        createPolicyUseCase.attach(policyId, new Arn(request.principalArn()));
+        policyService.attach(policyId, new Arn(request.principalArn()));
     return new PolicyAttachmentResponse(attachment.getId(), attachment.getPrincipalArn().value());
   }
 
@@ -102,7 +91,7 @@ public class PolicyController {
   @PreAuthorize("hasAnyRole('IAM_ADMIN', 'IAM_AUDITOR')")
   public AuthorizationDecisionResponse evaluate(@RequestBody EvaluatePolicyRequest request) {
     AuthorizationDecision decision =
-        evaluatePolicyUseCase.execute(
+        policyService.evaluate(
             new EvaluateCommand(
                 request.principalId(),
                 request.principalArn(),
