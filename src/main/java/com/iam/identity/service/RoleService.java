@@ -1,40 +1,60 @@
 package com.iam.identity.service;
 
 import com.iam.audit.service.ManagementAuditRecorder;
-import com.iam.identity.domain.model.Group;
 import com.iam.identity.domain.model.IamUser;
-import com.iam.identity.domain.repository.GroupRepository;
+import com.iam.identity.domain.model.Role;
 import com.iam.identity.domain.repository.IamUserRepository;
 import com.iam.identity.domain.repository.RoleRepository;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Assigns a role to a user or adds a user to a group. */
+/** IAM role listing and assignment operations. */
 @Service
-public class AssignMembershipService {
+@Transactional(readOnly = true)
+public class RoleService {
 
   private final RoleRepository roleRepository;
-  private final GroupRepository groupRepository;
   private final IamUserRepository iamUserRepository;
   private final ManagementAuditRecorder managementAuditRecorder;
 
   /**
-   * Creates the use case.
+   * Creates the role service.
    *
    * @param roleRepository role repository
-   * @param groupRepository group repository
    * @param iamUserRepository IAM user repository
    * @param managementAuditRecorder management audit recorder
    */
-  public AssignMembershipService(
+  public RoleService(
       RoleRepository roleRepository,
-      GroupRepository groupRepository,
       IamUserRepository iamUserRepository,
       ManagementAuditRecorder managementAuditRecorder) {
     this.roleRepository = roleRepository;
-    this.groupRepository = groupRepository;
     this.iamUserRepository = iamUserRepository;
     this.managementAuditRecorder = managementAuditRecorder;
+  }
+
+  /**
+   * Returns all IAM roles.
+   *
+   * @return role list
+   */
+  public List<Role> findAll() {
+    return roleRepository.findAll();
+  }
+
+  /**
+   * Creates a role with the given name and trust policy JSON.
+   *
+   * @param name role name
+   * @param trustPolicyJson optional trust policy JSON
+   * @return persisted role
+   */
+  @Transactional
+  public Role create(String name, String trustPolicyJson) {
+    Role role = roleRepository.save(Role.create(name, trustPolicyJson));
+    managementAuditRecorder.recordSuccess("identity:CreateRole", "Role", role.getId());
+    return role;
   }
 
   /**
@@ -44,7 +64,7 @@ public class AssignMembershipService {
    * @param roleId role id
    */
   @Transactional
-  public void assignRole(String userId, String roleId) {
+  public void assignToUser(String userId, String roleId) {
     roleRepository
         .findById(roleId)
         .orElseThrow(() -> new IllegalArgumentException("role not found: " + roleId));
@@ -55,22 +75,5 @@ public class AssignMembershipService {
     user.assignRole(roleId);
     iamUserRepository.save(user);
     managementAuditRecorder.recordSuccess("identity:AssignRole", "User", userId);
-  }
-
-  /**
-   * Adds a user to a group.
-   *
-   * @param groupId group id
-   * @param userId user id
-   */
-  @Transactional
-  public void addToGroup(String groupId, String userId) {
-    Group group =
-        groupRepository
-            .findById(groupId)
-            .orElseThrow(() -> new IllegalArgumentException("group not found: " + groupId));
-    group.addMember(userId);
-    groupRepository.save(group);
-    managementAuditRecorder.recordSuccess("identity:AddGroupMember", "Group", groupId);
   }
 }
