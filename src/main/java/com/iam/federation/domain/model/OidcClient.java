@@ -74,6 +74,9 @@ public class OidcClient {
     if (this.authorizationGrantTypes.isEmpty()) {
       throw new IllegalArgumentException("at least one authorization grant type is required");
     }
+    requireOpenIdScope(this.scopes);
+    requireAuthorizationCodeGrant(this.authorizationGrantTypes);
+    requireExclusiveNoneAuth(this.clientAuthenticationMethods);
   }
 
   /**
@@ -222,6 +225,25 @@ public class OidcClient {
       copy.add(value.trim());
     }
     return Set.copyOf(copy);
+  }
+
+  private static void requireOpenIdScope(Set<String> scopes) {
+    if (!scopes.contains("openid")) {
+      throw new IllegalArgumentException("scopes must include openid");
+    }
+  }
+
+  private static void requireAuthorizationCodeGrant(Set<String> grantTypes) {
+    if (!grantTypes.contains("authorization_code")) {
+      throw new IllegalArgumentException("authorization_code grant type is required");
+    }
+  }
+
+  private static void requireExclusiveNoneAuth(Set<String> authMethods) {
+    if (authMethods.contains("none") && authMethods.size() > 1) {
+      throw new IllegalArgumentException(
+          "none cannot be combined with other authentication methods");
+    }
   }
 
   public String getId() {

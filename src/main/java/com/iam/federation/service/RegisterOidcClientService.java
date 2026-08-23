@@ -91,9 +91,6 @@ public class RegisterOidcClientService {
   private Set<String> normalizeScopes(List<String> raw) {
     Set<String> scopes =
         raw == null || raw.isEmpty() ? this.oidcProperties.defaultScopes() : Set.copyOf(raw);
-    if (!scopes.contains("openid")) {
-      throw new IllegalArgumentException("scopes must include openid");
-    }
     return scopes;
   }
 
@@ -116,9 +113,6 @@ public class RegisterOidcClientService {
     if (grants.isEmpty()) {
       grants = this.oidcProperties.defaultGrantTypes();
     }
-    if (!grants.contains("authorization_code")) {
-      throw new IllegalArgumentException("authorization_code grant type is required");
-    }
     Set<String> allowed = this.oidcProperties.allowedGrantTypes();
     for (String grant : grants) {
       if (!allowed.contains(grant)) {
@@ -138,10 +132,6 @@ public class RegisterOidcClientService {
       if (!allowed.contains(method)) {
         throw new IllegalArgumentException("unsupported client_authentication_method: " + method);
       }
-    }
-    if (methods.contains("none") && methods.size() > 1) {
-      throw new IllegalArgumentException(
-          "none cannot be combined with other authentication methods");
     }
     return methods;
   }

@@ -1,10 +1,8 @@
 package com.iam.federation.infra.security;
 
 import com.iam.common.security.SecurityRoles;
-import com.iam.federation.domain.model.FederatedIdentityLink;
-import com.iam.federation.domain.repository.FederatedIdentityLinkRepository;
+import com.iam.federation.service.FederatedIdentityProvisioningService;
 import com.iam.identity.domain.model.IamUser;
-import com.iam.identity.domain.repository.IamUserRepository;
 import com.iam.identity.domain.repository.RoleRepository;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,23 +22,18 @@ import org.springframework.stereotype.Service;
 @ConditionalOnBean(ClientRegistrationRepository.class)
 public class FederatedIdentityUserService extends DefaultOAuth2UserService {
 
-  private final FederatedIdentityLinkRepository linkRepository;
-  private final IamUserRepository iamUserRepository;
+  private final FederatedIdentityProvisioningService provisioningService;
   private final RoleRepository roleRepository;
 
   /**
    * Creates the federated user service.
    *
-   * @param linkRepository federated identity link repository
-   * @param iamUserRepository IAM user repository
+   * @param provisioningService federated identity provisioning service
    * @param roleRepository role repository
    */
   public FederatedIdentityUserService(
-      FederatedIdentityLinkRepository linkRepository,
-      IamUserRepository iamUserRepository,
-      RoleRepository roleRepository) {
-    this.linkRepository = linkRepository;
-    this.iamUserRepository = iamUserRepository;
+      FederatedIdentityProvisioningService provisioningService, RoleRepository roleRepository) {
+    this.provisioningService = provisioningService;
     this.roleRepository = roleRepository;
   }
 
@@ -49,34 +42,14 @@ public class FederatedIdentityUserService extends DefaultOAuth2UserService {
     OAuth2User oauthUser = super.loadUser(userRequest);
     String provider = userRequest.getClientRegistration().getRegistrationId();
     String subject = oauthUser.getName();
-    IamUser iamUser = resolveIamUser(provider, subject, oauthUser);
+    String email =
+        Optional.ofNullable(oauthUser.getAttribute("email")).map(Object::toString).orElse(null);
+    IamUser iamUser = provisioningService.resolveOrProvision(provider, subject, email);
     List<SimpleGrantedAuthority> authorities = new ArrayList<>();
     authorities.add(new SimpleGrantedAuthority(SecurityRoles.USER));
     roleRepository
         .findByUserId(iamUser.getId())
         .forEach(role -> authorities.add(new SimpleGrantedAuthority(role.authority())));
     return new DefaultOAuth2User(authorities, oauthUser.getAttributes(), "sub");
-  }
-
-  private IamUser resolveIamUser(String provider, String subject, OAuth2User oauthUser) {
-    Optional<FederatedIdentityLink> existing =
-        linkRepository.findByProviderAndExternalSubject(provider, subject);
-    if (existing.isPresent()) {
-      return iamUserRepository
-          .findById(existing.get().getIamUserId())
-          .orElseThrow(() -> new OAuth2AuthenticationException("linked user missing"));
-    }
-    String username = provider + ":" + subject;
-    String email =
-        Optional.ofNullable(oauthUser.getAttribute("email")).map(Object::toString).orElse(null);
-    IamUser user =
-        iamUserRepository
-            .findByUsername(username)
-            .orElseGet(
-                () ->
-                    iamUserRepository.save(
-                        IamUser.create(username, email, "{noop}federated-no-password")));
-    linkRepository.save(FederatedIdentityLink.create(user.getId(), provider, subject));
-    return user;
   }
 }
