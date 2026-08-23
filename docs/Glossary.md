@@ -27,108 +27,295 @@ This document defines the project **Ubiquitous Language**. English terms are the
 
 ## 2. Business Domains | 业务域总览
 
-| Preferred Term | 中文   | Java Package（planned） | Frontend Route（planned） | API Prefix（planned） | Feature Flag | Notes |
-| -------------- | ------ | ----------------------- | ------------------------- | --------------------- | ------------ | ----- |
-| Identity       | 身份   | `com.iam.identity`      | `/identity`               | `/api/identity`       | —            | IAM User (local login implemented); Group / Role planned |
-| Policy         | 策略   | `com.iam.policy`        | `/policies`               | `/api/policies`       | —            | Policy documents + evaluation (planned) |
-| STS            | 临时凭证 | `com.iam.sts`           | —                         | `/api/sts`            | —            | AssumeRole + temporary credentials (planned) |
-| Federation     | 联邦   | `com.iam.federation`    | —                         | OIDC endpoints        | —            | OIDC Provider (SAS) implemented; External IdP planned |
-| Console        | 控制台 | —                       | `/`                       | —                     | —            | Angular IAM Console shell |
-| Audit          | 审计   | `com.iam.audit`         | `/audit`                  | `/api/audit`          | —            | Management + AuthZ decision events |
-| Common         | 横切   | `com.iam.common`        | —                         | —                     | —            | Shared filters, errors, config |
+| Preferred Term | 中文   | Java Package | Frontend Route | API Prefix | Status | Notes |
+| -------------- | ------ | ------------ | -------------- | ---------- | ------ | ----- |
+| Identity       | 身份   | `com.iam.identity` | `/identity` | `/api/identity` | partial | `IamUser` + form login; Group / Role expanding |
+| Policy         | 策略   | `com.iam.policy` | `/policies` | `/api/policies` | planned | Policy Engine + evaluation API |
+| STS            | 临时凭证 | `com.iam.sts` | — | `/api/sts` | planned | AssumeRole + temporary JWT |
+| Federation     | 联邦   | `com.iam.federation` | — | OIDC + `/api/clients` | partial | SAS Provider done; external IdP planned |
+| Console        | 控制台 | — | `/` | — | partial | Login + client registration |
+| Audit          | 审计   | `com.iam.audit` | `/audit` | `/api/audit` | partial | Domain events: Management + AuthZ decision logs |
+| Common         | 横切   | `com.iam.common` | — | — | partial | Shared VOs, security, web errors |
 
-**Frontend route map (canonical, planned)**
+**Frontend route map (canonical)**
 
 | Route        | Preferred Term | API prefix      |
 | ------------ | -------------- | --------------- |
 | `/identity`  | Identity       | `/api/identity` |
 | `/policies`  | Policy         | `/api/policies` |
 | `/audit`     | Audit          | `/api/audit`    |
+| `/clients`   | App Registration | `/api/clients` |
 | `/`          | Console        | Control Plane REST |
 
 ---
 
-## 3. Identity | 身份
+## 3. Protocols & Standards | 协议与标准
 
-| Preferred Term (English) | 中文     | Definition                                              | Type           | Code Mapping（planned）     | Notes                          |
-| ------------------------ | -------- | ------------------------------------------------------- | -------------- | --------------------------- | ------------------------------ |
-| Principal                | 主体     | Identity that can make requests (user, role, federated) | Aggregate concept | `Principal`               | Aligns with AWS IAM Principal  |
-| IAM User                 | IAM 用户 | Long-lived human or service identity within Explore IAM | Entity         | `IamUser`                   | Distinct from app end-user session |
-| Group                    | 组       | Collection of users for shared policy attachment        | Entity         | `Group`                     | —                              |
-| Role                     | 角色     | Assumable identity with trust + permission policies     | Entity         | `Role`                      | Used with STS AssumeRole       |
-| Federated Principal      | 联邦主体 | Principal mapped from an external IdP assertion         | Entity / VO    | `FederatedPrincipal`        | After Google / GitHub login    |
-
----
-
-## 4. Policy | 策略
-
-| Preferred Term (English) | 中文           | Definition                                                         | Type        | Code Mapping（planned） | Notes |
-| ------------------------ | -------------- | ------------------------------------------------------------------ | ----------- | ----------------------- | ----- |
-| Policy Document          | 策略文档       | JSON-like document of statements (Effect, Action, Resource, Condition) | Aggregate | `PolicyDocument`        | — |
-| Identity-based Policy    | 基于身份的策略 | Policy attached to User / Group / Role                             | Entity      | `IdentityBasedPolicy`   | — |
-| Resource-based Policy    | 基于资源的策略 | Policy attached to a resource                                      | Entity      | `ResourceBasedPolicy`   | — |
-| Action                   | 操作           | API or resource operation identifier                               | Value Object | `Action`               | e.g. `iam:CreateUser` |
-| Resource                 | 资源           | Target of an Action                                                | Value Object | `Resource`             | ARN-style id planned |
-| Condition                | 条件           | Context keys that further constrain a statement                    | Value Object | `Condition`            | — |
-| Permission Boundary      | 权限边界       | Maximum permissions a principal may be granted                     | Entity      | `PermissionBoundary`   | Optional / later |
-| Authorization Decision   | 鉴权决策       | Allow or Deny result for Principal + Action + Resource + Context   | Value Object | `AuthorizationDecision` | Explicit Deny over Allow |
-| Policy Engine            | 策略引擎       | Domain service that evaluates policies                             | Domain Service | `PolicyEngine`       | Custom; not a Spring starter |
+| Preferred Term (English) | 中文 | Definition | Framework Mapping |
+| ------------------------ | ---- | ---------- | ----------------- |
+| OAuth 2.0 | OAuth 2.0 | Authorization framework; authorization code and refresh token grants | Spring Authorization Server |
+| OpenID Connect (OIDC) | 开放身份连接 | Identity layer on OAuth 2.0; `openid` scope | SAS `oidc()` |
+| Authorization Code | 授权码 | Browser redirect flow exchanging code for tokens | `/oauth2/authorize` |
+| PKCE | PKCE | Proof Key for Code Exchange for public clients | `ClientSettings.requireProofKey` |
+| Access Token | 访问令牌 | Token authorizing resource access | JWT via `OAuth2TokenCustomizer` |
+| ID Token | 身份令牌 | OIDC token carrying identity claims | `OidcTokenCustomizerConfig` |
+| Refresh Token | 刷新令牌 | Long-lived token to obtain new access tokens | SAS `TokenSettings` |
+| JWKS | JWKS | JSON Web Key Set for signature verification | `JWKSource`, `/.well-known/jwks.json` |
+| JWK | JWK | Single JSON Web Key in a JWKS | `RSAKey` in `AuthorizationServerConfig` |
+| JWT | JWT | Self-contained signed token format | `NimbusJwtDecoder` |
+| Token Introspection | 令牌自省 | Resource server validates opaque or JWT tokens | SAS introspection endpoint (optional) |
+| OAuth2 Client Authentication | OAuth2 客户端认证 | `client_secret_basic`, `client_secret_post`, `none` | Registered client settings |
+| SAML 2.0 | SAML 2.0 | Secondary federation protocol (document only) | Not in current scope |
 
 ---
 
-## 5. STS | 临时凭证
+## 4. Spring Security & Framework | Spring Security 与框架映射
 
-| Preferred Term (English) | 中文       | Definition                                              | Type      | Code Mapping（planned） | Notes |
-| ------------------------ | ---------- | ------------------------------------------------------- | --------- | ----------------------- | ----- |
-| AssumeRole               | 扮演角色   | Exchange caller identity for a Role session             | Use Case  | `AssumeRoleUseCase`     | Trust policy must Allow |
-| Temporary Credentials    | 临时凭证   | Short-lived credentials issued after AssumeRole         | Value Object | `TemporaryCredentials` | May reuse OAuth2TokenGenerator / JWT |
-| Trust Policy             | 信任策略   | Policy stating who may assume a Role                    | Entity    | `TrustPolicy`           | Evaluated before session issue |
-| Assumed Role Session     | 扮演会话   | Active session bound to a Role and expiry               | Entity    | `AssumedRoleSession`    | — |
+Terms mapping Explore IAM security behavior to [Spring Security](https://docs.spring.io/spring-security/reference/index.html) and [Spring Authorization Server](https://docs.spring.io/spring-authorization-server/reference/index.html) APIs. Use these names when discussing filters, beans, and configuration — not as domain aggregate names unless listed in a domain section below.
+
+### 4.1 Core Security
+
+| Preferred Term (English) | 中文 | Definition | Framework Mapping | Status |
+| ------------------------ | ---- | ---------- | ----------------- | ------ |
+| Spring Security | Spring Security | Servlet security framework for authentication and authorization | `spring-boot-starter-security` | implemented |
+| Security Filter Chain | 安全过滤器链 | Ordered chain of servlet filters applying security rules | `SecurityFilterChain` | implemented |
+| Authorization Server Filter Chain | 授权服务器过滤器链 | Filter chain scoped to SAS OAuth2/OIDC endpoints (`@Order(1)`) | `authorizationServerSecurityFilterChain` in `WebSecurityConfig` | implemented |
+| Default Security Filter Chain | 默认安全过滤器链 | Filter chain for SPA, form login, and management APIs (`@Order(2)`) | `defaultSecurityFilterChain` in `WebSecurityConfig` | implemented |
+| Authentication | 认证 | Verifying who the caller is | `Authentication`, `AuthenticationManager` | implemented |
+| Authorization | 授权 | Deciding whether an authenticated caller may access a resource | `AuthorizationManager`, `@PreAuthorize` | implemented |
+| Security Context | 安全上下文 | Thread-local holder for the current `Authentication` | `SecurityContextHolder` | implemented |
+| Principal | 安全主体 | Identity attached to `Authentication` (username, JWT `sub`, etc.) | `Authentication.getPrincipal()` | implemented |
+| Granted Authority | 授权权限 | Role or scope string granted to a principal (e.g. `ROLE_IAM_ADMIN`) | `GrantedAuthority`, `SimpleGrantedAuthority` | implemented |
+| Authentication Entry Point | 认证入口点 | Handles unauthenticated access (redirect to login, 401, etc.) | `OAuthAwareLoginEntryPoint` | implemented |
+| Authentication Success Handler | 认证成功处理器 | Post-login redirect (e.g. continue OAuth authorize URL) | `ContinueUrlAuthenticationSuccessHandler` | implemented |
+| Authentication Failure Handler | 认证失败处理器 | Handles failed form login | `LoginAuthenticationFailureHandler` | implemented |
+| Authentication Event | 认证事件 | Success/failure events published by Spring Security | `AuthenticationSuccessEvent`, `AbstractAuthenticationFailureEvent` | implemented |
+| Enable Web Security | 启用 Web 安全 | Activates Spring Security filter chains | `@EnableWebSecurity` on `WebSecurityConfig` | implemented |
+
+### 4.2 Session & Form Login
+
+| Preferred Term (English) | 中文 | Definition | Framework Mapping | Status |
+| ------------------------ | ---- | ---------- | ----------------- | ------ |
+| Form Login | 表单登录 | Username/password authentication via HTML form | `HttpSecurity.formLogin()` | implemented |
+| Login Page | 登录页 | SPA route served at `/login` | `form.loginPage("/login")` | implemented |
+| User Details Service | 用户详情服务 | Loads `UserDetails` for form login from IAM store | `IamUserDetailsService` implements `UserDetailsService` | implemented |
+| User Details | 用户详情 | Spring Security adapter wrapping IAM user + authorities | `org.springframework.security.core.userdetails.User` | implemented |
+| Password Encoder | 密码编码器 | One-way hash for stored passwords (never plaintext) | `BCryptPasswordEncoder` | implemented |
+| Logout | 登出 | Invalidates session and clears security context | `HttpSecurity.logout()` → `/logout` | implemented |
+| Session | 会话 | Server-side HTTP session binding authenticated principal | `HttpSession` + Spring Security context | implemented |
+
+### 4.3 OAuth 2.0 / OIDC (Authorization Server)
+
+| Preferred Term (English) | 中文 | Definition | Framework Mapping | Status |
+| ------------------------ | ---- | ---------- | ----------------- | ------ |
+| OAuth2 Authorization Server | OAuth2 授权服务器 | Spring Authorization Server issuer and token endpoints | `HttpSecurity.oauth2AuthorizationServer()` | implemented |
+| Authorization Endpoint | 授权端点 | Browser redirect to obtain authorization code | `/oauth2/authorize` | implemented |
+| Token Endpoint | 令牌端点 | Exchange code or refresh token for tokens | `/oauth2/token` | implemented |
+| OpenID Provider Configuration | OIDC 发现文档 | Machine-readable issuer metadata | `/.well-known/openid-configuration` via `oidc()` | implemented |
+| JWK Set Endpoint | JWK 集端点 | Public signing keys for JWT verification | `/.well-known/jwks.json` | implemented |
+| Registered Client Repository | 注册客户端仓库 | Persistence adapter for SAS `RegisteredClient` | `JdbcOidcClientRepository` → `oauth2_registered_client` | implemented |
+| Authorization Server Settings | 授权服务器设置 | Issuer URL and server-wide SAS options | `AuthorizationServerSettings` | implemented |
+| Token Settings | 令牌设置 | Access token and refresh token TTL | `AuthorizationServerTokenSettingsConfig` | implemented |
+| Client Settings | 客户端设置 | Per-client PKCE, consent, and metadata | `ClientSettings` on `RegisteredClient` | implemented |
+| OAuth2 Token Customizer | 令牌定制器 | Adds claims to issued access/ID tokens | `OidcTokenCustomizerConfig` | implemented |
+| JWT Encoder | JWT 编码器 | Signs JWT access tokens and assumed-role tokens | `JwtEncoder` bean in `JwtEncoderConfig` | implemented |
+| JWT Decoder | JWT 解码器 | Validates JWT signatures on resource APIs | `oauth2ResourceServer().jwt()` | implemented |
+| OAuth2 Resource Server | OAuth2 资源服务器 | Protects APIs by validating Bearer JWTs | `HttpSecurity.oauth2ResourceServer()` on SAS chain | implemented |
+| Authorization Grant Type | 授权类型 | e.g. `authorization_code`, `refresh_token` | `AuthorizationGrantType` | implemented |
+| Client Authentication Method | 客户端认证方式 | e.g. `client_secret_basic`, `client_secret_post`, `none` | `ClientAuthenticationMethod` | implemented |
+| Redirect URI | 重定向 URI | Allowed OAuth callback URL for a client | `RedirectUri` VO, `RegisteredClient.redirectUris` | implemented |
+| Scope | 范围 | OAuth scope string (e.g. `openid`, `profile`) | `RegisteredClient.scopes` | implemented |
+| Issuer | 签发者 | OIDC issuer identifier URL | `spring.security.oauth2.authorizationserver.issuer` | implemented |
+
+### 4.4 Federation (OAuth2 Client)
+
+| Preferred Term (English) | 中文 | Definition | Framework Mapping | Status |
+| ------------------------ | ---- | ---------- | ----------------- | ------ |
+| OAuth2 Client | OAuth2 客户端 | Spring Security client for upstream IdPs | `spring-boot-starter-oauth2-client` | partial |
+| OAuth2 Login | OAuth2 登录 | Browser login via external provider | `HttpSecurity.oauth2Login()` | partial |
+| Client Registration | 客户端注册 | External IdP client id/secret and endpoints | `ClientRegistration`, `ClientRegistrationRepository` | planned |
+| OAuth2 User Service | OAuth2 用户服务 | Maps external user info to local IAM principal | `FederatedIdentityUserService` | partial |
+| User Info Endpoint | 用户信息端点 | External IdP profile URL used after OAuth2 login | `oauth2Login().userInfoEndpoint()` | partial |
+
+### 4.5 Method Security & RBAC
+
+| Preferred Term (English) | 中文 | Definition | Framework Mapping | Status |
+| ------------------------ | ---- | ---------- | ----------------- | ------ |
+| Method Security | 方法级安全 | RBAC on controller/service methods | `@EnableMethodSecurity` in `MethodSecurityConfig` | implemented |
+| PreAuthorize | 预授权 | SpEL expression evaluated before method invocation | `@PreAuthorize("hasRole('IAM_ADMIN')")` | implemented |
+| Has Role | 拥有角色 | SpEL helper matching `ROLE_*` granted authority | `hasRole('IAM_ADMIN')` → `ROLE_IAM_ADMIN` | implemented |
+| Has Any Role | 拥有任一角色 | SpEL helper matching any of several roles | `hasAnyRole('IAM_ADMIN', 'IAM_AUDITOR')` | implemented |
+| Is Authenticated | 已认证 | SpEL helper requiring any authenticated principal | `@PreAuthorize("isAuthenticated()")` on STS | implemented |
+| IAM Admin Role | IAM 管理员角色 | Full management API access | `SecurityRoles.IAM_ADMIN` (`ROLE_IAM_ADMIN`) | implemented |
+| IAM Auditor Role | IAM 审计员角色 | Read-only audit and list APIs | `SecurityRoles.IAM_AUDITOR` (`ROLE_IAM_AUDITOR`) | implemented |
+| User Role | 普通用户角色 | Default role for demo / authenticated users | `SecurityRoles.USER` (`ROLE_USER`) | implemented |
+
+### 4.6 CSRF & HTTP Hardening
+
+| Preferred Term (English) | 中文 | Definition | Framework Mapping | Status |
+| ------------------------ | ---- | ---------- | ----------------- | ------ |
+| CSRF Token | CSRF 令牌 | Token validating state-changing requests | `CsrfToken` | implemented |
+| Cookie CSRF Token Repository | Cookie CSRF 仓库 | Stores CSRF token in `XSRF-TOKEN` cookie for SPA | `CookieCsrfTokenRepository.withHttpOnlyFalse()` | implemented |
+| CSRF Token Request Handler | CSRF 请求处理器 | Resolves token from header (`X-XSRF-TOKEN`) or form field | `SpaCsrfTokenRequestHandler` | implemented |
+| CSRF Cookie Filter | CSRF Cookie 过滤器 | Ensures CSRF cookie is written on each response | `CsrfCookieFilter` | implemented |
+| Security Headers | 安全响应头 | HSTS, frame options, content-type options, etc. | `HttpSecurity.headers(withDefaults())` | implemented |
+| Permit All | 全部放行 | Matcher allowing anonymous access | `authorize.requestMatchers(...).permitAll()` | implemented |
+
+### 4.7 Persistence & Domain Kernel
+
+| Preferred Term (English) | 中文 | Definition | Framework Mapping | Status |
+| ------------------------ | ---- | ---------- | ----------------- | ------ |
+| Abstract Immutable | 不可变聚合基类 | Domain/JPA base: `id` + `createdAt` | `com.iam.common.domain.base.AbstractImmutable` | implemented |
+| Abstract Entity | 可变聚合基类 | Extends immutable; adds `updatedAt` + `@Version` | `AbstractEntity` | implemented |
+| Abstract Named Entity | 具名聚合基类 | Mutable aggregate with unique `name` | `AbstractNamedEntity` | implemented |
+| Abstract Audit Event | 审计事件基类 | Immutable domain event; `createdAt` mapped to `occurred_at` | `AbstractAuditEvent` (`<<DomainEvent>>`) | implemented |
+| Abstract Embeddable | 可嵌入值对象基类 | Embeddable VO base preventing empty composite `null` | `AbstractEmbeddable` | implemented |
+| Domain Strings | 域字符串校验 | Shared non-blank string validation | `DomainStrings.requireNonBlank` | implemented |
+| Attribute Converter | 属性转换器 | JPA mapping between domain type and column | e.g. `ArnAttributeConverter`, `PolicyStatementsJsonConverter` | implemented |
+| Optimistic Locking | 乐观锁 | Concurrent update detection via `@Version` | `AbstractEntity.version` | implemented |
+| Liquibase Changelog | Liquibase 变更日志 | Versioned SQL schema migrations | `db/changelog/0.1.xml` | implemented |
+| Schema Validation | 模式校验 | Hibernate validates entities against DB schema | `spring.jpa.hibernate.ddl-auto: validate` | implemented |
 
 ---
 
-## 6. Federation | 联邦与 SSO
+## 5. Security Controls | 安全控制
 
-| Preferred Term (English) | 中文              | Definition                                              | Type       | Code Mapping（planned） | Notes |
-| ------------------------ | ----------------- | ------------------------------------------------------- | ---------- | ----------------------- | ----- |
-| OIDC Provider            | OIDC 提供方       | Explore IAM as OpenID Connect issuer                    | Container  | Spring Authorization Server | Authorization code, tokens, JWKS |
-| Registered Client        | 注册客户端        | OAuth2 / OIDC client registered for a Relying Party     | Entity     | `RegisteredClient` (SAS) | Console app registration |
-| Relying Party            | 依赖方            | Application that trusts Explore IAM for login           | Concept    | —                       | Explore AI, WhatsFeed, Shopping, Low Code |
-| External IdP             | 外部身份提供方    | Upstream IdP used for federation                        | System Ext | OAuth2 Client           | Google / GitHub |
-| SSO Login                | 单点登录          | User authenticates once and accesses multiple apps      | Use Case   | OIDC Authorization Code | See C4-Sequence-SSOLogin |
-
----
-
-## 7. Audit | 审计
-
-| Preferred Term (English) | 中文         | Definition                                       | Type   | Code Mapping（planned） | Notes |
-| ------------------------ | ------------ | ------------------------------------------------ | ------ | ----------------------- | ----- |
-| Audit Event              | 审计事件     | Record of a management or AuthZ action           | Entity | `AuditEvent`            | — |
-| Management Event         | 管理事件     | CRUD on users, roles, policies, clients          | Entity | `ManagementEvent`       | — |
-| Authorization Decision Log | 鉴权决策日志 | Persisted Allow/Deny decision with reason code | Entity | `AuthorizationDecisionLog` | — |
+| Preferred Term (English) | 中文 | Definition | Framework Capability | Status |
+| ------------------------ | ---- | ---------- | -------------------- | ------ |
+| CSRF Protection | CSRF 防护 | Prevents cross-site request forgery on session APIs | `CookieCsrfTokenRepository` | implemented |
+| Session Fixation Protection | 会话固定防护 | New session ID after authentication | Spring Security `changeSessionId` | default |
+| Method Security | 方法级安全 | RBAC on management APIs | `@EnableMethodSecurity` + `@PreAuthorize` | implemented |
+| Security Headers | 安全响应头 | HSTS, frame options, content type options | `http.headers()` | implemented |
+| Password Hashing | 密码哈希 | Stored credentials never plaintext | `PasswordEncoder` (BCrypt) | implemented |
+| Disabled User | 停用用户 | Principal cannot authenticate when disabled | `UserDetails.isEnabled()` | implemented |
+| Consent | 授权同意 | User approves OAuth client scopes | `OAuth2AuthorizationConsentService` | planned |
+| Persistent Signing Key | 持久化签名密钥 | JWKS stable across restarts | `SigningKeyEntity`, `PersistentJwkSourceConfig` | implemented |
+| Implicit Deny | 隐式拒绝 | No matching Allow → Deny | `PolicyEngine` default | implemented |
+| Reason Code | 理由码 | Machine-readable authz/audit outcome | `ReasonCode` VO | implemented |
+| Least Privilege Session | 最小权限会话 | Short TTL temporary credentials | STS + `TokenSettings` | implemented |
+| IAM Admin Role | IAM 管理员角色 | Console and management API access | `ROLE_IAM_ADMIN` | implemented |
+| IAM Auditor Role | IAM 审计员角色 | Read-only audit API access | `ROLE_IAM_AUDITOR` | implemented |
 
 ---
 
-## 8. Console | 控制台
+## 6. Identity | 身份
 
-| Preferred Term (English) | 中文       | Definition                          | Type | Code Mapping（planned） | Notes |
-| ------------------------ | ---------- | ----------------------------------- | ---- | ----------------------- | ----- |
-| IAM Console              | IAM 控制台 | Angular SPA for administrators      | UI   | Angular 22 app          | Routes under `/identity`, `/policies`, `/audit` |
-| App Registration         | 应用注册   | UI flow to create a Registered Client | Use Case | Console + Control Plane | — |
+| Preferred Term (English) | 中文 | Definition | Type | Code Mapping | Status |
+| ------------------------ | ---- | ---------- | ---- | ------------ | ------ |
+| Principal | 主体 | Identity that can make requests | Concept | `Principal` | — |
+| IAM User | IAM 用户 | Long-lived human or service identity | Entity | `IamUser` | implemented |
+| User Status | 用户状态 | `ACTIVE` or `DISABLED` | Enum | `UserStatus` | via `enabled` flag |
+| Group | 组 | Collection of users for shared policy attachment | Entity | `Group` | planned |
+| Group Membership | 组成员关系 | User belongs to a Group | Entity | `GroupMembership` | planned |
+| Role | 角色 | Assumable identity with trust + permission policies | Entity | `Role` | planned |
+| Role ARN | 角色 ARN | Stable identifier for a Role | Value Object | `Arn` | planned |
+| Federated Principal | 联邦主体 | Principal mapped from external IdP | Entity | `FederatedPrincipal` | planned |
+| Trust Policy Document | 信任策略文档 | JSON policy defining who may assume a Role | Value Object | `TrustPolicyDocument` | planned |
 
 ---
 
-## 9. Dev Tooling | 开发工具
+## 7. Policy | 策略
 
-| Preferred Term (English) | 中文     | Definition                                              | Type    | Code Mapping              | Notes |
-| ------------------------ | -------- | ------------------------------------------------------- | ------- | ------------------------- | ----- |
-| Orchestrator             | 编排器   | Agent that delegates tasks to specialized Subagents     | Pattern | `.cursor/agents/orchestrator.md` | Cursor agent routing (dev tooling) |
-| Subagent                 | 子智能体 | Specialized Agent focused on a single responsibility    | Pattern | `.cursor/agents/*.md`     | e.g. developer, product-owner, business-analyst |
+| Preferred Term (English) | 中文 | Definition | Type | Code Mapping | Status |
+| ------------------------ | ---- | ---------- | ---- | ------------ | ------ |
+| Policy Document | 策略文档 | Document of statements (Effect, Action, Resource, Condition) | Aggregate | `PolicyDocument` | planned |
+| Policy Statement | 策略语句 | Single Allow or Deny rule block | Entity | `PolicyStatement` | planned |
+| Effect | 效力 | `ALLOW` or `DENY` | Enum | `Effect` | planned |
+| Identity-based Policy | 基于身份的策略 | Policy attached to User / Group / Role | Entity | `IdentityBasedPolicy` | planned |
+| Resource-based Policy | 基于资源的策略 | Policy attached to a resource | Entity | `ResourceBasedPolicy` | planned |
+| Policy Attachment | 策略附加 | Links Policy Document to a principal or resource | Entity | `PolicyAttachment` | planned |
+| Action | 操作 | API or resource operation identifier | Value Object | `Action` | planned |
+| Resource | 资源 | Target of an Action | Value Object | `Resource` | planned |
+| Condition | 条件 | Context keys constraining a statement | Value Object | `Condition` | planned |
+| Evaluation Context | 求值上下文 | Principal + Action + Resource + request context | Value Object | `EvaluationContext` | planned |
+| Authorization Decision | 鉴权决策 | Allow or Deny with reason (ephemeral) | Value Object | `AuthorizationDecision` | implemented |
+| Authorization Decision Log | 鉴权决策日志 | Persisted domain event after evaluation | Domain Event | `AuthorizationDecisionLog` (§10) | implemented |
+| Policy Engine | 策略引擎 | Evaluates policies: Deny > Allow > Implicit Deny | Domain Service | `PolicyEngine` | planned |
+| Permission Boundary | 权限边界 | Maximum permissions cap | Entity | `PermissionBoundary` | later |
+
+---
+
+## 8. STS | 临时凭证
+
+| Preferred Term (English) | 中文 | Definition | Type | Code Mapping | Status |
+| ------------------------ | ---- | ---------- | ---- | ------------ | ------ |
+| AssumeRole | 扮演角色 | Exchange caller identity for Role session | Use Case | `AssumeRoleService` | implemented |
+| Temporary Credentials | 临时凭证 | Short-lived token after AssumeRole | Value Object | `TemporaryCredentials` | planned |
+| Trust Policy | 信任策略 | Policy for who may assume a Role | Entity | `TrustPolicy` | planned |
+| Assumed Role Session | 扮演会话 | Active session bound to Role and expiry | Entity | `AssumedRoleSession` | planned |
+| Session Name | 会话名称 | Caller-provided session identifier | Value Object | `SessionName` | planned |
+| Expiration | 过期时间 | Credential validity end | Value Object | `Expiration` | planned |
+| Caller Principal | 调用方主体 | Principal requesting AssumeRole | Value Object | `PrincipalId` | planned |
+
+---
+
+## 9. Federation | 联邦与 SSO
+
+| Preferred Term (English) | 中文 | Definition | Type | Code Mapping | Status |
+| ------------------------ | ---- | ---------- | ---- | ------------ | ------ |
+| OIDC Provider | OIDC 提供方 | Explore IAM as OIDC issuer | Container | Spring Authorization Server | implemented |
+| Registered Client | 注册客户端 | OAuth2 / OIDC client for a Relying Party | Entity | `OidcClient` / SAS `RegisteredClient` | implemented |
+| Relying Party | 依赖方 | Application trusting Explore IAM | Concept | — | — |
+| External IdP | 外部身份提供方 | Upstream IdP (Google / GitHub) | System Ext | OAuth2 Client | planned |
+| Identity Provider | 身份提供方 | Configured external OAuth2 provider | Entity | `IdentityProvider` | planned |
+| Federated Identity Link | 联邦身份链接 | Maps external `sub` to IAM principal | Entity | `FederatedIdentityLink` | planned |
+| OAuth2 Login | OAuth2 登录 | Browser login via external provider | Capability | `oauth2Login()` | planned |
+| SSO Login | 单点登录 | One login for multiple Relying Parties | Use Case | OIDC Authorization Code | implemented |
+
+---
+
+## 10. Audit & Domain Events | 审计与领域事件
+
+Explore IAM distinguishes **domain events** (ubiquitous-language facts persisted in
+`com.iam.audit`) from **framework events** (Spring Security
+`AuthenticationSuccessEvent` — see §4.1). Domain events are append-only,
+immutable, and extend `AbstractAuditEvent`.
+
+| Preferred Term (English) | 中文 | Definition | Type | Code Mapping | Status |
+| ------------------------ | ---- | ---------- | ---- | ------------ | ------ |
+| Domain Event | 领域事件 | Past-tense fact in the domain; append-only | Concept | `AbstractAuditEvent` hierarchy | implemented |
+| Abstract Audit Event | 审计事件基类 | Kernel for immutable audit rows; `occurred_at` column | Base class | `AbstractAuditEvent` | implemented |
+| Management Event | 管理事件 | Management-plane action (actor, target, outcome) | Domain Event | `ManagementEvent` | implemented |
+| Authorization Decision Log | 鉴权决策日志 | Persisted Allow/Deny with reason code | Domain Event | `AuthorizationDecisionLog` | implemented |
+| Audit Outcome | 审计结果 | Success or failure of a management operation | Enum | `AuditOutcome` | implemented |
+| Occurred At | 发生时间 | When the domain event was recorded | Attribute | `AbstractAuditEvent.getOccurredAt()` | implemented |
+| Event Actor | 事件主体 | Principal that performed the management action | Attribute | `ManagementEvent.actor` | implemented |
+| Event Target Type | 事件目标类型 | Kind of resource affected (user, role, policy, …) | Attribute | `ManagementEvent.targetType` | implemented |
+| Event Target Id | 事件目标标识 | Identifier of the affected resource | Attribute | `ManagementEvent.targetId` | implemented |
+| Immutable Audit Record | 不可变审计记录 | Append-only audit row; no updates after insert | Pattern | `ManagementEvent`, `AuthorizationDecisionLog` | implemented |
+
+**Not domain events (do not model as aggregates):**
+
+| Preferred Term (English) | 中文 | Definition | Type | Code Mapping | Status |
+| ------------------------ | ---- | ---------- | ---- | ------------ | ------ |
+| Authentication Event | 认证事件 | Spring Security login success/failure notification | Framework Event | `AuthenticationSuccessEvent` | implemented |
+| Authorization Decision | 鉴权决策 | Ephemeral evaluation result before persistence | Value Object | `AuthorizationDecision` | implemented |
+
+---
+
+## 11. Console | 控制台
+
+| Preferred Term (English) | 中文 | Definition | Type | Code Mapping | Status |
+| ------------------------ | ---- | ---------- | ---- | ------------ | ------ |
+| IAM Console | IAM 控制台 | Angular SPA for administrators | UI | Angular 22 app | partial |
+| App Registration | 应用注册 | Create Registered Client | Use Case | Console + `/api/clients` | implemented |
+
+---
+
+## 12. Dev Tooling | 开发工具
+
+| Preferred Term (English) | 中文 | Definition | Type | Code Mapping | Notes |
+| ------------------------ | ---- | ---------- | ---- | ------------ | ----- |
+| Orchestrator | 编排器 | Agent delegating to Subagents | Pattern | `.cursor/agents/orchestrator.md` | dev tooling |
+| Subagent | 子智能体 | Specialized single-purpose Agent | Pattern | `.cursor/agents/*.md` | dev tooling |
 
 ---
 
 ## Reference
 
 - [AWS IAM User Guide](https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html)
+- [Spring Security Reference](https://docs.spring.io/spring-security/reference/index.html)
+- [Spring Authorization Server](https://docs.spring.io/spring-authorization-server/reference/index.html)
+- [Spring Security OAuth2](https://docs.spring.io/spring-security/reference/servlet/oauth2/index.html)
 - [C4 model](developer/c4-model/)
 - [User Story Map](product-owner/User-Story-Map.md)
