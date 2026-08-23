@@ -91,12 +91,6 @@
       BorderColor #FB923C
       FontColor #7C2D12
     }
-    .DomainEvent {
-      BackgroundColor #F5F3FF
-      BorderColor #8B5CF6
-      FontColor #4C1D95
-      BorderThickness 1.5
-    }
   }
   sequenceDiagram {
     LineColor #A1A1AA
@@ -154,7 +148,6 @@
       RoundCorner 12
     }
 
-    ' Role stereotypes for Dynamic diagrams (apply <<ui>> <<java>> …)
     .ui {
       BackgroundColor #F8FAFC
       BorderColor #64748B
@@ -203,13 +196,6 @@ skinparam sequenceMessageAlign center
 skinparam ParticipantPadding 20
 skinparam BoxPadding 12
 
-skinparam class {
-  BackgroundColor<<DomainEvent>> #F5F3FF
-  BorderColor<<DomainEvent>> #8B5CF6
-  FontColor<<DomainEvent>> #4C1D95
-}
-
-' Fallback for engines that style sequence via skinparam stereotypes
 skinparam participant {
   BackgroundColor<<ui>> #F8FAFC
   BorderColor<<ui>> #64748B
