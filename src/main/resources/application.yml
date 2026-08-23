@@ -39,6 +39,10 @@ app:
     username: ${APP_DEMO_USER_USERNAME:demo}
     password: ${APP_DEMO_USER_PASSWORD:demo-password}
     email: ${APP_DEMO_USER_EMAIL:demo@explore-iam.local}
+  security:
+    token:
+      access-token-ttl: ${APP_ACCESS_TOKEN_TTL:PT15M}
+      assume-role-ttl: ${APP_ASSUME_ROLE_TTL:PT1H}
   oidc:
     defaults:
       scopes: [openid, profile, email]
@@ -67,6 +71,18 @@ app:
           - openid
           - profile
           - email
+
+# Uncomment and set credentials to enable Google/GitHub federated login:
+# spring.security.oauth2.client.registration.google:
+#   client-id: ${GOOGLE_CLIENT_ID}
+#   client-secret: ${GOOGLE_CLIENT_SECRET}
+#   scope: openid, profile, email
+# spring.security.oauth2.client.provider.google:
+#   issuer-uri: https://accounts.google.com
+# spring.security.oauth2.client.registration.github:
+#   client-id: ${GITHUB_CLIENT_ID}
+#   client-secret: ${GITHUB_CLIENT_SECRET}
+#   scope: read:user, user:email
 
 logging:
   level:
