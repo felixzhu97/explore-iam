@@ -14,15 +14,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/sts")
 public class StsController {
 
-  private final AssumeRoleService assumeRoleUseCase;
+  private final AssumeRoleService assumeRoleService;
 
   /**
    * Creates the STS API controller.
    *
-   * @param assumeRoleUseCase assume-role use case
+   * @param assumeRoleService assume-role service
    */
-  public StsController(AssumeRoleService assumeRoleUseCase) {
-    this.assumeRoleUseCase = assumeRoleUseCase;
+  public StsController(AssumeRoleService assumeRoleService) {
+    this.assumeRoleService = assumeRoleService;
   }
 
   /**
@@ -35,7 +35,8 @@ public class StsController {
   @PreAuthorize("isAuthenticated()")
   public AssumeRoleResponse assumeRole(@RequestBody AssumeRoleRequest request) {
     AssumeRoleResult result =
-        assumeRoleUseCase.execute(new AssumeRoleCommand(request.roleArn(), request.sessionName()));
+        assumeRoleService.assumeRole(
+            new AssumeRoleCommand(request.roleArn(), request.sessionName()));
     return new AssumeRoleResponse(
         result.accessToken(), result.expiration().toString(), result.sessionId());
   }
