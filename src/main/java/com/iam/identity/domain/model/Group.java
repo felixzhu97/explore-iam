@@ -1,10 +1,16 @@
 package com.iam.identity.domain.model;
 
 import com.iam.common.domain.base.AbstractNamedEntity;
+import com.iam.common.domain.base.DomainStrings;
 import com.iam.common.domain.vo.Arn;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -16,6 +22,9 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public class Group extends AbstractNamedEntity {
+
+  @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
+  private final List<GroupMember> members = new ArrayList<>();
 
   private Group(String id, String name, Instant createdAt, Instant updatedAt) {
     super(id, name, createdAt, updatedAt);
@@ -49,5 +58,45 @@ public class Group extends AbstractNamedEntity {
   /** Returns the ARN for this group. */
   public Arn arn() {
     return new Arn("arn:iam::explore-iam:group/" + getName());
+  }
+
+  /**
+   * Adds a user to the group when not already a member.
+   *
+   * @param userId user id
+   */
+  public void addMember(String userId) {
+    String normalized = DomainStrings.requireNonBlank(userId, "userId");
+    if (hasMember(normalized)) {
+      return;
+    }
+    members.add(new GroupMember(this, normalized));
+    touch();
+  }
+
+  /**
+   * Removes a user from the group.
+   *
+   * @param userId user id
+   */
+  public void removeMember(String userId) {
+    if (members.removeIf(member -> member.userId().equals(userId))) {
+      touch();
+    }
+  }
+
+  /**
+   * Returns true when the user is a member.
+   *
+   * @param userId user id
+   * @return whether the user belongs to this group
+   */
+  public boolean hasMember(String userId) {
+    return members.stream().anyMatch(member -> member.userId().equals(userId));
+  }
+
+  /** Returns member user ids. */
+  public List<String> memberUserIds() {
+    return Collections.unmodifiableList(members.stream().map(GroupMember::userId).toList());
   }
 }

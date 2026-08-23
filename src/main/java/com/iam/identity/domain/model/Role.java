@@ -56,6 +56,21 @@ public class Role extends AbstractNamedEntity {
   }
 
   /**
+   * Creates a role using optional trust policy JSON.
+   *
+   * @param name role name
+   * @param trustPolicyJson trust policy JSON; blank uses allow-all default
+   * @return new aggregate
+   */
+  public static Role create(String name, String trustPolicyJson) {
+    TrustPolicyDocument trust =
+        trustPolicyJson == null || trustPolicyJson.isBlank()
+            ? TrustPolicyDocument.allowAll()
+            : new TrustPolicyDocument(trustPolicyJson);
+    return create(name, trust);
+  }
+
+  /**
    * Rebuilds a role from persistence.
    *
    * @param id internal id
