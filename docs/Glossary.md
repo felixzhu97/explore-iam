@@ -30,9 +30,9 @@ This document defines the project **Ubiquitous Language**. English terms are the
 | Preferred Term | 中文   | Java Package | Frontend Route | API Prefix | Status | Notes |
 | -------------- | ------ | ------------ | -------------- | ---------- | ------ | ----- |
 | Identity       | 身份   | `com.iam.identity` | `/identity` | `/api/identity` | partial | `IamUser` + form login; Group / Role expanding |
-| Policy         | 策略   | `com.iam.policy` | `/policies` | `/api/policies` | planned | Policy Engine + evaluation API |
-| STS            | 临时凭证 | `com.iam.sts` | — | `/api/sts` | planned | AssumeRole + temporary JWT |
-| Federation     | 联邦   | `com.iam.federation` | — | OIDC + `/api/clients` | partial | SAS Provider done; external IdP planned |
+| Policy         | 策略   | `com.iam.policy` | `/policies` | `/api/policies` | partial | Policy Engine + evaluation API |
+| STS            | 临时凭证 | `com.iam.sts` | — | `/api/sts` | partial | AssumeRole + temporary JWT |
+| Federation     | 联邦   | `com.iam.federation` | — | OIDC + `/api/clients` | partial | SAS Provider + `FederatedIdentityLink` |
 | Console        | 控制台 | — | `/` | — | partial | Login + client registration |
 | Audit          | 审计   | `com.iam.audit` | `/audit` | `/api/audit` | partial | Immutable audit aggregates (management + AuthZ) |
 | Common         | 横切   | `com.iam.common` | — | — | partial | Shared VOs, security, web errors |
@@ -172,6 +172,7 @@ Terms mapping Explore IAM security behavior to [Spring Security](https://docs.sp
 | Abstract Audit Event | 不可变审计聚合基类 | Immutable audit aggregate base; `occurred_at` column | `AbstractAuditEvent` | implemented |
 | Abstract Embeddable | 可嵌入值对象基类 | Embeddable VO base preventing empty composite `null` | `AbstractEmbeddable` | implemented |
 | Domain Strings | 域字符串校验 | Shared non-blank string validation | `DomainStrings.requireNonBlank` | implemented |
+| Semantic Accessor | 语义化访问器 | Public domain method expressing read intent without exposing persistence fields | Pattern | e.g. `IamUser.isLoginEnabled`, `PolicyDocument.statements` | implemented |
 | Attribute Converter | 属性转换器 | JPA mapping between domain type and column | e.g. `ArnAttributeConverter`, `PolicyStatementsJsonConverter` | implemented |
 | Optimistic Locking | 乐观锁 | Concurrent update detection via `@Version` | `AbstractEntity.version` | implemented |
 | Liquibase Changelog | Liquibase 变更日志 | Versioned SQL schema migrations | `db/changelog/0.1.xml` | implemented |
@@ -199,6 +200,26 @@ Terms mapping Explore IAM security behavior to [Spring Security](https://docs.sp
 
 ---
 
+## 5.5 Shared Value Objects | 共享值对象
+
+Cross-bounded-context value objects in `com.iam.common.domain.vo`.
+
+| Preferred Term (English) | 中文 | Definition | Type | Code Mapping | Status |
+| ------------------------ | ---- | ---------- | ---- | ------------ | ------ |
+| ARN | ARN | Explore IAM resource name (`arn:iam::explore-iam:…`) | Value Object | `Arn` | implemented |
+| User ARN | 用户 ARN | ARN for an IAM User | Factory | `Arn.user` | implemented |
+| Role ARN | 角色 ARN | ARN for an IAM Role | Factory | `Arn.role` | implemented |
+| Principal ID | 主体 ID | Identifier of the principal under evaluation | Value Object | `PrincipalId` | implemented |
+| Action | 操作 | API or resource operation identifier | Value Object | `Action` | implemented |
+| Resource | 资源 | Target of an Action | Value Object | `Resource` | implemented |
+| Effect | 效力 | `ALLOW` or `DENY` | Enum | `Effect` | implemented |
+| Reason Code | 理由码 | Machine-readable authorization outcome | Value Object | `ReasonCode` | implemented |
+| Explicit Deny Reason | 显式拒绝理由 | Matched Deny statement | Constant | `ReasonCode.EXPLICIT_DENY` | implemented |
+| Explicit Allow Reason | 显式允许理由 | Matched Allow statement | Constant | `ReasonCode.EXPLICIT_ALLOW` | implemented |
+| Implicit Deny Reason | 隐式拒绝理由 | No Allow matched | Constant | `ReasonCode.IMPLICIT_DENY` | implemented |
+
+---
+
 ## 6. Identity | 身份
 
 | Preferred Term (English) | 中文 | Definition | Type | Code Mapping | Status |
@@ -206,15 +227,28 @@ Terms mapping Explore IAM security behavior to [Spring Security](https://docs.sp
 | Principal | 主体 | Identity that can make requests | Concept | `Principal` | — |
 | IAM User | IAM 用户 | Long-lived human or service identity | Aggregate | `IamUser` | implemented |
 | User Status | 用户状态 | `ACTIVE` or `DISABLED` | Enum | `UserStatus` | via `enabled` flag |
+| Enable User | 启用用户 | Re-enables form login for a user | Behavior | `IamUser.enable` | implemented |
+| Disable User | 禁用用户 | Blocks form login for a user | Behavior | `IamUser.disable` | implemented |
+| Change Email | 修改邮箱 | Updates the user's contact email | Behavior | `IamUser.changeEmail` | implemented |
+| Has Role | 拥有角色 | Whether a role is assigned to the user | Behavior | `IamUser.hasRole` | implemented |
+| Assigned Role IDs | 已分配角色 ID | Read-only view of assigned role ids | Behavior | `IamUser.assignedRoleIds` | implemented |
+| Encoded Password Hash | 编码密码哈希 | Stored credential for Spring Security only | Behavior | `IamUser.encodedPasswordHash` | implemented |
+| Login Enabled | 登录已启用 | Whether form login is permitted | Behavior | `IamUser.isLoginEnabled` | implemented |
 | Group | 组 | Collection of users for shared policy attachment | Aggregate | `Group` | implemented |
+| Group ARN | 组 ARN | Stable identifier for a Group | Behavior | `Group.arn` | implemented |
 | Group Member | 组成员 | Child entity linking a user to a group | Entity | `GroupMember` | implemented |
 | Group Membership | 组成员关系 | User belongs to a Group | Behavior | `Group.addMember` | implemented |
+| Remove Group Member | 移除组成员 | Removes a user from the group | Behavior | `Group.removeMember` | implemented |
+| Has Member | 拥有成员 | Whether a user belongs to the group | Behavior | `Group.hasMember` | implemented |
+| Member User IDs | 成员用户 ID | Read-only view of member user ids | Behavior | `Group.memberUserIds` | implemented |
 | Role Assignment | 角色分配 | User assigned to a Role | Behavior | `IamUser.assignRole` | implemented |
 | User Role Assignment | 用户角色分配 | Child entity linking a role to a user | Entity | `UserRoleAssignment` | implemented |
 | Role | 角色 | Assumable identity with trust + permission policies | Aggregate | `Role` | implemented |
-| Role ARN | 角色 ARN | Stable identifier for a Role | Value Object | `Arn` | implemented |
-| Federated Principal | 联邦主体 | Principal mapped from external IdP | Concept | `provider:subject` username | implemented |
+| Role ARN Accessor | 角色 ARN 访问 | Returns this role's ARN value object | Behavior | `Role.arn` | implemented |
+| Trust Policy Accessor | 信任策略访问 | Returns trust policy governing assume-role | Behavior | `Role.trustPolicy` | implemented |
+| Role Authority | 角色权限 | Spring Security `ROLE_*` granted authority | Behavior | `Role.authority` | implemented |
 | Trust Policy Document | 信任策略文档 | JSON policy defining who may assume a Role | Value Object | `TrustPolicyDocument` | implemented |
+| Federated Principal | 联邦主体 | Principal mapped from external IdP | Concept | `provider:subject` username | implemented |
 | Create Federated User | 创建联邦用户 | Factory for external IdP login | Behavior | `IamUser.createForFederatedLogin` | implemented |
 
 ---
@@ -223,16 +257,19 @@ Terms mapping Explore IAM security behavior to [Spring Security](https://docs.sp
 
 | Preferred Term (English) | 中文 | Definition | Type | Code Mapping | Status |
 | ------------------------ | ---- | ---------- | ---- | ------------ | ------ |
-| Policy Document | 策略文档 | Document of statements (Effect, Action, Resource, Condition) | Aggregate | `PolicyDocument` | implemented |
-| Policy Statement | 策略语句 | Single Allow or Deny rule block | Entity | `PolicyStatement` | implemented |
-| Effect | 效力 | `ALLOW` or `DENY` | Enum | `Effect` | implemented |
+| Policy Document | 策略文档 | Document of statements (Effect, Action, Resource) | Aggregate | `PolicyDocument` | implemented |
+| Policy Statement | 策略语句 | Single Allow or Deny rule block embedded in JSON | Value Object | `PolicyStatement` | implemented |
+| Policy Statements | 策略语句集合 | Unmodifiable view of embedded statements | Behavior | `PolicyDocument.statements` | implemented |
+| Effect | 效力 | `ALLOW` or `DENY` | Enum | `Effect` | see §5.5 |
 | Identity-based Policy | 基于身份的策略 | Policy attached to User / Group / Role | Entity | `IdentityBasedPolicy` | planned |
 | Resource-based Policy | 基于资源的策略 | Policy attached to a resource | Entity | `ResourceBasedPolicy` | planned |
-| Policy Attachment | 策略附加 | Links Policy Document to a principal or resource | Aggregate | `PolicyAttachment` | implemented |
-| Action | 操作 | API or resource operation identifier | Value Object | `Action` | implemented |
-| Resource | 资源 | Target of an Action | Value Object | `Resource` | implemented |
+| Policy Attachment | 策略附加 | Links Policy Document to a principal ARN | Aggregate | `PolicyAttachment` | implemented |
+| Policy ID Reference | 策略 ID 引用 | Attached policy document id | Behavior | `PolicyAttachment.policyId` | implemented |
+| Principal ARN | 主体 ARN | ARN the policy is attached to | Behavior | `PolicyAttachment.principalArn` | implemented |
+| Action | 操作 | API or resource operation identifier | Value Object | `Action` | see §5.5 |
+| Resource | 资源 | Target of an Action | Value Object | `Resource` | see §5.5 |
 | Condition | 条件 | Context keys constraining a statement | Value Object | `Condition` | planned |
-| Evaluation Context | 求值上下文 | Principal + Action + Resource + request context | Value Object | `EvaluationContext` | implemented |
+| Evaluation Context | 求值上下文 | Principal + Action + Resource | Value Object | `EvaluationContext` | implemented |
 | Authorization Decision | 鉴权决策 | Allow or Deny with reason | Value Object | `AuthorizationDecision` | implemented |
 | Policy Engine | 策略引擎 | Evaluates policies: Deny > Allow > Implicit Deny | Domain Service | `PolicyEngine` | implemented |
 | Permission Boundary | 权限边界 | Maximum permissions cap | Entity | `PermissionBoundary` | later |
@@ -245,11 +282,12 @@ Terms mapping Explore IAM security behavior to [Spring Security](https://docs.sp
 | ------------------------ | ---- | ---------- | ---- | ------------ | ------ |
 | AssumeRole | 扮演角色 | Exchange caller identity for Role session | Use Case | `AssumeRoleService` | implemented |
 | Temporary Credentials | 临时凭证 | Short-lived token after AssumeRole | Value Object | `TemporaryCredentials` | planned |
-| Trust Policy | 信任策略 | Policy for who may assume a Role | Entity | `TrustPolicy` | planned |
+| Trust Policy | 信任策略 | Policy for who may assume a Role | Concept | `TrustPolicyDocument` on `Role` | implemented |
 | Assumed Role Session | 扮演会话 | Active session bound to Role and expiry | Aggregate | `AssumedRoleSession` | implemented |
-| Session Name | 会话名称 | Caller-provided session identifier | Value Object | `SessionName` | planned |
-| Expiration | 过期时间 | Credential validity end | Value Object | `Expiration` | planned |
-| Caller Principal | 调用方主体 | Principal requesting AssumeRole | Value Object | `PrincipalId` | planned |
+| Session Name | 会话名称 | Caller-provided session identifier | Behavior | `AssumedRoleSession.sessionName` | implemented |
+| Expiration | 过期时间 | Credential validity end | Behavior | `AssumedRoleSession.expiresAt` | implemented |
+| Session Expired | 会话已过期 | Whether credentials are no longer valid | Behavior | `AssumedRoleSession.isExpired` | implemented |
+| Caller Principal | 调用方主体 | Principal that requested AssumeRole | Behavior | `AssumedRoleSession.callerPrincipal` | implemented |
 
 ---
 
@@ -258,12 +296,18 @@ Terms mapping Explore IAM security behavior to [Spring Security](https://docs.sp
 | Preferred Term (English) | 中文 | Definition | Type | Code Mapping | Status |
 | ------------------------ | ---- | ---------- | ---- | ------------ | ------ |
 | OIDC Provider | OIDC 提供方 | Explore IAM as OIDC issuer | Container | Spring Authorization Server | implemented |
-| Registered Client | 注册客户端 | OAuth2 / OIDC client for a Relying Party | Entity | `OidcClient` / SAS `RegisteredClient` | implemented |
+| OIDC Client | OIDC 客户端 | Domain aggregate for Relying Party registration | Aggregate | `OidcClient` | implemented |
+| Registered Client | 注册客户端 | OAuth2 / OIDC client for a Relying Party | Concept | `OidcClient` / SAS `RegisteredClient` | implemented |
+| Client ID | 客户端 ID | OAuth2 / OIDC `client_id` value object | Value Object | `ClientId` | implemented |
+| Public Client | 公共客户端 | Client authenticated with `none` only | Behavior | `OidcClient.isPublicClient` | implemented |
 | Relying Party | 依赖方 | Application trusting Explore IAM | Concept | — | — |
 | External IdP | 外部身份提供方 | Upstream IdP (Google / GitHub) | System Ext | OAuth2 Client | planned |
 | Identity Provider | 身份提供方 | Configured external OAuth2 provider | Entity | `IdentityProvider` | planned |
-| Federated Identity Link | 联邦身份链接 | Maps external `sub` to IAM principal | Entity | `FederatedIdentityLink` | planned |
-| OAuth2 Login | OAuth2 登录 | Browser login via external provider | Capability | `oauth2Login()` | planned |
+| Federated Identity Link | 联邦身份链接 | Maps external provider + subject to local user | Aggregate | `FederatedIdentityLink` | implemented |
+| Linked User ID | 关联用户 ID | Local IAM User id for a federation link | Behavior | `FederatedIdentityLink.linkedUserId` | implemented |
+| External Subject | 外部主体 | Subject identifier from the external IdP | Attribute | `FederatedIdentityLink.externalSubject` | implemented |
+| Provider | 联邦提供方 | External IdP provider key (e.g. `google`) | Attribute | `FederatedIdentityLink.provider` | implemented |
+| OAuth2 Login | OAuth2 登录 | Browser login via external provider | Capability | `oauth2Login()` | partial |
 | SSO Login | 单点登录 | One login for multiple Relying Parties | Use Case | OIDC Authorization Code | implemented |
 
 ---
