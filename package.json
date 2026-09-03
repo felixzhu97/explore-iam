@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --port 4201 --host 127.0.0.1",
+    "start": "ng serve --port 4210 --host 127.0.0.1",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
