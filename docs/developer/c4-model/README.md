@@ -11,7 +11,7 @@ Style standards: global [c4-model](~/.cursor/skills/scrum-team/developers/develo
 | Track | Files | Style |
 |-------|-------|-------|
 | **Structural C4** | C1–C3, Deployment | `C4_blue_new` theme (wireframe) |
-| **Domain + Dynamics** | Code domain model, `C4-Dynamic-*` | `style-zinc.puml` (zinc palette) |
+| **Domain + Dynamics** | Code domain model, `C4-Dynamic-*` | [`style-zinc.puml`](style-zinc.puml)（白底 + 彩色边框/标题，IAM 风格） |
 
 ## File set
 
@@ -24,7 +24,7 @@ Style standards: global [c4-model](~/.cursor/skills/scrum-team/developers/develo
 | `C4-Deployment.puml` | Deployment | **Single** view: local H2 dev + production target topology |
 | `C4-Dynamic-SSOLogin.puml` | Dynamic | OIDC Authorization Code + optional external IdP |
 | `C4-Dynamic-PolicyEvaluation.puml` | Dynamic | AssumeRole + PolicyEngine (Deny > Allow > implicit Deny) |
-| `style-zinc.puml` | Shared | Zinc styles for Code + Dynamic diagrams only |
+| `style-zinc.puml` | Shared | Code + Dynamic 共用样式（白底、标题色区分 stereotype） |
 
 ## Stack & ports
 

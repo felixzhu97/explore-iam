@@ -58,6 +58,16 @@ journey
         查询鉴权决策: 5: 合规审计员
 ```
 
+### 活文档与架构
+
+```mermaid
+journey
+    title 活文档与架构
+    section 领域模型
+        核对 C4 与 Glossary: 4: 跨仓开发者
+        跨仓统一 C4 视觉: 3: 架构评审参与者
+```
+
 ---
 
 ## Backbone 故事地图
@@ -69,6 +79,13 @@ journey
 | [US-01](./user-stories/E1-identity.md#us-01-管理-iam-用户) 管理用户 | [US-04](./user-stories/E2-policy.md#us-04-编写并附加策略) 编写/附加策略 | [US-06](./user-stories/E3-sts.md#us-06-assumerole) AssumeRole | [US-08](./user-stories/E4-sso-federation.md#us-08-oidc-登录业务应用) OIDC 登录 | [US-10](./user-stories/E5-console-clients.md#us-10-注册-relying-party) 注册客户端 | [US-12](./user-stories/E6-audit.md#us-12-管理事件) 管理事件 |
 | [US-02](./user-stories/E1-identity.md#us-02-管理用户组) 组 | [US-05](./user-stories/E2-policy.md#us-05-策略求值-deny-优先于-allow) 求值 Deny>Allow | [US-07](./user-stories/E3-sts.md#us-07-临时凭证过期) 凭证过期 | [US-09](./user-stories/E4-sso-federation.md#us-09-联邦-googlegithub) 联邦 IdP | [US-11](./user-stories/E5-console-clients.md#us-11-console-管理面) Console | [US-13](./user-stories/E6-audit.md#us-13-鉴权决策查询) 鉴权查询 |
 | [US-03](./user-stories/E1-identity.md#us-03-管理角色) 角色 | | | | | |
+
+### 已实现
+
+| 活文档与架构 |
+|--------------|
+| [US-14](./user-stories/E7-living-docs.md#us-14-领域模型图与代码一致) 领域图与代码一致 |
+| [US-15](./user-stories/E7-living-docs.md#us-15-c4-图视觉风格跨仓一致) C4 视觉风格跨仓一致 |
 
 ---
 
@@ -82,6 +99,7 @@ journey
 | E4 SSO 与联邦 | [E4-sso-federation.md](./user-stories/E4-sso-federation.md) | US-08 – US-09 | US-08 已实现 / US-09 规划中 |
 | E5 控制台与客户端 | [E5-console-clients.md](./user-stories/E5-console-clients.md) | US-10 – US-11 | US-10 已实现 / US-11 规划中 |
 | E6 审计 | [E6-audit.md](./user-stories/E6-audit.md) | US-12 – US-13 | 规划中 |
+| E7 活文档与架构 | [E7-living-docs.md](./user-stories/E7-living-docs.md) | US-14 – US-15 | 已实现 |
 
 ## 参考
 
