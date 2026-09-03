@@ -145,6 +145,7 @@ Do not commit real secrets.
 
 | Doc | Link |
 |-----|------|
+| Guideline | [docs/Guideline.md](docs/Guideline.md) |
 | C4 model | [docs/developer/c4-model/](docs/developer/c4-model/) |
 | Glossary | [docs/Glossary.md](docs/Glossary.md) |
 | User story map | [docs/product-owner/User-Story-Map.md](docs/product-owner/User-Story-Map.md) |

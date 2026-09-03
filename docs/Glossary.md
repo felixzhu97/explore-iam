@@ -366,9 +366,6 @@ Immutable **aggregate roots** for append-only audit rows. Not Spring Security
 
 ## Reference
 
-- [AWS IAM User Guide](https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html)
-- [Spring Security Reference](https://docs.spring.io/spring-security/reference/index.html)
-- [Spring Authorization Server](https://docs.spring.io/spring-authorization-server/reference/index.html)
-- [Spring Security OAuth2](https://docs.spring.io/spring-security/reference/servlet/oauth2/index.html)
+- [Guideline](Guideline.md) — IAM domain principles and related standards
 - [C4 model](developer/c4-model/)
 - [User Story Map](product-owner/User-Story-Map.md)
