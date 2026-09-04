@@ -140,39 +140,62 @@ Identity and access management defines who may authenticate, what they may do, a
 
 ### Related
 
-| Resource | URL |
-| -------- | --- |
-| OAuth 2.0 (RFC 6749) | https://datatracker.ietf.org/doc/html/rfc6749 |
-| OAuth 2.1 (Internet-Draft) | https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1 |
-| Bearer Token (RFC 6750) | https://datatracker.ietf.org/doc/html/rfc6750 |
-| PKCE (RFC 7636) | https://datatracker.ietf.org/doc/html/rfc7636 |
-| OAuth for Native Apps (RFC 8252) | https://datatracker.ietf.org/doc/html/rfc8252 |
-| OAuth 2.0 Security BCP (RFC 9700) | https://datatracker.ietf.org/doc/html/rfc9700 |
-| Pushed Authorization Requests (RFC 9126) | https://datatracker.ietf.org/doc/html/rfc9126 |
-| DPoP (RFC 9449) | https://datatracker.ietf.org/doc/html/rfc9449 |
-| JWT (RFC 7519) | https://datatracker.ietf.org/doc/html/rfc7519 |
-| JWK (RFC 7517) | https://datatracker.ietf.org/doc/html/rfc7517 |
-| JWT Best Current Practices (RFC 8725) | https://datatracker.ietf.org/doc/html/rfc8725 |
-| OpenID Connect Core | https://openid.net/specs/openid-connect-core-1_0.html |
-| OpenID Connect Discovery | https://openid.net/specs/openid-connect-discovery-1_0.html |
-| FAPI 2.0 Security Profile | https://openid.net/specs/fapi-2_0-security-profile.html |
-| SAML 2.0 Technical Overview | https://docs.oasis-open.org/security/saml/Post2.0/sstc-saml-tech-overview-2.0.html |
-| SCIM 2.0 Protocol (RFC 7644) | https://datatracker.ietf.org/doc/html/rfc7644 |
-| NIST SP 800-63B | https://pages.nist.gov/800-63-4/sp800-63b.html |
-| NIST SP 800-207 Zero Trust | https://csrc.nist.gov/pubs/sp/800/207/final |
-| W3C Web Authentication (WebAuthn) | https://www.w3.org/TR/webauthn-3/ |
-| FIDO2 | https://fidoalliance.org/fido2/ |
-| OWASP Authentication Cheat Sheet | https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html |
-| OWASP Password Storage Cheat Sheet | https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html |
-| OWASP CSRF Prevention | https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html |
+[OAuth 2.0 (RFC 6749)](https://datatracker.ietf.org/doc/html/rfc6749)
+
+[OAuth 2.1 (Internet-Draft)](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1)
+
+[Bearer Token Usage (RFC 6750)](https://datatracker.ietf.org/doc/html/rfc6750)
+
+[PKCE (RFC 7636)](https://datatracker.ietf.org/doc/html/rfc7636)
+
+[OAuth 2.0 Security BCP (RFC 9700)](https://datatracker.ietf.org/doc/html/rfc9700)
+
+[OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html)
+
+[OpenID Connect Discovery](https://openid.net/specs/openid-connect-discovery-1_0.html)
+
+[JSON Web Token (RFC 7519)](https://datatracker.ietf.org/doc/html/rfc7519)
+
+[JSON Web Key (RFC 7517)](https://datatracker.ietf.org/doc/html/rfc7517)
+
+[JWT Best Current Practices (RFC 8725)](https://datatracker.ietf.org/doc/html/rfc8725)
+
+[SAML 2.0 Technical Overview](https://docs.oasis-open.org/security/saml/Post2.0/sstc-saml-tech-overview-2.0.html)
+
+[SCIM 2.0 Protocol (RFC 7644)](https://datatracker.ietf.org/doc/html/rfc7644)
 
 ### Developer documentation
 
-| Resource | URL |
-| -------- | --- |
-| AWS IAM User Guide | https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html |
-| AWS IAM policy evaluation | https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html |
-| AWS STS AssumeRole | https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html |
-| Spring Security Reference | https://docs.spring.io/spring-security/reference/index.html |
-| Spring Authorization Server | https://docs.spring.io/spring-authorization-server/reference/index.html |
-| Spring Security OAuth2 | https://docs.spring.io/spring-security/reference/servlet/oauth2/index.html |
+[Spring Security Reference](https://docs.spring.io/spring-security/reference/index.html)
+
+[Spring Authorization Server](https://docs.spring.io/spring-authorization-server/reference/index.html)
+
+[Spring Security OAuth2](https://docs.spring.io/spring-security/reference/servlet/oauth2/index.html)
+
+[Spring Security OAuth2 Login](https://docs.spring.io/spring-security/reference/servlet/oauth2/login/index.html)
+
+[Spring Security OAuth2 Resource Server](https://docs.spring.io/spring-security/reference/servlet/oauth2/resource-server/index.html)
+
+[Spring Security OAuth2 Client](https://docs.spring.io/spring-security/reference/servlet/oauth2/client/index.html)
+
+[Spring Security Authentication](https://docs.spring.io/spring-security/reference/servlet/authentication/index.html)
+
+[Spring Security SAML2](https://docs.spring.io/spring-security/reference/servlet/saml2/index.html)
+
+[Spring Security CSRF](https://docs.spring.io/spring-security/reference/servlet/exploits/csrf.html)
+
+[AWS IAM User Guide](https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html)
+
+[AWS IAM Users](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users.html)
+
+[AWS IAM Groups](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_groups.html)
+
+[AWS IAM Roles](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html)
+
+[AWS IAM policy evaluation](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html)
+
+[AWS IAM identity providers](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers.html)
+
+[AWS temporary security credentials](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html)
+
+[AWS STS AssumeRole](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html)
