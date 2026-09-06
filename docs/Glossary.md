@@ -250,6 +250,8 @@ Cross-bounded-context value objects in `com.iam.common.domain.vo`.
 | Trust Policy Document | 信任策略文档 | JSON policy defining who may assume a Role | Value Object | `TrustPolicyDocument` | implemented |
 | Federated Principal | 联邦主体 | Principal mapped from external IdP | Concept | `provider:subject` username | implemented |
 | Create Federated User | 创建联邦用户 | Factory for external IdP login | Behavior | `IamUser.createForFederatedLogin` | implemented |
+| MFA | 多因素认证 | Extra factor (TOTP / WebAuthn / passkey) beyond password on the Security filter chain | Capability | Spring Security Authentication / WebAuthn (planned) | planned |
+| Application | 应用 | Relying product registered as an OIDC client (`RegisteredClient`) | Concept | `OidcClient` / App Registration | implemented |
 
 ---
 
@@ -267,6 +269,7 @@ Cross-bounded-context value objects in `com.iam.common.domain.vo`.
 | Policy ID Reference | 策略 ID 引用 | Attached policy document id | Behavior | `PolicyAttachment.policyId` | implemented |
 | Principal ARN | 主体 ARN | ARN the policy is attached to | Behavior | `PolicyAttachment.principalArn` | implemented |
 | Action | 操作 | API or resource operation identifier | Value Object | `Action` | see §5.5 |
+| Permission Point | 权限点 | Stable Action + Resource (+ Condition) check evaluated by the Policy Engine or method security | Concept | `Action` + `Resource` + `EvaluationContext` | implemented |
 | Resource | 资源 | Target of an Action | Value Object | `Resource` | see §5.5 |
 | Condition | 条件 | Context keys constraining a statement | Value Object | `Condition` | planned |
 | Evaluation Context | 求值上下文 | Principal + Action + Resource | Value Object | `EvaluationContext` | implemented |
