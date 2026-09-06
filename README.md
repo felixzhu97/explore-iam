@@ -13,6 +13,8 @@ The module issues and validates OpenID Connect tokens for relying parties, model
 
 ## Get started
 
+Follow the [User guide](docs/user-guide/README.md) for target operator and relying-party steps (best-practice integration; align this repo over time).
+
 ### Requirements
 
 You need JDK 25+, Node.js 20+, pnpm 8+, and Git. PlantUML is optional if you want to regenerate C4 diagrams locally.
@@ -84,6 +86,7 @@ Do not commit real secrets.
 
 ## Next steps
 
+- Follow the [User guide](docs/user-guide/README.md), [Operator setup](docs/user-guide/operator-setup.md), and [Relying party integration](docs/user-guide/relying-party.md).
 - Read the [Guideline](docs/Guideline.md) for IAM trust boundaries and Spring Security–related resources.
 - Align terms with the [Glossary](docs/Glossary.md).
 - Browse the [C4 model](docs/developer/c4-model/) for context, containers, and the domain model.
