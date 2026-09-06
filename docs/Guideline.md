@@ -49,7 +49,7 @@ See [RFC 6750](https://datatracker.ietf.org/doc/html/rfc6750) and
 principals, Group for shared policy, and Role for assumable access. Prefer
 short-lived sessions over permanent elevation. Classical access-control framing:
 [The Protection of Information in Computer Systems](https://web.mit.edu/Saltzer/www/publications/protection/),
-[Role-Based Access Control Models](https://csrc.nist.gov/pubs/journal/1996/02/role-based-access-control-models/final).
+[Role-Based Access Control Models](https://profsandhu.com/journals/computer/i94rbac%28org%29.pdf).
 
 ### Policy evaluation
 
@@ -155,7 +155,7 @@ outcome in audit so investigators can reconstruct what changed and when.
 **Use Group for shared policy and Role for assumable identity.** Membership
 fits bulk authorization; roles fit short, revocable duty changes. Do not bake
 temporary tasks into everyone’s lasting permissions. RBAC lineage:
-[Role-Based Access Control Models](https://csrc.nist.gov/pubs/journal/1996/02/role-based-access-control-models/final).
+[Role-Based Access Control Models](https://profsandhu.com/journals/computer/i94rbac%28org%29.pdf).
 
 ### Authentication assurance
 
@@ -284,7 +284,7 @@ and [Spring Security CSRF](https://docs.spring.io/spring-security/reference/serv
 
 [The Protection of Information in Computer Systems](https://web.mit.edu/Saltzer/www/publications/protection/)
 
-[Role-Based Access Control Models](https://csrc.nist.gov/pubs/journal/1996/02/role-based-access-control-models/final)
+[Role-Based Access Control Models](https://profsandhu.com/journals/computer/i94rbac%28org%29.pdf)
 
 [OAuth 2.0 (RFC 6749)](https://datatracker.ietf.org/doc/html/rfc6749)
 
