@@ -9,10 +9,10 @@ shipping ad-hoc login stacks inside every application.
 ## Introduction
 
 This guideline describes how to design identity, policy, STS, federation, and
-audit in `explore-iam`. Prefer official documentation, open protocols, and
-primary research when changing trust boundaries. Product vocabulary lives in
-the [Glossary](Glossary.md); architecture boundaries live in the
-[C4 model](developer/c4-model/).
+audit in `explore-iam`. Prefer open protocols, primary research, and Apple’s
+identity, privacy, and security guidance when shaping trust boundaries. Product
+vocabulary lives in the [Glossary](Glossary.md); architecture boundaries live
+in the [C4 model](developer/c4-model/).
 
 ## Best practices
 
@@ -22,8 +22,9 @@ the [Glossary](Glossary.md); architecture boundaries live in the
 apps should trust identity and access tokens from this issuer instead of
 inventing parallel login protocols. A shared issuer keeps discovery, JWKS,
 validation, and revocation consistent across clients. See
-[OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html)
-and [Spring Authorization Server](https://docs.spring.io/spring-authorization-server/reference/index.html).
+[OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html),
+[Spring Authorization Server](https://docs.spring.io/spring-authorization-server/reference/index.html),
+and [Sign in with Apple](https://developer.apple.com/documentation/signinwithapple).
 
 ### Authorization Code and PKCE
 
@@ -38,9 +39,11 @@ strings. See [OAuth 2.1](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-
 
 **Keep client secrets off browsers.** Secrets belong only in the relying
 party’s back-channel token exchange. The front end may use `client_id`,
-`state`, and PKCE material—never the client secret. Publish issuer metadata
-and JWKS so relying parties can validate signatures without hard-coded keys.
-See [RFC 6750](https://datatracker.ietf.org/doc/html/rfc6750) and
+`state`, and PKCE material—never the client secret. Prefer platform secret
+stores such as [Keychain Services](https://developer.apple.com/documentation/security/keychain-services)
+for credentials on Apple clients. Publish issuer metadata and JWKS so relying
+parties can validate signatures without hard-coded keys. See
+[RFC 6750](https://datatracker.ietf.org/doc/html/rfc6750) and
 [RFC 7517](https://datatracker.ietf.org/doc/html/rfc7517).
 
 ### Principals
@@ -50,30 +53,35 @@ principals, Group for shared policy, and Role for assumable access. Prefer
 short-lived sessions over permanent elevation. Classical access-control framing:
 [The Protection of Information in Computer Systems](https://web.mit.edu/Saltzer/www/publications/protection/),
 [Role-Based Access Control Models](https://profsandhu.com/journals/computer/i94rbac%28org%29.pdf).
+Account lifecycle expectations also appear in
+[Managing accounts](https://developer.apple.com/design/human-interface-guidelines/managing-accounts).
 
 ### Policy evaluation
 
 **Evaluate Deny before Allow, then implicit Deny.** Grant least privilege and
 keep verifying who can do what instead of trusting a single login forever.
-Explicit deny must override allow; with no match, deny by default. See
-[AWS IAM policy evaluation logic](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html)
-and [NIST SP 800-207](https://csrc.nist.gov/pubs/sp/800/207/final).
+Explicit deny must override allow; with no match, deny by default. Align data
+access with
+[Privacy](https://developer.apple.com/design/human-interface-guidelines/privacy)
+and [NIST SP 800-207](https://csrc.nist.gov/pubs/sp/800/207/final): ask only for
+what a feature needs, and keep re-checking authorization.
 
 ### Temporary credentials
 
 **Issue short-lived STS credentials only after AssumeRole.** Callers exchange
 an existing identity for a temporary session; the trust policy decides who may
 assume the Role. Reject expired sessions instead of renewing them quietly in
-the background. See
-[AWS STS AssumeRole](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html)
-and [AWS temporary security credentials](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html).
+the background. Prefer ephemeral proofs over long-lived elevation—see
+[App Attest](https://developer.apple.com/documentation/devicecheck/establishing-your-app-s-integrity)
+for short-lived integrity assertions on Apple clients.
 
 ### Federated identity
 
 **Map each external subject to one Federated Identity Link.** Prefer OpenID
 Connect for new integrations; retain SAML only when an existing enterprise IdP
 requires it. One external account should not fan out to many local identities.
-See [OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html)
+See [OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html),
+[Sign in with Apple](https://developer.apple.com/design/human-interface-guidelines/sign-in-with-apple),
 and [SAML 2.0 Technical Overview](https://docs.oasis-open.org/security/saml/Post2.0/sstc-saml-tech-overview-2.0.html).
 
 ### Append-only audit
@@ -89,8 +97,9 @@ Editing history after the fact breaks accountability.
 **Use Explore IAM as the OIDC provider for relying parties.** Business apps
 should trust identity and access tokens issued by this platform instead of
 inventing their own login protocols. For developer guidance, see
-[Spring Authorization Server](https://docs.spring.io/spring-authorization-server/reference/index.html)
-and [OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html).
+[Spring Authorization Server](https://docs.spring.io/spring-authorization-server/reference/index.html),
+[OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html),
+and [Sign in with Apple REST API](https://developer.apple.com/documentation/sign_in_with_apple/sign_in_with_apple_rest_api).
 
 ### OAuth 2.1
 
@@ -115,7 +124,8 @@ risk of stolen authorization codes for public clients. For guidance, see
 **Keep client_secret out of the browser.** Secrets belong only in the relying
 party’s back-channel token exchange. The front end may use `client_id`,
 `state`, and PKCE material—never the client secret. For guidance, see
-[RFC 6750](https://datatracker.ietf.org/doc/html/rfc6750).
+[RFC 6750](https://datatracker.ietf.org/doc/html/rfc6750) and
+[Keychain Services](https://developer.apple.com/documentation/security/keychain-services).
 
 ### Issuer discovery and JWKS
 
@@ -129,7 +139,10 @@ and [RFC 7517](https://datatracker.ietf.org/doc/html/rfc7517).
 
 **Raise sender-constrained profiles for high-assurance APIs.** For
 finance-grade or cross-boundary APIs, build on the baseline with PAR, DPoP or
-mTLS, and the FAPI 2.0 Security Profile when required. For guidance, see
+mTLS, and the FAPI 2.0 Security Profile when required. On Apple platforms,
+complement server checks with
+[App Attest](https://developer.apple.com/documentation/devicecheck/establishing-your-app-s-integrity)
+when asserting client integrity. For guidance, see
 [FAPI 2.0 Security Profile](https://openid.net/specs/fapi-2_0-security-profile.html),
 [RFC 9449](https://datatracker.ietf.org/doc/html/rfc9449), and
 [RFC 9126](https://datatracker.ietf.org/doc/html/rfc9126).
@@ -140,15 +153,18 @@ mTLS, and the FAPI 2.0 Security Profile when required. For guidance, see
 
 **Treat IAM User as the long-lived principal for form login.** People and
 service accounts need a manageable, stable identity. Sessions may expire; the
-user record itself must remain auditable and disableable. For developer
-guidance, see
-[AWS IAM User Guide](https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html).
+user record itself must remain auditable and disableable. For account UX and
+lifecycle, see
+[Managing accounts](https://developer.apple.com/design/human-interface-guidelines/managing-accounts)
+and [Authentication Services](https://developer.apple.com/documentation/authenticationservices).
 
 ### Account disablement
 
 **Disable the account when access must stop immediately.** After disable, the
 principal must not authenticate for management or STS. Record the disable
 outcome in audit so investigators can reconstruct what changed and when.
+Credential-state checks on Apple clients follow patterns in
+[Authentication Services](https://developer.apple.com/documentation/authenticationservices).
 
 ### Groups and roles
 
@@ -162,21 +178,26 @@ temporary tasks into everyone’s lasting permissions. RBAC lineage:
 **Match authentication strength to assurance level.** Passwords fit only
 risk-aligned scenarios; high-value actions should step up to multi-factor or
 phishing-resistant authentication. For guidance, see
-[NIST SP 800-63B](https://pages.nist.gov/800-63-4/sp800-63b.html) and
-[OWASP Authentication Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html).
+[NIST SP 800-63B](https://pages.nist.gov/800-63-4/sp800-63b.html),
+[Passkeys](https://developer.apple.com/passkeys), and
+[Apple Platform Security](https://support.apple.com/guide/security/welcome/web).
 
 ### Passkeys and WebAuthn
 
 **Plan a phishing-resistant sign-in path.** Passkeys / WebAuthn reduce
 shared-secret and phishing risk. Introduce them alongside form login rather
 than cutting off existing users overnight. For guidance, see
-[W3C Web Authentication](https://www.w3.org/TR/webauthn-3/) and
+[Passkeys](https://developer.apple.com/passkeys),
+[W3C Web Authentication](https://www.w3.org/TR/webauthn-3/), and
 [FIDO2](https://fidoalliance.org/fido2/).
 
 ### Password storage
 
 **Never store credentials in plaintext or reversible form.** Verify secrets by
-comparing hashes, and handle credential material with care. For guidance, see
+comparing hashes, and handle credential material with care. Prefer platform
+secret stores such as
+[Keychain Services](https://developer.apple.com/documentation/security/keychain-services)
+on Apple clients. For guidance, see
 [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html).
 
 ## Policy
@@ -184,23 +205,27 @@ comparing hashes, and handle credential material with care. For guidance, see
 ### Policy evaluation
 
 **Evaluate Deny before Allow, then deny by default.** An explicit deny must
-override allow; with no match, deny. For developer guidance, see
-[AWS IAM policy evaluation logic](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html).
-Complete mediation and least privilege remain the classic design principles in
+override allow; with no match, deny. Complete mediation and least privilege
+remain the classic design principles in
 [The Protection of Information in Computer Systems](https://web.mit.edu/Saltzer/www/publications/protection/).
+Keep data collection and permission prompts aligned with
+[Privacy](https://developer.apple.com/design/human-interface-guidelines/privacy).
 
 ### Policy attachment
 
-**Attach policy to identifiable principals by stable ARN.** Attachments should
-point at User, Group, or Role identities people and systems can recognize over
-time. Loose text breaks under rename and migration and makes audit hard to
-replay.
+**Attach policy to identifiable principals by stable identifiers.** Attachments
+should point at User, Group, or Role identities people and systems can
+recognize over time. Loose text breaks under rename and migration and makes
+audit hard to replay. Prefer durable subject identifiers such as those used by
+[Sign in with Apple](https://developer.apple.com/documentation/signinwithapple).
 
 ### Least privilege
 
 **Grant only the access an observable job needs.** Console and API roles should
 map to real duties, not open-by-default access. Keep verifying who can do what
 instead of trusting a single login forever. For guidance, see
+[Privacy](https://developer.apple.com/design/human-interface-guidelines/privacy),
+[Security](https://developer.apple.com/security/), and
 [NIST SP 800-207 Zero Trust Architecture](https://csrc.nist.gov/pubs/sp/800/207/final).
 
 ## STS
@@ -209,9 +234,10 @@ instead of trusting a single login forever. For guidance, see
 
 **Issue temporary credentials only after AssumeRole succeeds.** Callers exchange
 an existing identity for a short session; the trust policy decides who may
-assume the Role. Do not mint tokens without that check. For developer guidance,
-see
-[AWS STS AssumeRole](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html).
+assume the Role. Do not mint tokens without that check. Prefer short-lived
+proofs over standing privilege—see
+[App Attest](https://developer.apple.com/documentation/devicecheck/establishing-your-app-s-integrity)
+for integrity assertions that expire with the request context.
 
 ### Session expiration
 
@@ -225,8 +251,10 @@ the background.
 **Validate JWT claims and algorithms carefully.** When issuing and validating
 JWTs, check `iss`, `aud`, `exp`, and the signing algorithm; reject `none` and
 weak algorithms. For guidance, see
-[RFC 7519](https://datatracker.ietf.org/doc/html/rfc7519) and
-[RFC 8725](https://datatracker.ietf.org/doc/html/rfc8725).
+[RFC 7519](https://datatracker.ietf.org/doc/html/rfc7519),
+[RFC 8725](https://datatracker.ietf.org/doc/html/rfc8725), and identity-token
+validation in the
+[Sign in with Apple REST API](https://developer.apple.com/documentation/sign_in_with_apple/sign_in_with_apple_rest_api).
 
 ## Federation and SSO
 
@@ -234,7 +262,9 @@ weak algorithms. For guidance, see
 
 **Resolve federation to one stable Federated Identity Link.** Federated sign-in
 should resolve or create a single link so one external account does not fan out
-to many local identities, and many people do not share one link.
+to many local identities, and many people do not share one link. Mirror the
+stable-user model in
+[Sign in with Apple](https://developer.apple.com/design/human-interface-guidelines/sign-in-with-apple).
 
 ### Authorization endpoint
 
@@ -248,6 +278,8 @@ path. For guidance, see
 **Prefer OpenID Connect for new integrations.** Choose OIDC when you can;
 retain SAML 2.0 only when an existing enterprise IdP requires it. For guidance,
 see
+[Sign in with Apple](https://developer.apple.com/documentation/signinwithapple)
+and
 [SAML 2.0 Technical Overview](https://docs.oasis-open.org/security/saml/Post2.0/sstc-saml-tech-overview-2.0.html).
 
 ### SCIM
@@ -326,6 +358,16 @@ and [Spring Security CSRF](https://docs.spring.io/spring-security/reference/serv
 
 [FIDO2](https://fidoalliance.org/fido2/)
 
+[Managing accounts](https://developer.apple.com/design/human-interface-guidelines/managing-accounts)
+
+[Sign in with Apple (HIG)](https://developer.apple.com/design/human-interface-guidelines/sign-in-with-apple)
+
+[Privacy](https://developer.apple.com/design/human-interface-guidelines/privacy)
+
+[Passkeys](https://developer.apple.com/passkeys)
+
+[Apple Platform Security](https://support.apple.com/guide/security/welcome/web)
+
 [OWASP Authentication Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html)
 
 [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html)
@@ -352,21 +394,17 @@ and [Spring Security CSRF](https://docs.spring.io/spring-security/reference/serv
 
 [Spring Security CSRF](https://docs.spring.io/spring-security/reference/servlet/exploits/csrf.html)
 
-[AWS IAM User Guide](https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html)
+[Authentication Services](https://developer.apple.com/documentation/authenticationservices)
 
-[AWS IAM Users](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users.html)
+[Sign in with Apple](https://developer.apple.com/documentation/signinwithapple)
 
-[AWS IAM Groups](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_groups.html)
+[Sign in with Apple REST API](https://developer.apple.com/documentation/sign_in_with_apple/sign_in_with_apple_rest_api)
 
-[AWS IAM Roles](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html)
+[Keychain Services](https://developer.apple.com/documentation/security/keychain-services)
 
-[AWS IAM policy evaluation](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html)
+[App Attest](https://developer.apple.com/documentation/devicecheck/establishing-your-app-s-integrity)
 
-[AWS IAM identity providers](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers.html)
-
-[AWS temporary security credentials](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html)
-
-[AWS STS AssumeRole](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html)
+[Security](https://developer.apple.com/security/)
 
 [Glossary](Glossary.md)
 
