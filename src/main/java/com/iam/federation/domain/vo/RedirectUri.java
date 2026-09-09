@@ -5,13 +5,14 @@ import java.util.Locale;
 import java.util.Objects;
 
 /**
- * Absolute HTTP(S) redirect URI for an OIDC Relying Party. Fragments and non-http schemes are
- * rejected.
+ * Absolute redirect URI for an OIDC Relying Party. Allows {@code http}/{@code https} and native
+ * custom schemes (for example {@code com.explore.ai://oauth/callback}). Fragments and dangerous
+ * schemes are rejected.
  */
 public record RedirectUri(String value) {
 
   /**
-   * Validates an absolute HTTP(S) redirect URI without a fragment.
+   * Validates an absolute redirect URI without a fragment.
    *
    * @param value raw redirect_uri
    */
@@ -31,16 +32,34 @@ public record RedirectUri(String value) {
       throw new IllegalArgumentException("redirect_uri must be absolute: " + trimmed);
     }
     String scheme = uri.getScheme().toLowerCase(Locale.ROOT);
-    if (!"http".equals(scheme) && !"https".equals(scheme)) {
-      throw new IllegalArgumentException("redirect_uri scheme must be http or https: " + trimmed);
-    }
-    if (uri.getHost() == null || uri.getHost().isBlank()) {
-      throw new IllegalArgumentException("redirect_uri must include a host: " + trimmed);
+    if ("http".equals(scheme) || "https".equals(scheme)) {
+      if (uri.getHost() == null || uri.getHost().isBlank()) {
+        throw new IllegalArgumentException("redirect_uri must include a host: " + trimmed);
+      }
+    } else if (!isAllowedCustomScheme(scheme)) {
+      throw new IllegalArgumentException(
+          "redirect_uri scheme must be http, https, or a reverse-DNS custom scheme: " + trimmed);
     }
     if (uri.getFragment() != null) {
       throw new IllegalArgumentException("redirect_uri must not contain a fragment: " + trimmed);
     }
     value = trimmed;
+  }
+
+  private static boolean isAllowedCustomScheme(String scheme) {
+    if ("javascript".equals(scheme)
+        || "data".equals(scheme)
+        || "file".equals(scheme)
+        || "about".equals(scheme)) {
+      return false;
+    }
+    // Native app schemes: com.explore.ai, com.explore.chat, …
+    return scheme.contains(".") && scheme.chars().allMatch(ch ->
+        (ch >= 'a' && ch <= 'z')
+            || (ch >= '0' && ch <= '9')
+            || ch == '.'
+            || ch == '+'
+            || ch == '-');
   }
 
   @Override
