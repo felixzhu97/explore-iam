@@ -19,6 +19,15 @@ class RedirectUriTest {
   }
 
   @Test
+  @DisplayName("should accept reverse-DNS custom schemes for native apps")
+  void shouldAcceptReverseDnsCustomSchemesForNativeApps() {
+    assertThat(new RedirectUri("com.explore.ai://oauth/callback").value())
+        .isEqualTo("com.explore.ai://oauth/callback");
+    assertThat(new RedirectUri("com.explore.chat://oauth/callback").value())
+        .isEqualTo("com.explore.chat://oauth/callback");
+  }
+
+  @Test
   @DisplayName("should reject blank fragment javascript and relative URIs")
   void shouldRejectUnsafeUris() {
     assertThatThrownBy(() -> new RedirectUri(" ")).isInstanceOf(IllegalArgumentException.class);
