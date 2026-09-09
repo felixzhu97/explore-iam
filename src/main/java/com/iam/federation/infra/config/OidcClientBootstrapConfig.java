@@ -30,9 +30,14 @@ public class OidcClientBootstrapConfig {
       OidcSeedClientProperties properties) {
     return args -> {
       for (OidcSeedClientProperties.SeedClient seed : properties.getSeedClients()) {
-        if (!StringUtils.hasText(seed.getClientId())
-            || !StringUtils.hasText(seed.getClientSecret())) {
-          log.warn("Skipping OIDC seed client with blank client-id or client-secret");
+        if (!StringUtils.hasText(seed.getClientId())) {
+          log.warn("Skipping OIDC seed client with blank client-id");
+          continue;
+        }
+        if (!seed.isPublicClient() && !StringUtils.hasText(seed.getClientSecret())) {
+          log.warn(
+              "Skipping confidential OIDC seed client '{}' with blank client-secret",
+              seed.getClientId());
           continue;
         }
         ClientId clientId = new ClientId(seed.getClientId());
@@ -52,15 +57,19 @@ public class OidcClientBootstrapConfig {
                 ? properties.defaultScopes()
                 : new LinkedHashSet<>(seed.getScopes());
         OidcClient client =
-            OidcClient.seed(
-                clientId,
-                seed.getClientName(),
-                passwordEncoder.encode(seed.getClientSecret()),
-                redirectUris,
-                postLogout,
-                scopes);
+            seed.isPublicClient()
+                ? OidcClient.seedPublic(
+                    clientId, seed.getClientName(), redirectUris, postLogout, scopes)
+                : OidcClient.seed(
+                    clientId,
+                    seed.getClientName(),
+                    passwordEncoder.encode(seed.getClientSecret()),
+                    redirectUris,
+                    postLogout,
+                    scopes);
         oidcClientRepository.save(client);
-        log.info("Seeded OIDC client '{}'", clientId.value());
+        log.info(
+            "Seeded OIDC client '{}' (public={})", clientId.value(), seed.isPublicClient());
       }
     };
   }
