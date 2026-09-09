@@ -84,6 +84,16 @@ Do not commit real secrets.
 ./gradlew test
 ```
 
+### Deploy
+
+Production is a single Render Web Service (Docker): console SPA and OIDC API share one origin.
+
+1. Connect the GitHub repo [`felixzhu97/explore-iam`](https://github.com/felixzhu97/explore-iam) with the Blueprint in [`render.yaml`](render.yaml) (Dashboard → New → Blueprint, or Render’s Blueprint docs).
+2. After the first URL exists, set **`OIDC_ISSUER=https://<service>.onrender.com`** in the Render Dashboard (env `sync: false`), plus `APP_DEMO_USER_PASSWORD` and any seed client secrets you need, then redeploy.
+3. Verify `GET /actuator/health` and OpenID discovery at `/.well-known/openid-configuration`, then open the console on the same host.
+
+Plan is Render Starter (Oregon). Disk for H2 under `/app/data` is ephemeral on Starter—same cloud-minimal approach as explore-ai.
+
 ## Next steps
 
 - Follow the [User guide](docs/user-guide/README.md), [Operator setup](docs/user-guide/operator-setup.md), and [Relying party integration](docs/user-guide/relying-party.md).

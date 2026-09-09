@@ -1,0 +1,32 @@
+# Render Blueprint — production IAM (Starter)
+# https://render.com/docs/blueprint-spec
+#
+# After first deploy, set OIDC_ISSUER to https://<this-service>.onrender.com
+# in the Render Dashboard, then redeploy.
+services:
+  - type: web
+    name: explore-iam
+    runtime: docker
+    plan: starter
+    region: oregon
+    healthCheckPath: /actuator/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: JAVA_TOOL_OPTIONS
+        value: "-XX:MaxRAMPercentage=60.0"
+      - key: OIDC_ISSUER
+        sync: false
+      - key: APP_DEMO_USER_ENABLED
+        value: "true"
+      - key: APP_DEMO_USER_USERNAME
+        value: demo
+      - key: APP_DEMO_USER_PASSWORD
+        sync: false
+      - key: APP_DEMO_USER_EMAIL
+        value: demo@explore-iam.local
+      - key: IAM_CLIENT_EXPLORE_AI_ID
+        value: explore-ai
+      - key: IAM_CLIENT_EXPLORE_AI_SECRET
+        sync: false
