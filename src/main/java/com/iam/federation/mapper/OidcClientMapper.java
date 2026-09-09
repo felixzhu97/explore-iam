@@ -27,6 +27,9 @@ public final class OidcClientMapper {
   public static RegisteredClient toRegisteredClient(OidcClient client) {
     ClientSettings.Builder settings =
         ClientSettings.builder().requireAuthorizationConsent(client.requiresAuthorizationConsent());
+    if (client.isPublicClient()) {
+      settings.requireProofKey(true);
+    }
     if (StringUtils.hasText(client.clientUri())) {
       settings.setting(SETTING_CLIENT_URI, client.clientUri());
     }
