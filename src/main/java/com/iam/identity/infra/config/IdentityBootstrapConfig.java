@@ -13,6 +13,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /** Seeds the demo IAM user, admin role, and exposes the shared password encoder. */
 @Configuration
@@ -33,29 +35,41 @@ public class IdentityBootstrapConfig {
       IamUserRepository userRepository,
       RoleRepository roleRepository,
       PasswordEncoder passwordEncoder,
+      DemoUserProperties properties,
+      PlatformTransactionManager transactionManager) {
+    TransactionTemplate tx = new TransactionTemplate(transactionManager);
+    return (ApplicationArguments args) ->
+        tx.executeWithoutResult(
+            status ->
+                seedDemoUserInTransaction(
+                    userRepository, roleRepository, passwordEncoder, properties));
+  }
+
+  private static void seedDemoUserInTransaction(
+      IamUserRepository userRepository,
+      RoleRepository roleRepository,
+      PasswordEncoder passwordEncoder,
       DemoUserProperties properties) {
-    return (ApplicationArguments args) -> {
-      Role adminRole = ensureAdminRole(roleRepository);
-      if (!properties.isEnabled()) {
-        return;
-      }
-      IamUser user =
-          userRepository
-              .findByUsername(properties.getUsername())
-              .orElseGet(
-                  () -> {
-                    IamUser created =
-                        IamUser.create(
-                            properties.getUsername(),
-                            properties.getEmail(),
-                            passwordEncoder.encode(properties.getPassword()));
-                    IamUser saved = userRepository.save(created);
-                    log.info("Seeded demo IAM User '{}'", properties.getUsername());
-                    return saved;
-                  });
-      user.assignRole(adminRole.getId());
-      userRepository.save(user);
-    };
+    Role adminRole = ensureAdminRole(roleRepository);
+    if (!properties.isEnabled()) {
+      return;
+    }
+    IamUser user =
+        userRepository
+            .findByUsername(properties.getUsername())
+            .orElseGet(
+                () -> {
+                  IamUser created =
+                      IamUser.create(
+                          properties.getUsername(),
+                          properties.getEmail(),
+                          passwordEncoder.encode(properties.getPassword()));
+                  IamUser saved = userRepository.save(created);
+                  log.info("Seeded demo IAM User '{}'", properties.getUsername());
+                  return saved;
+                });
+    user.assignRole(adminRole.getId());
+    userRepository.save(user);
   }
 
   private static Role ensureAdminRole(RoleRepository roleRepository) {
