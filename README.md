@@ -9,7 +9,7 @@
 
 The module issues and validates OpenID Connect tokens for relying parties, models lasting principals as IAM User, Group, and Role, evaluates identity-based policy, issues short-lived STS sessions after AssumeRole, and keeps management and authorization outcomes auditable. An Angular login SPA covers form sign-in and the OAuth authorize path.
 
-`explore-iam` is built with Java 25, Spring Boot, Spring Authorization Server, Spring Security, Spring Data JPA, and Liquibase. Trust boundaries and integration rules live in the [Guideline](docs/Guideline.md).
+`explore-iam` is built with Java 25, Spring Boot, Spring Authorization Server, Spring Security, Spring Data JPA, and Liquibase. A native SwiftUI hello-world app (**IAM**) lives under `src/main/ios`. Trust boundaries and integration rules live in the [Guideline](docs/Guideline.md).
 
 ## Get started
 
@@ -91,6 +91,7 @@ Do not commit real secrets.
 - Align terms with the [Glossary](docs/Glossary.md).
 - Browse the [C4 model](docs/developer/c4-model/) for context, containers, and the domain model.
 - See the [User Story Map](docs/product-owner/User-Story-Map.md) for product journeys.
+- Open the native iOS skeleton: [`src/main/ios`](src/main/ios) (scheme **IAM**).
 - Build and run diagrams from `docs/developer/c4-model/*.puml` when PlantUML is available.
 - Review [Spring Authorization Server](https://docs.spring.io/spring-authorization-server/reference/index.html) and [Spring Security OAuth2](https://docs.spring.io/spring-security/reference/servlet/oauth2/index.html).
 
