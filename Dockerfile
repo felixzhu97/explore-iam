@@ -1,8 +1,10 @@
 # Frontend: Angular SPA → src/main/resources/static
-FROM node:20-alpine AS frontend
+# Node 22 + npm-global pnpm: corepack+pnpm@11 on Node 20 fails with
+# ERR_UNKNOWN_BUILTIN_MODULE during install on Render's builders.
+FROM node:22-alpine AS frontend
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@11.8.0 --activate
+RUN npm install -g pnpm@11.8.0
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY angular.json tsconfig.json tsconfig.app.json ./
