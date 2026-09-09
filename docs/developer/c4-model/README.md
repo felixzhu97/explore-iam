@@ -21,7 +21,7 @@ Style standards: global [c4-model](~/.cursor/skills/scrum-team/developers/develo
 | `C2-Container.puml` | Container | IAM Application monolith (:9100), metadata database |
 | `C3-Component.puml` | Component | **Single** diagram: Angular Console + backend modules (`controller → service → domain ← infra`) |
 | `C4-Code-Domain-Model.puml` | Code | DDD class model with `AbstractEntity` / `AbstractImmutable` kernel |
-| `C4-Deployment.puml` | Deployment | **Single** view: local H2 dev + production target topology |
+| `C4-Deployment.puml` | Deployment | **Single** view: local H2 + Render Starter (Docker) |
 | `C4-Dynamic-SSOLogin.puml` | Dynamic | OIDC Authorization Code (confidential + public PKCE) |
 | `C4-Dynamic-NativePkceLogin.puml` | Dynamic | Native iOS ASWebAuthenticationSession + PKCE → RP Bearer |
 | `C4-Dynamic-PolicyEvaluation.puml` | Dynamic | AssumeRole + PolicyEngine (Deny > Allow > implicit Deny) |

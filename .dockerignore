@@ -1,0 +1,13 @@
+.gradle
+build
+.idea
+*.iml
+.env
+*.log
+node_modules
+data
+dist
+src/main/resources/static
+src/main/ios
+.cursor
+.git

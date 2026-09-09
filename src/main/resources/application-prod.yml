@@ -1,0 +1,46 @@
+server:
+  port: ${PORT:8080}
+  forward-headers-strategy: framework
+
+spring:
+  datasource:
+    url: jdbc:h2:file:./data/explore-iam;DB_CLOSE_DELAY=-1;AUTO_SERVER=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+  security:
+    oauth2:
+      authorizationserver:
+        # Required in prod — set to the public Render URL, e.g. https://explore-iam-xxxx.onrender.com
+        issuer: ${OIDC_ISSUER}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+app:
+  demo-user:
+    enabled: ${APP_DEMO_USER_ENABLED:true}
+    username: ${APP_DEMO_USER_USERNAME:demo}
+    password: ${APP_DEMO_USER_PASSWORD:demo-password}
+    email: ${APP_DEMO_USER_EMAIL:demo@explore-iam.local}
+
+logging:
+  level:
+    org.springframework.security: INFO
+    org.springframework.security.oauth2: INFO

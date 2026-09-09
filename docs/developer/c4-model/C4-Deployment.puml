@@ -2,38 +2,28 @@
 !theme C4_blue_new from https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/themes
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Deployment.puml
 
-title Deployment (C4) — local/dev + production
+title Deployment (C4) — local/dev + production (Render)
 
 Deployment_Node(local, "Local development", "Developer machine") {
     Deployment_Node(local_proc, "Process", "Gradle bootRun / JAR") {
         Container(iam_local, "IAM Application", "Spring Boot 4.1 + embedded Angular SPA", "HTTP :9100")
     }
     Deployment_Node(local_data, "Data", "File or container") {
-        ContainerDb(h2, "H2 Database", "File ./data/explore-iam", "Liquibase 0.1.xml")
+        ContainerDb(h2, "H2 Database", "File ./data/explore-iam", "Liquibase")
     }
     Rel(iam_local, h2, "JDBC", "jdbc:h2:file:./data/explore-iam")
 }
 
-Deployment_Node(prod, "Production (target)", "Container orchestration — planned") {
-    Deployment_Node(edge, "Edge", "CDN / TLS termination") {
-        Container(console_cdn, "IAM Console static", "Angular 22 build", "CDN or object storage")
+Deployment_Node(prod, "Production", "Render Starter (Docker)") {
+    Deployment_Node(render, "Render Web Service", "JRE 25 / HTTPS") {
+        Container(iam_prod, "IAM Application", "Spring Boot prod + embedded Angular", ":8080")
+        ContainerDb(h2_prod, "H2 File DB", "ephemeral disk", "/app/data/explore-iam")
     }
-    Deployment_Node(app_tier, "Application tier", "Kubernetes / PaaS") {
-        Container(iam_prod, "IAM Application", "Spring Boot 4.1 / Java 25", "Replicas behind LB :443")
-    }
-    Deployment_Node(data_tier, "Data tier", "Managed services") {
-        ContainerDb(postgres, "PostgreSQL", "Managed", "Metadata + audit tables")
-        ContainerDb(redis, "Redis", "Optional", "Session / rate limit")
-        Container(audit_archive, "Audit archive", "Object storage / SIEM", "Long-term retention")
-    }
-    Rel(console_cdn, iam_prod, "REST + OIDC", "HTTPS")
-    Rel(iam_prod, postgres, "JDBC / SQL")
-    Rel(iam_prod, redis, "Optional cache")
-    Rel(iam_prod, audit_archive, "Export audit")
+    Rel(iam_prod, h2_prod, "JDBC")
 }
 
-System_Ext(rps, "Relying Parties", "Explore AI / WhatsFeed / …", "OIDC clients")
-System_Ext(idp, "External IdP", "Google / GitHub", "Federation")
+System_Ext(rps, "Relying Parties", "Explore AI / Explore Chat / …", "OIDC clients")
+System_Ext(idp, "External IdP", "Google / GitHub", "Federation (optional)")
 
 Rel(rps, iam_local, "OIDC (dev)", "http://localhost:9100")
 Rel(rps, iam_prod, "OIDC (prod)", "HTTPS")
