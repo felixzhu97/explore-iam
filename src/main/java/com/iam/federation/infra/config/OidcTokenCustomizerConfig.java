@@ -10,7 +10,7 @@ import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 
-/** Customizes OIDC ID Token claims from the IAM user aggregate. */
+/** Customizes OIDC ID Token and access token claims from the IAM user aggregate. */
 @Configuration
 public class OidcTokenCustomizerConfig {
 
@@ -18,7 +18,10 @@ public class OidcTokenCustomizerConfig {
   OAuth2TokenCustomizer<JwtEncodingContext> oidcClaimsCustomizer(
       IamUserRepository iamUserRepository) {
     return context -> {
-      if (!OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())) {
+      String tokenType = context.getTokenType().getValue();
+      boolean idToken = OidcParameterNames.ID_TOKEN.equals(tokenType);
+      boolean accessToken = "access_token".equals(tokenType);
+      if (!idToken && !accessToken) {
         return;
       }
       String username = context.getPrincipal().getName();
@@ -28,6 +31,8 @@ public class OidcTokenCustomizerConfig {
 
   private static void applyClaims(JwtEncodingContext context, IamUser user) {
     Set<String> scopes = context.getAuthorizedScopes();
+    // Resource servers (AI / Chat) validate the access token and need email/profile
+    // on that JWT — not only on the ID token.
     context.getClaims().claim("sub", user.getId());
     if (scopes.contains(OidcScopes.EMAIL) && user.getEmail() != null) {
       context.getClaims().claim("email", user.getEmail());
