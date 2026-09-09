@@ -4,7 +4,7 @@
 
 title System Context (C1) — Explore IAM
 
-Person(end_user, "End User", "Uses business apps via SSO")
+Person(end_user, "End User", "Uses business apps via SSO (web or native)")
 Person(developer, "App Developer", "Registers Relying Parties; integrates OIDC")
 Person(admin, "IAM Administrator", "Manages users, groups, roles, policies, audit")
 
@@ -14,21 +14,21 @@ System_Boundary(explore_iam, "Explore IAM") {
 
 System_Ext(google_idp, "Google IdP", "External OIDC / OAuth federation")
 System_Ext(github_idp, "GitHub IdP", "External OAuth federation")
-System_Ext(explore_ai, "Explore AI", "Relying Party")
-System_Ext(whatsfeed, "WhatsFeed", "Relying Party")
+System_Ext(explore_ai, "Explore AI", "Relying Party — web OAuth Login + native public client explore-ai-ios")
+System_Ext(explore_chat, "Explore Chat", "Relying Party — password JWT + native public client explore-chat-ios")
 System_Ext(shopping, "Shopping System", "Relying Party")
 System_Ext(low_code, "Low Code Platform", "Relying Party")
 
-Rel(end_user, explore_ai, "Uses", "HTTPS")
-Rel(end_user, whatsfeed, "Uses", "HTTPS")
+Rel(end_user, explore_ai, "Uses", "HTTPS / native")
+Rel(end_user, explore_chat, "Uses", "HTTPS / native")
 Rel(end_user, shopping, "Uses", "HTTPS")
 Rel(end_user, low_code, "Uses", "HTTPS")
-Rel(end_user, iam_platform, "Login / consent", "HTTPS / OIDC")
+Rel(end_user, iam_platform, "Login / consent", "HTTPS / OIDC / PKCE")
 Rel(admin, iam_platform, "Manage identity & policy", "HTTPS")
 Rel(developer, iam_platform, "Register clients", "HTTPS / REST")
 
-Rel(explore_ai, iam_platform, "OIDC login / token / AuthZ", "OIDC / HTTPS")
-Rel(whatsfeed, iam_platform, "OIDC login / token / AuthZ", "OIDC / HTTPS")
+Rel(explore_ai, iam_platform, "OIDC authorize / token / JWKS", "OIDC / HTTPS")
+Rel(explore_chat, iam_platform, "OIDC authorize / token / JWKS", "OIDC / HTTPS")
 Rel(shopping, iam_platform, "OIDC login / token / AuthZ", "OIDC / HTTPS")
 Rel(low_code, iam_platform, "OIDC login / token / AuthZ", "OIDC / HTTPS")
 

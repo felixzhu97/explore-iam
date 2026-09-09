@@ -244,6 +244,11 @@ package "com.iam.federation.domain" as pkg_federation {
   class RedirectUri <<ValueObject>> {
     +value: String
   }
+  note right of OidcClient
+    Public clients (explore-ai-ios / explore-chat-ios):
+    requireProofKey; custom-scheme RedirectUri
+    (com.explore.*://oauth/callback) allowed.
+  end note
 }
 
 FederatedIdentityLink --|> AbstractImmutable

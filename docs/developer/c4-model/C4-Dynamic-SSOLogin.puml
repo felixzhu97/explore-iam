@@ -1,5 +1,8 @@
 @startuml C4-Dynamic-SSOLogin
-!include style-zinc.puml
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+
 title Dynamic — SSO login (OIDC Authorization Code)
 
 actor "End User" as user
@@ -9,7 +12,7 @@ participant "External IdP\nGoogle / GitHub" as idp <<external>>
 database "Metadata DB" as db <<db>>
 
 user -> app: 1. Access protected resource
-app --> user: 2. Redirect to /oauth2/authorize
+app --> user: 2. Start /oauth2/authorize\n(web redirect or ASWebAuthenticationSession)
 user -> iam: 3. GET /oauth2/authorize\n(client_id, redirect_uri, scope, state, PKCE)
 iam -> db: 4. Load RegisteredClient
 db --> iam: 5. Client settings
@@ -25,24 +28,20 @@ alt No local session
 end
 iam --> user: 12. Consent (if required) + redirect with code
 user -> app: 13. redirect_uri?code=…&state=…
-app -> iam: 14. POST /oauth2/token\n(client_id, client_secret, code)
-iam -> db: 16. Persist authorization (optional)
-iam --> app: 17. ID Token + Access Token (+ Refresh Token)
-app -> iam: 18. JWKS verify / userinfo (optional)
-app --> user: 19. Application session established
-
-legend right
-  |= Role |= Color |
-  | Actor | Emerald |
-  | <<ui>> | Slate |
-  | <<java>> | Blue |
-  | <<external>> | Zinc |
-  | <<db>> | Amber |
-endlegend
+alt Confidential client
+  app -> iam: 14a. POST /oauth2/token\n(client_id, client_secret, code)
+else Public native client (PKCE)
+  app -> iam: 14b. POST /oauth2/token\n(client_id, code, code_verifier)\nno client_secret
+end
+iam --> app: 15. Access Token (+ ID / Refresh)\nemail/profile claims on access token when scoped
+app -> iam: 16. JWKS verify / userinfo (optional)
+app --> user: 17. Application session / Bearer API calls
 
 note right of iam
-  Demo admin: demo / demo-password
+  Demo: demo / demo-password
   Discovery: /.well-known/openid-configuration
+  Native seeds: explore-ai-ios, explore-chat-ios
+  Custom-scheme redirects allowed (RFC 8252)
 end note
 
 @enduml
