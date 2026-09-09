@@ -1,0 +1,37 @@
+@startuml C4-Dynamic-NativePkceLogin
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+
+title Dynamic — Native iOS Sign in (Authorization Code + PKCE)
+
+actor "End User" as user
+participant "AI / Chat iOS\nASWebAuthenticationSession" as ios <<ui>>
+participant "IAM Application\n:9100" as iam <<java>>
+participant "AI or Chat API\nResource Server" as api <<java>>
+database "Metadata DB" as db <<db>>
+
+user -> ios: 1. Tap Sign in with IAM
+ios -> ios: 2. Generate code_verifier / challenge / state
+ios -> iam: 3. GET /oauth2/authorize\nclient_id=explore-*-ios\nredirect_uri=com.explore.*://oauth/callback\nscope=openid profile email\nPKCE S256
+iam -> db: 4. Load public RegisteredClient
+db --> iam: 5. requireProofKey=true
+alt No session
+  iam --> ios: 6. Redirect /login (Angular SPA)
+  user -> iam: 7. demo / demo-password
+end
+iam --> ios: 8. Custom-scheme redirect?code=&state=
+ios -> iam: 9. POST /oauth2/token\ngrant_type=authorization_code\ncode_verifier (no secret)
+iam --> ios: 10. access_token (+ refresh / id_token)\nemail claim on access_token
+ios -> api: 11. API call\nAuthorization: Bearer access_token
+api -> iam: 12. JWKS / issuer validate (lazy)
+api -> api: 13. Map sub/email → AccountUser / ChatUser
+api --> ios: 14. 200 (e.g. /api/account/me or /auth/me)
+ios --> user: 15. Navigate to Home / main tabs
+
+note over ios, api
+  Preferred clients: explore-ai-ios, explore-chat-ios.
+  Chat also keeps password HS JWT login as a separate path.
+end note
+
+@enduml

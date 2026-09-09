@@ -4,25 +4,25 @@
 
 title Container Diagram (C2) — Explore IAM
 
-Person(end_user, "End User", "SSO into business apps")
+Person(end_user, "End User", "SSO into business apps (web or iOS)")
 Person(admin, "IAM Administrator", "Console operations")
 Person(developer, "App Developer", "Integration & debugging")
 
 System_Boundary(explore_iam, "Explore IAM") {
-    Container(iam_app, "IAM Application", "Spring Boot 4.1 / Java 25 + Angular 22 SPA", "Single deployable :9100 — Console static + REST + OIDC Provider (SAS)")
+    Container(iam_app, "IAM Application", "Spring Boot 4.1 / Java 25 + Angular 22 SPA", "Single deployable :9100 — Console static + REST + OIDC Provider (SAS)\nSeed public clients: explore-ai-ios / explore-chat-ios (PKCE required)\nAccess + ID tokens carry email/profile claims")
     ContainerDb(metadata_db, "Metadata Database", "H2 (local) / PostgreSQL (target)", "Users, groups, roles, policies, clients, signing keys, audit")
 }
 
 System_Ext(google_idp, "Google IdP", "External federation")
 System_Ext(github_idp, "GitHub IdP", "External federation")
-System_Ext(apps, "Business Applications", "Explore AI / WhatsFeed / Shopping / Low Code", "OIDC Relying Parties")
+System_Ext(apps, "Business Applications", "Explore AI / Explore Chat / Shopping / Low Code\nWeb confidential clients + native public PKCE clients", "OIDC Relying Parties")
 
-Rel(end_user, apps, "Uses", "HTTPS")
-Rel(end_user, iam_app, "Login / consent", "HTTPS / OIDC")
+Rel(end_user, apps, "Uses", "HTTPS / native")
+Rel(end_user, iam_app, "Login / consent", "HTTPS / OIDC / PKCE")
 Rel(admin, iam_app, "Console + management API", "HTTPS :9100")
 Rel(developer, iam_app, "Register clients / REST", "HTTPS :9100")
 
-Rel(apps, iam_app, "Authorization Code / Token / JWKS", "OIDC / HTTPS")
+Rel(apps, iam_app, "Authorization Code (+ PKCE) / Token / JWKS", "OIDC / HTTPS")
 Rel(iam_app, metadata_db, "Read / write", "JDBC / Liquibase")
 Rel(iam_app, google_idp, "OAuth2 Login (optional)", "OIDC")
 Rel(iam_app, github_idp, "OAuth2 Login (optional)", "OAuth 2.0")
