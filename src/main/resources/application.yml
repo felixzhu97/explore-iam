@@ -71,6 +71,24 @@ app:
           - openid
           - profile
           - email
+      - client-id: ${IAM_CLIENT_EXPLORE_AI_IOS_ID:explore-ai-ios}
+        client-name: Explore AI iOS
+        public-client: true
+        redirect-uris:
+          - com.explore.ai://oauth/callback
+        scopes:
+          - openid
+          - profile
+          - email
+      - client-id: ${IAM_CLIENT_EXPLORE_CHAT_IOS_ID:explore-chat-ios}
+        client-name: Explore Chat iOS
+        public-client: true
+        redirect-uris:
+          - com.explore.chat://oauth/callback
+        scopes:
+          - openid
+          - profile
+          - email
 
 # Uncomment and set credentials to enable Google/GitHub federated login:
 # spring.security.oauth2.client.registration.google:

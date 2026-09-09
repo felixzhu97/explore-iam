@@ -156,6 +156,38 @@ public class OidcClient {
   }
 
   /**
+   * Seeds a public native / SPA Relying Party ({@code none} + PKCE).
+   *
+   * @param clientId public client_id
+   * @param clientName display name
+   * @param redirectUris allowed redirect URIs (custom schemes allowed)
+   * @param postLogoutRedirectUris allowed post-logout redirect URIs
+   * @param scopes requested scopes
+   * @return seeded public aggregate
+   */
+  public static OidcClient seedPublic(
+      ClientId clientId,
+      String clientName,
+      Set<RedirectUri> redirectUris,
+      Set<RedirectUri> postLogoutRedirectUris,
+      Set<String> scopes) {
+    return new OidcClient(
+        UUID.randomUUID().toString(),
+        clientId,
+        Instant.now(),
+        clientName,
+        null,
+        null,
+        redirectUris,
+        postLogoutRedirectUris,
+        scopes,
+        Set.of("code"),
+        Set.of("none"),
+        Set.of("authorization_code", "refresh_token"),
+        false);
+  }
+
+  /**
    * Rebuilds an aggregate from persistence without changing identifiers.
    *
    * @param id internal id

@@ -80,6 +80,28 @@ sequenceDiagram
 Prefer a BFF or confidential backend. If the client is public, require PKCE, omit
 client secrets, and keep tokens out of long-lived local storage when you can.
 
+## Native public clients (iOS)
+
+Local bootstrap seeds public clients with `public-client: true` and
+`requireProofKey(true)`:
+
+| client_id | redirect URI |
+| --- | --- |
+| `explore-ai-ios` | `com.explore.ai://oauth/callback` |
+| `explore-chat-ios` | `com.explore.chat://oauth/callback` |
+
+Use Authorization Code + PKCE from the device (`ASWebAuthenticationSession`):
+
+1. `GET $ISSUER/oauth2/authorize` with `client_id`, `redirect_uri`, `scope`,
+   `response_type=code`, `code_challenge`, `code_challenge_method=S256`.
+2. User signs in on the Authorization Server (demo: `demo` / `demo-password`).
+3. App receives `code` on the custom scheme callback.
+4. `POST $ISSUER/oauth2/token` with `grant_type=authorization_code`, `code`,
+   `redirect_uri`, `code_verifier`, and `client_id` (no secret).
+5. Call Explore AI / Chat APIs with `Authorization: Bearer <access_token>`.
+
+Issuer for local defaults is `http://localhost:9100`.
+
 ## Manual token check (optional)
 
 After a browser authorize round-trip yields a `code`:
