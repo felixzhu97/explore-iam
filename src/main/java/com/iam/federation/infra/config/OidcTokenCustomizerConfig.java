@@ -2,7 +2,9 @@ package com.iam.federation.infra.config;
 
 import com.iam.identity.domain.model.IamUser;
 import com.iam.identity.domain.repository.IamUserRepository;
+import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
@@ -41,6 +43,17 @@ public class OidcTokenCustomizerConfig {
     if (scopes.contains(OidcScopes.PROFILE)) {
       context.getClaims().claim("preferred_username", user.getUsername());
       context.getClaims().claim("name", user.getUsername());
+    }
+    if ("access_token".equals(context.getTokenType().getValue())) {
+      Set<String> permissions =
+          scopes.stream()
+              .filter(scope -> !"openid".equals(scope))
+              .filter(scope -> !"profile".equals(scope))
+              .filter(scope -> !"email".equals(scope))
+              .collect(Collectors.toCollection(LinkedHashSet::new));
+      if (!permissions.isEmpty()) {
+        context.getClaims().claim("permissions", permissions);
+      }
     }
   }
 }
