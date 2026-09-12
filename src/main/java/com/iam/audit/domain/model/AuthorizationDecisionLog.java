@@ -1,17 +1,18 @@
 package com.iam.audit.domain.model;
 
-import com.iam.audit.domain.converter.ReasonCodeConverter;
 import com.iam.common.domain.base.AbstractAuditEvent;
 import com.iam.common.domain.vo.Action;
 import com.iam.common.domain.vo.Effect;
 import com.iam.common.domain.vo.PrincipalId;
 import com.iam.common.domain.vo.ReasonCode;
 import com.iam.common.domain.vo.Resource;
+import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.validation.Valid;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
@@ -25,33 +26,45 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public class AuthorizationDecisionLog extends AbstractAuditEvent {
 
-  @Getter(AccessLevel.NONE)
-  @Column(name = "principal_id", nullable = false, length = 256)
-  private String principalId;
+  @Embedded
+  @AttributeOverride(
+      name = "value",
+      column = @Column(name = "principal_id", nullable = false, length = 256))
+  @Valid
+  private PrincipalId principalId;
 
-  @Getter(AccessLevel.NONE)
-  @Column(nullable = false, length = 128)
-  private String action;
+  @Embedded
+  @AttributeOverride(
+      name = "value",
+      column = @Column(name = "action", nullable = false, length = 128))
+  @Valid
+  private Action action;
 
-  @Getter(AccessLevel.NONE)
-  @Column(nullable = false, length = 512)
-  private String resource;
+  @Embedded
+  @AttributeOverride(
+      name = "value",
+      column = @Column(name = "resource", nullable = false, length = 512))
+  @Valid
+  private Resource resource;
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false, length = 8)
   private Effect effect;
 
-  @Column(name = "reason_code", nullable = false, length = 64)
-  @Convert(converter = ReasonCodeConverter.class)
+  @Embedded
+  @AttributeOverride(
+      name = "value",
+      column = @Column(name = "reason_code", nullable = false, length = 64))
+  @Valid
   private ReasonCode reasonCode;
 
   private AuthorizationDecisionLog(
-      String id,
-      String principalId,
-      String action,
-      String resource,
+      PrincipalId principalId,
+      Action action,
+      Resource resource,
       Effect effect,
       ReasonCode reasonCode,
+      String id,
       Instant occurredAt) {
     super(id, occurredAt);
     this.principalId = Objects.requireNonNull(principalId, "principalId");
@@ -69,12 +82,12 @@ public class AuthorizationDecisionLog extends AbstractAuditEvent {
       Effect effect,
       ReasonCode reasonCode) {
     return new AuthorizationDecisionLog(
-        UUID.randomUUID().toString(),
-        principalId.value(),
-        action.value(),
-        resource.value(),
+        principalId,
+        action,
+        resource,
         effect,
         reasonCode,
+        UUID.randomUUID().toString(),
         Instant.now());
   }
 
@@ -95,37 +108,6 @@ public class AuthorizationDecisionLog extends AbstractAuditEvent {
       Effect effect,
       ReasonCode reasonCode) {
     return capture(principalId, action, resource, effect, reasonCode);
-  }
-
-  /** Rebuilds from persistence. */
-  public static AuthorizationDecisionLog reconstitute(
-      String id,
-      PrincipalId principalId,
-      Action action,
-      Resource resource,
-      Effect effect,
-      ReasonCode reasonCode,
-      Instant occurredAt) {
-    return new AuthorizationDecisionLog(
-        id,
-        principalId.value(),
-        action.value(),
-        resource.value(),
-        effect,
-        reasonCode,
-        occurredAt);
-  }
-
-  public PrincipalId getPrincipalId() {
-    return new PrincipalId(principalId);
-  }
-
-  public Action getAction() {
-    return new Action(action);
-  }
-
-  public Resource getResource() {
-    return new Resource(resource);
   }
 
   public boolean isAllowed() {
