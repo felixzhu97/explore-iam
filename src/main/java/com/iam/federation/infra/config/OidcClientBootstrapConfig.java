@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.StringUtils;
 
-/** Seeds configured OIDC clients on application startup. */
+/** Seeds configured OIDC clients on application startup (idempotent scope merge). */
 @Configuration
 @EnableConfigurationProperties(OidcSeedClientProperties.class)
 public class OidcClientBootstrapConfig {
@@ -41,7 +41,18 @@ public class OidcClientBootstrapConfig {
           continue;
         }
         ClientId clientId = new ClientId(seed.getClientId());
-        if (oidcClientRepository.findByClientId(clientId).isPresent()) {
+        Set<String> desiredScopes =
+            seed.getScopes().isEmpty()
+                ? properties.defaultScopes()
+                : new LinkedHashSet<>(seed.getScopes());
+        var existing = oidcClientRepository.findByClientId(clientId);
+        if (existing.isPresent()) {
+          OidcClient client = existing.get();
+          if (!client.scopes().equals(desiredScopes)) {
+            client.replaceScopes(desiredScopes);
+            oidcClientRepository.save(client);
+            log.info("Updated OIDC client '{}' scopes", clientId.value());
+          }
           continue;
         }
         Set<RedirectUri> redirectUris =
@@ -52,21 +63,17 @@ public class OidcClientBootstrapConfig {
             seed.getPostLogoutRedirectUris().stream()
                 .map(RedirectUri::new)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
-        Set<String> scopes =
-            seed.getScopes().isEmpty()
-                ? properties.defaultScopes()
-                : new LinkedHashSet<>(seed.getScopes());
         OidcClient client =
             seed.isPublicClient()
                 ? OidcClient.seedPublic(
-                    clientId, seed.getClientName(), redirectUris, postLogout, scopes)
+                    clientId, seed.getClientName(), redirectUris, postLogout, desiredScopes)
                 : OidcClient.seed(
                     clientId,
                     seed.getClientName(),
                     passwordEncoder.encode(seed.getClientSecret()),
                     redirectUris,
                     postLogout,
-                    scopes);
+                    desiredScopes);
         oidcClientRepository.save(client);
         log.info(
             "Seeded OIDC client '{}' (public={})", clientId.value(), seed.isPublicClient());

@@ -71,6 +71,12 @@ app:
           - openid
           - profile
           - email
+          - write:ai_chat
+          - write:ai_audio
+          - write:ai_rag
+          - write:ai_media
+          - write:ai_agent
+          - write:ai_tools
       - client-id: ${IAM_CLIENT_EXPLORE_AI_IOS_ID:explore-ai-ios}
         client-name: Explore AI iOS
         public-client: true
@@ -80,6 +86,28 @@ app:
           - openid
           - profile
           - email
+          - write:ai_chat
+          - write:ai_audio
+          - write:ai_rag
+          - write:ai_media
+          - write:ai_agent
+          - write:ai_tools
+      - client-id: ${IAM_CLIENT_EXPLORE_CHAT_ID:explore-chat}
+        client-name: Explore Chat
+        client-secret: ${IAM_CLIENT_EXPLORE_CHAT_SECRET:explore-chat-dev-secret}
+        redirect-uris:
+          - http://localhost:4300/login/oauth2/code/explore-iam
+          - http://127.0.0.1:4300/login/oauth2/code/explore-iam
+        post-logout-redirect-uris:
+          - http://localhost:4300/
+          - http://127.0.0.1:4300/
+        scopes:
+          - openid
+          - profile
+          - email
+          - write:chat_messaging
+          - write:chat_social
+          - admin:chat
       - client-id: ${IAM_CLIENT_EXPLORE_CHAT_IOS_ID:explore-chat-ios}
         client-name: Explore Chat iOS
         public-client: true
@@ -89,6 +117,9 @@ app:
           - openid
           - profile
           - email
+          - write:chat_messaging
+          - write:chat_social
+          - admin:chat
 
 # Uncomment and set credentials to enable Google/GitHub federated login:
 # spring.security.oauth2.client.registration.google:
