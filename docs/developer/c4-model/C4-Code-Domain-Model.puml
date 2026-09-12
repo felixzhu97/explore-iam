@@ -1,26 +1,37 @@
 @startuml C4-Code-Domain-Model
-!include style-zinc.puml
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  FontColor #000000
+}
+
 title Code diagram (C4) — Domain model (aligned to com.iam.*.domain)
 hide empty members
 
 legend right
-  |= 标题色 |= Type |
-  | <color:#334155>Abstract</color> | 抽象基类 |
-  | <color:#064E3B>AggregateRoot</color> | 聚合根 |
-  | <color:#1E3A8A>Entity</color> | 实体 |
-  | <color:#9A3412>ValueObject</color> | 值对象 |
-  | <color:#78350F>Enum</color> | 枚举 |
-  | <color:#3730A3>DomainService</color> | 领域服务 |
+  |= Stereotype |= Meaning |
+  | <<Abstract>> | 抽象基类 |
+  | <<AggregateRoot>> | 聚合根 |
+  | <<Entity>> | 实体 |
+  | <<ValueObject>> | 值对象 |
+  | <<Enum>> | 枚举 |
+  | <<DomainService>> | 领域服务 |
 endlegend
 
 package "com.iam.common.domain.base" as pkg_kernel {
   class AbstractImmutable <<Abstract>> {
     +id: String
-    +createdAt: Instant
+    +createdAt: Instant @CreationTimestamp
   }
   class AbstractEntity <<Abstract>> {
-    +updatedAt: Instant
+    +updatedAt: Instant @UpdateTimestamp
     +version: long
+    # touch()
   }
   class AbstractEmbeddable <<Abstract>>
   class AbstractNamedEntity <<Abstract>> {
@@ -57,6 +68,12 @@ package "com.iam.common.domain.vo" as pkg_common {
     +value: String
     --
     +matches(requested)
+  }
+  class Scope <<ValueObject>> {
+    +value: String
+    --
+    +{static} of(raw)
+    +isOidcStandard()
   }
   class PrincipalId <<ValueObject>> {
     +value: String
@@ -170,7 +187,7 @@ package "com.iam.policy.domain" as pkg_policy {
   }
   class PermissionPoint <<AggregateRoot>> {
     +code: String
-    +oauthScope: String
+    +oauthScope: Scope
     +module: String
     +action: Action
     +resource: Resource
@@ -178,6 +195,7 @@ package "com.iam.policy.domain" as pkg_policy {
     --
     +{static} create(code, oauthScope, module, action, resource, description)
     +oauthScope()
+    +oauthScopeValue()
     +matchesScope(scope)
   }
   class EvaluationContext <<ValueObject>> {
@@ -207,6 +225,7 @@ PolicyAttachment --> PolicyDocument : references policyId
 PolicyAttachment --> Arn
 PermissionPoint --> Action
 PermissionPoint --> Resource
+PermissionPoint --> Scope : oauthScope
 EvaluationContext --> PrincipalId
 EvaluationContext --> Action
 EvaluationContext --> Resource
@@ -239,12 +258,18 @@ package "com.iam.federation.domain" as pkg_federation {
   class OidcClient <<AggregateRoot>> {
     +clientId: ClientId
     +redirectUris: Set<RedirectUri>
+    +scopes: Set<Scope>
     --
     +{static} register(...)
     +{static} seed(...)
+    +{static} seedPublic(...)
+    +{static} reconstitute(...)
     +isPublicClient()
     +clientId()
     +redirectUris()
+    +scopes()
+    +scopeValues()
+    +replaceScopes(scopes)
   }
   class FederatedIdentityLink <<AggregateRoot>> {
     +iamUserId: String
@@ -264,6 +289,7 @@ package "com.iam.federation.domain" as pkg_federation {
     Public clients (explore-ai-ios / explore-chat-ios):
     requireProofKey; custom-scheme RedirectUri
     (com.explore.*://oauth/callback) allowed.
+    Scopes persist via SAS oauth2_registered_client.scopes.
   end note
 }
 
@@ -272,6 +298,7 @@ ClientId --|> AbstractEmbeddable
 RedirectUri --|> AbstractEmbeddable
 OidcClient --> ClientId
 OidcClient --> RedirectUri
+OidcClient --> Scope : scopes
 FederatedIdentityLink ..> IamUser : links
 
 package "com.iam.audit.domain" as pkg_audit {
@@ -280,9 +307,9 @@ package "com.iam.audit.domain" as pkg_audit {
   }
   class AuditTarget <<ValueObject>> {
     +type: String
-    +id: String
+    +targetId: String
     --
-    +matches(type, id)
+    +matches(type, targetId)
   }
   class ManagementEvent <<AggregateRoot>> {
     +actor: AuditActor
@@ -298,9 +325,9 @@ package "com.iam.audit.domain" as pkg_audit {
     +targets(candidate)
   }
   class AuthorizationDecisionLog <<AggregateRoot>> {
-    +principalId: String
-    +action: String
-    +resource: String
+    +principalId: PrincipalId
+    +action: Action
+    +resource: Resource
     +effect: Effect
     +reasonCode: ReasonCode
     --
@@ -331,6 +358,9 @@ AuthorizationDecisionLog ..> AuthorizationDecision : captures
 
 note as N_LAYERS
   Layering (per module): controller → service → domain ← infra
+  Kernel: @CreationTimestamp / @UpdateTimestamp; Bean Validation on fields.
+  Persisted string VOs: @Embeddable (Arn, Action, Resource, …).
+  reconstitute: OidcClient only (non-JPA aggregate).
   Preferred Terms: docs/Glossary.md
 end note
 
