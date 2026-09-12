@@ -48,7 +48,7 @@ public class OidcClientBootstrapConfig {
         var existing = oidcClientRepository.findByClientId(clientId);
         if (existing.isPresent()) {
           OidcClient client = existing.get();
-          if (!client.scopes().equals(desiredScopes)) {
+          if (!client.scopeValues().equals(desiredScopes)) {
             client.replaceScopes(desiredScopes);
             oidcClientRepository.save(client);
             log.info("Updated OIDC client '{}' scopes", clientId.value());

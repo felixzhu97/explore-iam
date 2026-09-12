@@ -58,6 +58,12 @@ package "com.iam.common.domain.vo" as pkg_common {
     --
     +matches(requested)
   }
+  class Scope <<ValueObject>> {
+    +value: String
+    --
+    +{static} of(raw)
+    +isOidcStandard()
+  }
   class PrincipalId <<ValueObject>> {
     +value: String
     --
@@ -170,7 +176,7 @@ package "com.iam.policy.domain" as pkg_policy {
   }
   class PermissionPoint <<AggregateRoot>> {
     +code: String
-    +oauthScope: String
+    +oauthScope: Scope
     +module: String
     +action: Action
     +resource: Resource
@@ -178,6 +184,7 @@ package "com.iam.policy.domain" as pkg_policy {
     --
     +{static} create(code, oauthScope, module, action, resource, description)
     +oauthScope()
+    +oauthScopeValue()
     +matchesScope(scope)
   }
   class EvaluationContext <<ValueObject>> {
@@ -207,6 +214,7 @@ PolicyAttachment --> PolicyDocument : references policyId
 PolicyAttachment --> Arn
 PermissionPoint --> Action
 PermissionPoint --> Resource
+PermissionPoint --> Scope : oauthScope
 EvaluationContext --> PrincipalId
 EvaluationContext --> Action
 EvaluationContext --> Resource
@@ -239,12 +247,18 @@ package "com.iam.federation.domain" as pkg_federation {
   class OidcClient <<AggregateRoot>> {
     +clientId: ClientId
     +redirectUris: Set<RedirectUri>
+    +scopes: Set<Scope>
     --
     +{static} register(...)
     +{static} seed(...)
+    +{static} seedPublic(...)
+    +{static} reconstitute(...)
     +isPublicClient()
     +clientId()
     +redirectUris()
+    +scopes()
+    +scopeValues()
+    +replaceScopes(scopes)
   }
   class FederatedIdentityLink <<AggregateRoot>> {
     +iamUserId: String
@@ -264,6 +278,7 @@ package "com.iam.federation.domain" as pkg_federation {
     Public clients (explore-ai-ios / explore-chat-ios):
     requireProofKey; custom-scheme RedirectUri
     (com.explore.*://oauth/callback) allowed.
+    Scopes persist via SAS oauth2_registered_client.scopes.
   end note
 }
 
@@ -272,6 +287,7 @@ ClientId --|> AbstractEmbeddable
 RedirectUri --|> AbstractEmbeddable
 OidcClient --> ClientId
 OidcClient --> RedirectUri
+OidcClient --> Scope : scopes
 FederatedIdentityLink ..> IamUser : links
 
 package "com.iam.audit.domain" as pkg_audit {

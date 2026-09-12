@@ -25,6 +25,6 @@ class OidcClientReplaceScopesTest {
     client.replaceScopes(
         Set.of("openid", "profile", "email", "write:ai_chat", "write:ai_audio"));
 
-    assertThat(client.scopes()).contains("write:ai_chat", "write:ai_audio", "openid");
+    assertThat(client.scopeValues()).contains("write:ai_chat", "write:ai_audio", "openid");
   }
 }

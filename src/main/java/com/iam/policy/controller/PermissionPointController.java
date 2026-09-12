@@ -119,7 +119,7 @@ public class PermissionPointController {
       return new PermissionPointResponse(
           "permissionPoints/" + point.getCode(),
           point.getCode(),
-          point.oauthScope(),
+          point.oauthScopeValue(),
           point.getModule(),
           point.getAction().value(),
           point.getResource().value(),
