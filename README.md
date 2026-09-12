@@ -60,7 +60,7 @@ After signing in, register clients in the console or over the API:
 
 | | |
 |--|--|
-| Console | `http://localhost:9100/clients` · `http://localhost:9100/clients/new` |
+| Console | `http://localhost:9100/apps` · `http://localhost:9100/apps/new` |
 | API | `POST /api/v1/clients`, `GET /api/v1/clients`, `GET /api/v1/clients/{clientId}` |
 
 `POST /api/v1/clients` accepts `clientName`, `redirectUris`, and optional `postLogoutRedirectUris`, `clientUri`, `scopes`, `responseTypes` (`code`), `authorizationGrantTypes` (`authorization_code`, optional `refresh_token`), and `clientAuthenticationMethods` (`client_secret_basic` \| `client_secret_post` \| `none`). For confidential clients, the secret is returned **once** on create.

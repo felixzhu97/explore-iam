@@ -29,25 +29,28 @@ This document defines the project **Ubiquitous Language**. English terms are the
 
 | Preferred Term | 中文   | Java Package | Frontend Route | API Prefix | Status | Notes |
 | -------------- | ------ | ------------ | -------------- | ---------- | ------ | ----- |
-| Identity       | 身份   | `com.iam.identity` | `/identity` | `/api/v1/users`, `/api/v1/groups`, `/api/v1/roles` | partial | AIP-121 collection; `IamUser` / Group / Role |
-| Policy         | 策略   | `com.iam.policy` | `/policies` | `/api/v1/policies`, `/api/v1/permissionPoints` | partial | Policy Engine + Permission Point catalog |
+| Identity       | 身份   | `com.iam.identity` | `/users-and-access` | `/api/v1/users`, `/api/v1/groups`, `/api/v1/roles` | partial | Console Users and Access |
+| Policy         | 策略   | `com.iam.policy` | `/permissions` | `/api/v1/policies`, `/api/v1/permissionPoints` | partial | Permission Point catalog |
 | STS            | 临时凭证 | `com.iam.sts` | — | `/api/v1/sts` | partial | AssumeRole + temporary JWT |
-| Federation     | 联邦   | `com.iam.federation` | — | OIDC + `/api/v1/clients` | partial | SAS Provider + `OidcClient` |
-| Console        | 控制台 | — | `/` | — | partial | Login + client registration |
-| Audit          | 审计   | `com.iam.audit` | `/audit` | `/api/v1/auditEvents` | partial | Immutable audit aggregates |
-| Common         | 横切   | `com.iam.common` | — | — | partial | Shared VOs, security, AIP helpers |
+| Federation     | 联邦   | `com.iam.federation` | `/apps` | OIDC + `/api/v1/clients` | partial | Console Apps map to OIDC clients |
+| Console        | 控制台 | — | `/` | — | partial | Login + management shell |
+| Audit          | 审计   | `com.iam.audit` | `/activity` | `/api/v1/auditEvents` | partial | Immutable audit aggregates |
+| Common         | 横切   | `com.iam.common` | — | — | partial | Shared VOs, security helpers |
 
-**Frontend route map (canonical)**
+**Frontend route map (canonical)** — Console browser paths. Management HTTP uses `/api/v1/...` resource APIs (SPA path ≠ API path).
 
-| Route        | Preferred Term | API prefix (AIP) |
-| ------------ | -------------- | ---------------- |
-| `/identity`  | Identity       | `/api/v1/users`, `/api/v1/groups`, `/api/v1/roles` |
-| `/policies`  | Policy         | `/api/v1/policies`, `/api/v1/permissionPoints` |
-| `/audit`     | Audit          | `/api/v1/auditEvents` |
-| `/clients`   | App Registration | `/api/v1/clients` |
-| `/`          | Console        | Control Plane REST |
+| Route | Preferred Term | API prefix |
+| ----- | -------------- | ---------- |
+| `/users-and-access/people` | Identity (People) | `/api/v1/users` |
+| `/users-and-access/groups` | Identity (Groups) | `/api/v1/groups` |
+| `/users-and-access/roles` | Identity (Roles) | `/api/v1/roles` |
+| `/permissions/points` | Permission Point | `/api/v1/permissionPoints` |
+| `/permissions/policies` | Policy | `/api/v1/policies` |
+| `/apps` | App Registration | `/api/v1/clients` |
+| `/activity` | Audit | `/api/v1/auditEvents` |
+| `/` | Console | Control Plane REST |
 
-**AIP REST (management APIs)** — Google [API Improvement Proposals](https://google.aip.dev/): resource paths under `/api/v1`, standard Get/List/Create/Update/Delete, AIP-136 custom methods (`POST …/{resource}:disable`), AIP-158 `page_size` / `page_token` / `next_page_token`, AIP-193 `RpcStatus` errors.
+**Management REST** — resource paths under `/api/v1`, standard Get/List/Create/Update/Delete, custom methods (`POST …/{resource}:disable`), pagination `page_size` / `page_token` / `next_page_token`.
 
 ---
 
@@ -368,7 +371,7 @@ Immutable **aggregate roots** for append-only audit rows. Not Spring Security
 | Preferred Term (English) | 中文 | Definition | Type | Code Mapping | Status |
 | ------------------------ | ---- | ---------- | ---- | ------------ | ------ |
 | IAM Console | IAM 控制台 | Angular SPA for administrators | UI | Angular 22 app | partial |
-| App Registration | 应用注册 | Create Registered Client | Use Case | Console + `/api/v1/clients` | implemented |
+| App Registration | 应用注册 | Create Registered Client | Use Case | Console `/apps` + `/api/v1/clients` | implemented |
 
 ---
 

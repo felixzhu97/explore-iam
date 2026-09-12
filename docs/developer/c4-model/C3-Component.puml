@@ -7,10 +7,13 @@ title Component Diagram (C3) — Explore IAM (backend + frontends)
 Container_Boundary(iam_app, "IAM Application (Spring Boot :9100)") {
 
     Container_Boundary(console, "IAM Console") {
-        Component(console_shell, "App Shell", "Angular 22", "Routes: home, clients, login")
-        Component(clients_ui, "App Registration UI", "Angular", "Client list + create wizard")
+        Component(console_shell, "App Shell", "Angular 22", "Routes: apps, users-and-access, permissions, activity")
+        Component(clients_ui, "App Registration UI", "Angular", "/apps list + create + scopes")
+        Component(uaa_ui, "Users and Access UI", "Angular", "/users-and-access/*")
+        Component(perm_ui, "Permissions UI", "Angular", "/permissions/*")
+        Component(activity_ui, "Activity UI", "Angular", "/activity")
         Component(login_ui, "Login UI", "Angular", "Form login + OAuth client context")
-        Component(http_client, "HTTP Client", "Angular HttpClient", "REST + CSRF (X-XSRF-TOKEN)")
+        Component(http_client, "HTTP Client", "Angular HttpClient", "/api/v1 + CSRF")
     }
 
     Container_Boundary(identity, "Identity Module") {
@@ -60,8 +63,14 @@ ContainerDb_Ext(metadata_db, "Metadata Database", "H2 / PostgreSQL", "Liquibase 
 System_Ext(external_idp, "External IdP", "Google / GitHub", "Optional OAuth2 Login")
 
 Rel(console_shell, clients_ui, "Routes")
+Rel(console_shell, uaa_ui, "Routes")
+Rel(console_shell, perm_ui, "Routes")
+Rel(console_shell, activity_ui, "Routes")
 Rel(console_shell, login_ui, "Routes")
 Rel(clients_ui, http_client, "REST")
+Rel(uaa_ui, http_client, "REST")
+Rel(perm_ui, http_client, "REST")
+Rel(activity_ui, http_client, "REST")
 Rel(login_ui, http_client, "Form POST /login")
 
 Rel(http_client, user_ctrl, "HTTPS /api/v1/users")
