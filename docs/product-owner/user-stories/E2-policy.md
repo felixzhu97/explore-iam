@@ -56,3 +56,29 @@
 ### 状态
 
 规划中
+
+---
+
+## US-05a 权限点目录（GitHub 风格 Scope）
+
+**As a** IAM 管理员  
+**I want** 维护 Permission Point 目录，每个权限点对应一个 GitHub 风格 OAuth scope  
+**So that** Explore AI / Chat 等依赖方可用统一的 `write:ai_chat` / `admin:chat` 做 JWT 鉴权
+
+### 验收标准
+
+1. **Scenario** 列出权限点
+   **GIVEN** 管理员或审计员已登录  
+   **WHEN** 调用 `GET /api/v1/permissionPoints`  
+   **THEN** 返回含 `write:ai_chat`、`admin:chat` 等目录项  
+   **AND** 每项含 Action、Resource、module
+
+2. **Scenario** 拒绝点分产品 Scope
+   **GIVEN** 管理员尝试创建 `oauthScope` 为 `ai.chat` 的权限点  
+   **WHEN** 提交创建请求  
+   **THEN** 请求被拒绝  
+   **AND** 提示须使用 `{access}:{resource}` 格式
+
+### 状态
+
+规划中
