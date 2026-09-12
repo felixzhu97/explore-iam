@@ -29,23 +29,25 @@ This document defines the project **Ubiquitous Language**. English terms are the
 
 | Preferred Term | 中文   | Java Package | Frontend Route | API Prefix | Status | Notes |
 | -------------- | ------ | ------------ | -------------- | ---------- | ------ | ----- |
-| Identity       | 身份   | `com.iam.identity` | `/identity` | `/api/identity` | partial | `IamUser` + form login; Group / Role expanding |
-| Policy         | 策略   | `com.iam.policy` | `/policies` | `/api/policies` | partial | Policy Engine + evaluation API |
-| STS            | 临时凭证 | `com.iam.sts` | — | `/api/sts` | partial | AssumeRole + temporary JWT |
-| Federation     | 联邦   | `com.iam.federation` | — | OIDC + `/api/clients` | partial | SAS Provider + `FederatedIdentityLink` |
+| Identity       | 身份   | `com.iam.identity` | `/identity` | `/api/v1/users`, `/api/v1/groups`, `/api/v1/roles` | partial | AIP-121 collection; `IamUser` / Group / Role |
+| Policy         | 策略   | `com.iam.policy` | `/policies` | `/api/v1/policies`, `/api/v1/permissionPoints` | partial | Policy Engine + Permission Point catalog |
+| STS            | 临时凭证 | `com.iam.sts` | — | `/api/v1/sts` | partial | AssumeRole + temporary JWT |
+| Federation     | 联邦   | `com.iam.federation` | — | OIDC + `/api/v1/clients` | partial | SAS Provider + `OidcClient` |
 | Console        | 控制台 | — | `/` | — | partial | Login + client registration |
-| Audit          | 审计   | `com.iam.audit` | `/audit` | `/api/audit` | partial | Immutable audit aggregates (management + AuthZ) |
-| Common         | 横切   | `com.iam.common` | — | — | partial | Shared VOs, security, web errors |
+| Audit          | 审计   | `com.iam.audit` | `/audit` | `/api/v1/auditEvents` | partial | Immutable audit aggregates |
+| Common         | 横切   | `com.iam.common` | — | — | partial | Shared VOs, security, AIP helpers |
 
 **Frontend route map (canonical)**
 
-| Route        | Preferred Term | API prefix      |
-| ------------ | -------------- | --------------- |
-| `/identity`  | Identity       | `/api/identity` |
-| `/policies`  | Policy         | `/api/policies` |
-| `/audit`     | Audit          | `/api/audit`    |
-| `/clients`   | App Registration | `/api/clients` |
+| Route        | Preferred Term | API prefix (AIP) |
+| ------------ | -------------- | ---------------- |
+| `/identity`  | Identity       | `/api/v1/users`, `/api/v1/groups`, `/api/v1/roles` |
+| `/policies`  | Policy         | `/api/v1/policies`, `/api/v1/permissionPoints` |
+| `/audit`     | Audit          | `/api/v1/auditEvents` |
+| `/clients`   | App Registration | `/api/v1/clients` |
 | `/`          | Console        | Control Plane REST |
+
+**AIP REST (management APIs)** — Google [API Improvement Proposals](https://google.aip.dev/): resource paths under `/api/v1`, standard Get/List/Create/Update/Delete, AIP-136 custom methods (`POST …/{resource}:disable`), AIP-158 `page_size` / `page_token` / `next_page_token`, AIP-193 `RpcStatus` errors.
 
 ---
 
@@ -124,7 +126,9 @@ Terms mapping Explore IAM security behavior to [Spring Security](https://docs.sp
 | Authorization Grant Type | 授权类型 | e.g. `authorization_code`, `refresh_token` | `AuthorizationGrantType` | implemented |
 | Client Authentication Method | 客户端认证方式 | e.g. `client_secret_basic`, `client_secret_post`, `none` | `ClientAuthenticationMethod` | implemented |
 | Redirect URI | 重定向 URI | Allowed OAuth callback URL for a client | `RedirectUri` VO, `RegisteredClient.redirectUris` | implemented |
-| Scope | 范围 | OAuth scope string (e.g. `openid`, `profile`) | `RegisteredClient.scopes` | implemented |
+| Scope | 范围 | OAuth scope string; OIDC std (`openid`, `profile`, `email`) plus GitHub-style product scopes (`write:ai_chat`, `admin:chat`) | `RegisteredClient.scopes` / Permission Point `oauthScope` | implemented |
+| Scope Catalog | 范围目录 | Curated set of OAuth scopes backed by Permission Points | Permission Point seeds | planned |
+| GitHub-Style Scope | GitHub 风格范围 | `{access}:{resource}` as in GitHub OAuth (`read:user`, `write:packages`, `admin:org`); access ∈ `read` \| `write` \| `admin` | Permission Point `oauthScope` | planned |
 | Issuer | 签发者 | OIDC issuer identifier URL | `spring.security.oauth2.authorizationserver.issuer` | implemented |
 
 ### 4.4 Federation (OAuth2 Client)
@@ -269,7 +273,10 @@ Cross-bounded-context value objects in `com.iam.common.domain.vo`.
 | Policy ID Reference | 策略 ID 引用 | Attached policy document id | Behavior | `PolicyAttachment.policyId` | implemented |
 | Principal ARN | 主体 ARN | ARN the policy is attached to | Behavior | `PolicyAttachment.principalArn` | implemented |
 | Action | 操作 | API or resource operation identifier | Value Object | `Action` | see §5.5 |
-| Permission Point | 权限点 | Stable Action + Resource (+ Condition) check evaluated by the Policy Engine or method security | Concept | `Action` + `Resource` + `EvaluationContext` | implemented |
+| Permission Point | 权限点 | Catalog entry: stable code, Action, Resource, and GitHub-style `oauthScope` for Relying Party JWT enforcement | Aggregate | `PermissionPoint` | planned |
+| Permission Point Code | 权限点编码 | Business key equal to `oauthScope` (e.g. `write:ai_chat`) | Attribute | `PermissionPoint.code` | planned |
+| OAuth Scope Accessor | OAuth 范围访问 | Scope string granted on access tokens | Behavior | `PermissionPoint.oauthScope` | planned |
+| Module | 模块 | Product area owning the permission (`ai`, `chat`, `oidc`) | Attribute | `PermissionPoint.module` | planned |
 | Resource | 资源 | Target of an Action | Value Object | `Resource` | see §5.5 |
 | Condition | 条件 | Context keys constraining a statement | Value Object | `Condition` | planned |
 | Evaluation Context | 求值上下文 | Principal + Action + Resource | Value Object | `EvaluationContext` | implemented |
@@ -334,13 +341,20 @@ Immutable **aggregate roots** for append-only audit rows. Not Spring Security
 | From Evaluation | 从求值捕获 | Factory from policy evaluation outcome | Behavior | `AuthorizationDecisionLog.fromEvaluation` | implemented |
 | Management Audit Recorder | 管理审计记录器 | Application helper persisting management events | Service | `ManagementAuditRecorder` | implemented |
 | Identity Disable User Action | 禁用用户操作 | Audited management action | Action | `identity:DisableUser` | implemented |
+| Identity Create User Action | 创建用户操作 | Audited management action | Action | `identity:CreateUser` | planned |
+| Identity Enable User Action | 启用用户操作 | Audited management action | Action | `identity:EnableUser` | planned |
+| Identity Reset Password Action | 重置密码操作 | Audited management action | Action | `identity:ResetPassword` | planned |
 | Identity Create Group Action | 创建组操作 | Audited management action | Action | `identity:CreateGroup` | implemented |
 | Identity Add Group Member Action | 添加组成员操作 | Audited management action | Action | `identity:AddGroupMember` | implemented |
+| Identity Remove Group Member Action | 移除组成员操作 | Audited management action | Action | `identity:RemoveGroupMember` | planned |
 | Identity Create Role Action | 创建角色操作 | Audited management action | Action | `identity:CreateRole` | implemented |
 | Identity Assign Role Action | 分配角色操作 | Audited management action | Action | `identity:AssignRole` | implemented |
+| Identity Unassign Role Action | 取消角色分配 | Audited management action | Action | `identity:UnassignRole` | planned |
 | Federation Register Client Action | 注册客户端操作 | Audited management action | Action | `federation:RegisterClient` | implemented |
+| Federation Update Client Scopes Action | 更新客户端范围 | Audited management action | Action | `federation:UpdateClientScopes` | planned |
 | Policy Create Action | 创建策略操作 | Audited management action | Action | `policy:CreatePolicy` | implemented |
 | Policy Attach Action | 附加策略操作 | Audited management action | Action | `policy:AttachPolicy` | implemented |
+| Policy Create Permission Point Action | 创建权限点 | Audited management action | Action | `policy:CreatePermissionPoint` | planned |
 | STS Assume Role Action | 扮演角色操作 | Audited management action | Action | `sts:AssumeRole` | implemented |
 | Was Successful | 是否成功 | Query on management aggregate | Behavior | `ManagementEvent.wasSuccessful` | implemented |
 | Is Allowed | 是否允许 | Query on authorization aggregate | Behavior | `AuthorizationDecisionLog.isAllowed` | implemented |
@@ -354,7 +368,29 @@ Immutable **aggregate roots** for append-only audit rows. Not Spring Security
 | Preferred Term (English) | 中文 | Definition | Type | Code Mapping | Status |
 | ------------------------ | ---- | ---------- | ---- | ------------ | ------ |
 | IAM Console | IAM 控制台 | Angular SPA for administrators | UI | Angular 22 app | partial |
-| App Registration | 应用注册 | Create Registered Client | Use Case | Console + `/api/clients` | implemented |
+| App Registration | 应用注册 | Create Registered Client | Use Case | Console + `/api/v1/clients` | implemented |
+
+---
+
+## 11.1 Module Scope Vocabulary | 模块范围词汇（GitHub-style）
+
+Permission Point `oauthScope` / `code` uses GitHub OAuth scope shape
+[`{access}:{resource}`](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/scopes-for-oauth-apps)
+(`read:user`, `write:packages`, `admin:org`). Reject dotted product scopes
+(`ai.chat`, `chat.admin`).
+
+| Module | oauthScope | Relying Party use |
+|--------|------------|-------------------|
+| oidc | `openid`, `profile`, `email` | OIDC standard |
+| ai | `write:ai_chat` | Explore AI chat / text / privacy |
+| ai | `write:ai_audio` | ASR / TTS |
+| ai | `write:ai_rag` | RAG |
+| ai | `write:ai_media` | image / vision |
+| ai | `write:ai_agent` | pipeline / workflow / automation / skill |
+| ai | `write:ai_tools` | mcp / tools / eval |
+| chat | `write:chat_messaging` | chats / messages / calls / media / notifications |
+| chat | `write:chat_social` | posts / follow / groups / status / search |
+| chat | `admin:chat` | Chat admin APIs |
 
 ---
 

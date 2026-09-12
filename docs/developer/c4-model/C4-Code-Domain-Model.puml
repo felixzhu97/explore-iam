@@ -168,6 +168,18 @@ package "com.iam.policy.domain" as pkg_policy {
     +policyId()
     +principalArn()
   }
+  class PermissionPoint <<AggregateRoot>> {
+    +code: String
+    +oauthScope: String
+    +module: String
+    +action: Action
+    +resource: Resource
+    +description: String
+    --
+    +{static} create(code, oauthScope, module, action, resource, description)
+    +oauthScope()
+    +matchesScope(scope)
+  }
   class EvaluationContext <<ValueObject>> {
     +principalId: PrincipalId
     +action: Action
@@ -189,9 +201,12 @@ package "com.iam.policy.domain.service" as pkg_policy_svc {
 
 PolicyDocument --|> AbstractNamedEntity
 PolicyAttachment --|> AbstractImmutable
+PermissionPoint --|> AbstractImmutable
 PolicyDocument "1" *-- "1..*" PolicyStatement : document_json
 PolicyAttachment --> PolicyDocument : references policyId
 PolicyAttachment --> Arn
+PermissionPoint --> Action
+PermissionPoint --> Resource
 EvaluationContext --> PrincipalId
 EvaluationContext --> Action
 EvaluationContext --> Resource
@@ -199,6 +214,7 @@ AuthorizationDecision --> Effect
 AuthorizationDecision --> ReasonCode
 PolicyEngine ..> PolicyDocument : reads
 PolicyEngine ..> AuthorizationDecision : returns
+PermissionPoint ..> PolicyEngine : catalog for Action/Resource
 
 package "com.iam.sts.domain" as pkg_sts {
   class AssumedRoleSession <<AggregateRoot>> {
