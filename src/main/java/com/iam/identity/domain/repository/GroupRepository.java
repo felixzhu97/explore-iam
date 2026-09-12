@@ -37,4 +37,11 @@ public interface GroupRepository {
    * @return all groups
    */
   List<Group> findAll();
+
+  /**
+   * Deletes a group aggregate.
+   *
+   * @param group aggregate to remove
+   */
+  void delete(Group group);
 }

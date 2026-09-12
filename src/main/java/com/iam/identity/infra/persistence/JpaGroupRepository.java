@@ -34,4 +34,9 @@ class JpaGroupRepository implements GroupRepository {
   public List<Group> findAll() {
     return groupRepository.findAll();
   }
+
+  @Override
+  public void delete(Group group) {
+    groupRepository.delete(group);
+  }
 }

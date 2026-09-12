@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** Policy document CRUD and evaluation API. */
 @RestController
-@RequestMapping("/api/policies")
+@RequestMapping("/api/v1/policies")
 public class PolicyController {
 
   private final PolicyService policyService;
@@ -68,16 +68,16 @@ public class PolicyController {
   /**
    * Attaches a policy to a principal ARN.
    *
-   * @param policyId policy id
+   * @param policy policy id
    * @param request attachment payload
    * @return created attachment
    */
-  @PostMapping("/{policyId}/attach")
+  @PostMapping("/{policy}:attach")
   @PreAuthorize("hasRole('IAM_ADMIN')")
   public PolicyAttachmentResponse attach(
-      @PathVariable String policyId, @RequestBody AttachPolicyRequest request) {
+      @PathVariable String policy, @RequestBody AttachPolicyRequest request) {
     PolicyAttachment attachment =
-        policyService.attach(policyId, new Arn(request.principalArn()));
+        policyService.attach(policy, new Arn(request.principalArn()));
     return new PolicyAttachmentResponse(attachment.getId(), attachment.principalArn().value());
   }
 
@@ -87,7 +87,7 @@ public class PolicyController {
    * @param request evaluation payload
    * @return authorization decision
    */
-  @PostMapping("/evaluate")
+  @PostMapping(":evaluate")
   @PreAuthorize("hasAnyRole('IAM_ADMIN', 'IAM_AUDITOR')")
   public AuthorizationDecisionResponse evaluate(@RequestBody EvaluatePolicyRequest request) {
     AuthorizationDecision decision =

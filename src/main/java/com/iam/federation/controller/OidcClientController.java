@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** HTTP API for listing and registering OIDC clients. */
 @RestController
-@RequestMapping("/api/clients")
+@RequestMapping("/api/v1/clients")
 public class OidcClientController {
 
   private final OidcClientService oidcClientService;
@@ -78,6 +78,20 @@ public class OidcClientController {
         .findByClientId(clientId)
         .map(view -> ResponseEntity.ok(toResponse(view)))
         .orElseGet(() -> ResponseEntity.notFound().build());
+  }
+
+  /**
+   * Replaces client scopes (AIP-136).
+   *
+   * @param clientId public client_id
+   * @param request scopes payload
+   * @return updated client
+   */
+  @PostMapping("/{clientId}:updateScopes")
+  @PreAuthorize("hasRole('IAM_ADMIN')")
+  public ClientResponse updateScopes(
+      @PathVariable String clientId, @RequestBody UpdateScopesRequest request) {
+    return toResponse(oidcClientService.updateScopes(clientId, request.scopes()));
   }
 
   private static ClientResponse toResponse(RegisteredOidcClientResult result) {

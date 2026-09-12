@@ -123,6 +123,28 @@ public class IamUser extends AbstractEntity {
   }
 
   /**
+   * Replaces the encoded password hash (operator reset).
+   *
+   * @param passwordHash new encoded password
+   */
+  public void resetPassword(String passwordHash) {
+    this.passwordHash = requirePasswordHash(passwordHash);
+    touch();
+  }
+
+  /**
+   * Removes a role assignment when present.
+   *
+   * @param roleId role id
+   */
+  public void unassignRole(String roleId) {
+    String normalized = DomainStrings.requireNonBlank(roleId, "roleId");
+    if (roleAssignments.removeIf(assignment -> assignment.roleId().equals(normalized))) {
+      touch();
+    }
+  }
+
+  /**
    * Updates the user's email address.
    *
    * @param email new email

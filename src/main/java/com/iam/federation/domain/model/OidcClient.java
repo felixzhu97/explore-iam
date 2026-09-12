@@ -22,7 +22,7 @@ public class OidcClient {
   private final String clientUri;
   private final Set<RedirectUri> redirectUris;
   private final Set<RedirectUri> postLogoutRedirectUris;
-  private final Set<String> scopes;
+  private Set<String> scopes;
   private final Set<String> responseTypes;
   private final Set<String> clientAuthenticationMethods;
   private final Set<String> authorizationGrantTypes;
@@ -321,6 +321,17 @@ public class OidcClient {
   /** Returns registered OAuth scopes. */
   public Set<String> scopes() {
     return scopes;
+  }
+
+  /**
+   * Replaces allowed OAuth scopes (must include {@code openid}).
+   *
+   * @param newScopes replacement scope set
+   */
+  public void replaceScopes(Set<String> newScopes) {
+    Set<String> copy = copyStrings(newScopes, "scopes");
+    requireOpenIdScope(copy);
+    this.scopes = copy;
   }
 
   /** Returns registered OAuth response types. */

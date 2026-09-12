@@ -34,7 +34,7 @@ class OidcClientControllerTest {
     ResponseEntity<ClientResponse> created =
         client
             .post()
-            .uri("/api/clients")
+            .uri("/api/v1/clients")
             .contentType(MediaType.APPLICATION_JSON)
             .body(
                 Map.of(
@@ -62,7 +62,7 @@ class OidcClientControllerTest {
         .containsExactly("client_secret_basic");
 
     List<ClientResponse> list =
-        client.get().uri("/api/clients").retrieve().body(new ParameterizedTypeReference<>() {});
+        client.get().uri("/api/v1/clients").retrieve().body(new ParameterizedTypeReference<>() {});
 
     assertThat(list).isNotNull();
     ClientResponse listed =
@@ -81,7 +81,7 @@ class OidcClientControllerTest {
             () ->
                 client
                     .post()
-                    .uri("/api/clients")
+                    .uri("/api/v1/clients")
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(
                         Map.of("clientName", "Bad", "redirectUris", List.of("javascript:alert(1)")))

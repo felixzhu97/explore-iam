@@ -14,37 +14,37 @@ Container_Boundary(iam_app, "IAM Application (Spring Boot :9100)") {
     }
 
     Container_Boundary(identity, "Identity Module") {
-        Component(user_ctrl, "UserController", "controller", "/api/identity/users")
-        Component(group_ctrl, "GroupController", "controller", "/api/identity/groups")
-        Component(role_ctrl, "RoleController", "controller", "/api/identity/roles")
+        Component(user_ctrl, "UserController", "controller", "/api/v1/users")
+        Component(group_ctrl, "GroupController", "controller", "/api/v1/groups")
+        Component(role_ctrl, "RoleController", "controller", "/api/v1/roles")
         Component(identity_svc, "Identity Services", "service", "UserService / GroupService / RoleService")
         Component(identity_dom, "Identity Domain", "domain", "IamUser, Group, Role")
         Component(identity_infra, "Identity Infra", "infra", "JPA repos, WebSecurityConfig, bootstrap")
     }
 
     Container_Boundary(policy, "Policy Module") {
-        Component(policy_ctrl, "PolicyController", "controller", "/api/policies")
+        Component(policy_ctrl, "PolicyController", "controller", "/api/v1/policies")
         Component(policy_svc, "PolicyService", "service", "Create / attach / evaluate")
         Component(policy_dom, "Policy Domain", "domain", "PolicyDocument, PolicyEngine")
         Component(policy_infra, "Policy Infra", "infra", "JpaPolicyRepository, converters")
     }
 
     Container_Boundary(sts, "STS Module") {
-        Component(sts_ctrl, "StsController", "controller", "/api/sts")
+        Component(sts_ctrl, "StsController", "controller", "/api/v1/sts")
         Component(sts_svc, "AssumeRoleService", "service", "Temporary JWT")
         Component(sts_dom, "STS Domain", "domain", "AssumedRoleSession")
         Component(sts_infra, "STS Infra", "infra", "JpaAssumedRoleSessionRepository")
     }
 
     Container_Boundary(federation, "Federation Module") {
-        Component(fed_ctrl, "OidcClientController", "controller", "/api/clients")
+        Component(fed_ctrl, "OidcClientController", "controller", "/api/v1/clients")
         Component(fed_svc, "OidcClientService", "service", "Register / list OIDC clients")
         Component(fed_dom, "Federation Domain", "domain", "OidcClient, FederatedIdentityLink")
         Component(fed_infra, "Federation Infra", "infra", "SAS config, JWK persistence, OAuth2 client")
     }
 
     Container_Boundary(audit, "Audit Module") {
-        Component(audit_ctrl, "AuditController", "controller", "/api/audit")
+        Component(audit_ctrl, "AuditController", "controller", "/api/v1/auditEvents")
         Component(audit_svc, "AuditService", "service", "Management + AuthZ decision logs")
         Component(audit_dom, "Audit Domain", "domain", "ManagementEvent, AuthorizationDecisionLog")
         Component(audit_infra, "Audit Infra", "infra", "JpaAuditRepository, auth listener")
@@ -64,12 +64,12 @@ Rel(console_shell, login_ui, "Routes")
 Rel(clients_ui, http_client, "REST")
 Rel(login_ui, http_client, "Form POST /login")
 
-Rel(http_client, user_ctrl, "HTTPS /api/identity/users")
-Rel(http_client, group_ctrl, "HTTPS /api/identity/groups")
-Rel(http_client, role_ctrl, "HTTPS /api/identity/roles")
-Rel(http_client, policy_ctrl, "HTTPS /api/policies")
-Rel(http_client, fed_ctrl, "HTTPS /api/clients")
-Rel(http_client, audit_ctrl, "HTTPS /api/audit")
+Rel(http_client, user_ctrl, "HTTPS /api/v1/users")
+Rel(http_client, group_ctrl, "HTTPS /api/v1/groups")
+Rel(http_client, role_ctrl, "HTTPS /api/v1/roles")
+Rel(http_client, policy_ctrl, "HTTPS /api/v1/policies")
+Rel(http_client, fed_ctrl, "HTTPS /api/v1/clients")
+Rel(http_client, audit_ctrl, "HTTPS /api/v1/auditEvents")
 
 Rel(user_ctrl, identity_svc, "Delegates")
 Rel(group_ctrl, identity_svc, "Delegates")

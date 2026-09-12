@@ -117,6 +117,26 @@ public class OidcClientService {
     return RegisteredOidcClientResult.from(saved, plaintextSecret);
   }
 
+  /**
+   * Replaces allowed scopes for an existing client.
+   *
+   * @param clientId public client_id
+   * @param scopes new scope list (must include openid)
+   * @return updated view
+   */
+  @Transactional
+  public OidcClientView updateScopes(String clientId, List<String> scopes) {
+    OidcClient client =
+        oidcClientRepository
+            .findByClientId(new ClientId(clientId))
+            .orElseThrow(() -> new IllegalArgumentException("client not found: " + clientId));
+    client.replaceScopes(normalizeScopes(scopes));
+    OidcClient saved = oidcClientRepository.save(client);
+    managementAuditRecorder.recordSuccess(
+        "federation:UpdateClientScopes", "OidcClient", saved.clientId().value());
+    return OidcClientView.from(saved);
+  }
+
   private Set<String> normalizeScopes(List<String> raw) {
     return raw == null || raw.isEmpty() ? oidcProperties.defaultScopes() : Set.copyOf(raw);
   }
