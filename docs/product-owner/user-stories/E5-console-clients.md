@@ -30,7 +30,7 @@
 
 ### 状态
 
-已实现（API + `/clients` 注册页；完整 Console 壳见 US-11）
+已实现（API + `/apps` 注册页；完整 Console 壳见 US-11）
 
 ---
 
@@ -44,8 +44,9 @@
 
 1. **Scenario** 主导航可达
    **GIVEN** 管理员已登录 Console  
-   **WHEN** 打开身份、策略、应用注册、审计入口  
-   **THEN** 各页面可加载  
+   **WHEN** 打开 Users and Access、Permissions、Apps、Activity 入口  
+   **THEN** 各页面可加载（`/users-and-access/*`、`/permissions/*`、`/apps`、`/activity`）  
+   **AND** 管理请求仅调用 `/api/v1/...`  
    **AND** 未授权入口被隐藏或拒绝
 
 2. **Scenario** 未登录被重定向
@@ -56,4 +57,4 @@
 
 ### 状态
 
-规划中
+部分实现（Users and Access / Permissions / Apps / Activity）
