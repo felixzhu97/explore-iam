@@ -27,7 +27,7 @@ public class GroupMember {
   @Getter(AccessLevel.PACKAGE)
   @ManyToOne(fetch = FetchType.LAZY)
   @MapsId("groupId")
-  @JoinColumn(name = "group_id", nullable = false)
+  @JoinColumn(nullable = false)
   private Group group;
 
   GroupMember(Group group, String userId) {

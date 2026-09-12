@@ -5,11 +5,15 @@ import com.iam.audit.domain.vo.AuditTarget;
 import com.iam.common.domain.base.AbstractAuditEvent;
 import com.iam.common.domain.base.DomainStrings;
 import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
@@ -28,13 +32,26 @@ public class ManagementEvent extends AbstractAuditEvent {
 
   @Embedded
   @AttributeOverride(
-      name = "value", column = @Column(name = "actor", nullable = false, length = 256))
+      name = "value",
+      column = @Column(name = "actor", nullable = false, length = 256))
+  @Valid
   private AuditActor actor;
 
+  @NotBlank
+  @Size(max = 128)
   @Column(nullable = false, length = 128)
   private String action;
 
   @Embedded
+  @AttributeOverrides({
+    @AttributeOverride(
+        name = "type",
+        column = @Column(name = "target_type", nullable = false, length = 64)),
+    @AttributeOverride(
+        name = "targetId",
+        column = @Column(name = "target_id", nullable = false, length = 256))
+  })
+  @Valid
   private AuditTarget target;
 
   @Enumerated(EnumType.STRING)
@@ -80,27 +97,6 @@ public class ManagementEvent extends AbstractAuditEvent {
   public static ManagementEvent logAuthentication(AuditActor actor, AuditOutcome outcome) {
     return logManagementAction(
         actor, AUTH_LOGIN_ACTION, new AuditTarget(USER_TARGET_TYPE, actor.getValue()), outcome);
-  }
-
-  /**
-   * Rebuilds from persistence.
-   *
-   * @param id internal id
-   * @param actor principal performing the action
-   * @param action action name
-   * @param target affected resource
-   * @param outcome success or failure
-   * @param occurredAt when the event occurred
-   * @return reconstituted aggregate
-   */
-  public static ManagementEvent reconstitute(
-      String id,
-      AuditActor actor,
-      String action,
-      AuditTarget target,
-      AuditOutcome outcome,
-      Instant occurredAt) {
-    return new ManagementEvent(id, actor, action, target, outcome, occurredAt);
   }
 
   /** Returns true when the management action succeeded. */
