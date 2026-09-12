@@ -1,12 +1,14 @@
 package com.iam.identity.domain.model;
 
 import com.iam.common.domain.base.AbstractNamedEntity;
-import com.iam.common.domain.converter.ArnAttributeConverter;
 import com.iam.common.domain.vo.Arn;
 import com.iam.identity.domain.converter.TrustPolicyDocumentConverter;
+import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
+import jakarta.validation.Valid;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.AccessLevel;
@@ -20,25 +22,28 @@ import lombok.NoArgsConstructor;
 public class Role extends AbstractNamedEntity {
 
   @Getter(AccessLevel.NONE)
-  @Column(nullable = false, unique = true, length = 512)
-  @Convert(converter = ArnAttributeConverter.class)
+  @Embedded
+  @AttributeOverride(
+      name = "value",
+      column = @Column(name = "arn", nullable = false, unique = true, length = 512))
+  @Valid
   private Arn arn;
 
   @Getter(AccessLevel.NONE)
-  @Column(name = "trust_policy_json", columnDefinition = "clob")
+  @Column(columnDefinition = "clob")
   @Convert(converter = TrustPolicyDocumentConverter.class)
-  private TrustPolicyDocument trustPolicy;
+  private TrustPolicyDocument trustPolicyJson;
 
   private Role(
       String id,
       String name,
       Arn arn,
-      TrustPolicyDocument trustPolicy,
+      TrustPolicyDocument trustPolicyJson,
       Instant createdAt,
       Instant updatedAt) {
     super(id, name, createdAt, updatedAt);
     this.arn = arn;
-    this.trustPolicy = trustPolicy;
+    this.trustPolicyJson = trustPolicyJson;
   }
 
   /**
@@ -70,27 +75,6 @@ public class Role extends AbstractNamedEntity {
     return create(name, trust);
   }
 
-  /**
-   * Rebuilds a role from persistence.
-   *
-   * @param id internal id
-   * @param name role name
-   * @param arn role ARN
-   * @param trustPolicy trust policy document
-   * @param createdAt creation timestamp
-   * @param updatedAt last update timestamp
-   * @return reconstituted aggregate
-   */
-  public static Role reconstitute(
-      String id,
-      String name,
-      Arn arn,
-      TrustPolicyDocument trustPolicy,
-      Instant createdAt,
-      Instant updatedAt) {
-    return new Role(id, name, arn, trustPolicy, createdAt, updatedAt);
-  }
-
   /** Returns this role's ARN. */
   public Arn arn() {
     return arn;
@@ -98,7 +82,7 @@ public class Role extends AbstractNamedEntity {
 
   /** Returns the trust policy governing who may assume this role. */
   public TrustPolicyDocument trustPolicy() {
-    return trustPolicy;
+    return trustPolicyJson;
   }
 
   /** Returns the Spring Security authority for this role. */
