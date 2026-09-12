@@ -6,8 +6,10 @@ import com.iam.identity.domain.model.Role;
 import com.iam.identity.domain.repository.IamUserRepository;
 import com.iam.identity.domain.repository.RoleRepository;
 import java.util.List;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 /** IAM role listing and assignment operations. */
 @Service
@@ -67,13 +69,33 @@ public class RoleService {
   public void assignToUser(String userId, String roleId) {
     roleRepository
         .findById(roleId)
-        .orElseThrow(() -> new IllegalArgumentException("role not found: " + roleId));
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "role not found"));
     IamUser user =
         iamUserRepository
             .findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("user not found: " + userId));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
     user.assignRole(roleId);
     iamUserRepository.save(user);
     managementAuditRecorder.recordSuccess("identity:AssignRole", "User", userId);
+  }
+
+  /**
+   * Removes a role assignment from a user.
+   *
+   * @param userId user id
+   * @param roleId role id
+   */
+  @Transactional
+  public void unassignFromUser(String userId, String roleId) {
+    roleRepository
+        .findById(roleId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "role not found"));
+    IamUser user =
+        iamUserRepository
+            .findById(userId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
+    user.unassignRole(roleId);
+    iamUserRepository.save(user);
+    managementAuditRecorder.recordSuccess("identity:UnassignRole", "User", userId);
   }
 }

@@ -13,9 +13,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** IAM role management API. */
+/**
+ * AIP Identity Role API.
+ *
+ * @see <a href="https://google.aip.dev/136">AIP-136 Custom methods</a>
+ */
 @RestController
-@RequestMapping("/api/identity/roles")
+@RequestMapping("/api/v1/roles")
 public class RoleController {
 
   private final RoleService roleService;
@@ -36,8 +40,8 @@ public class RoleController {
    */
   @GetMapping
   @PreAuthorize("hasAnyRole('IAM_ADMIN', 'IAM_AUDITOR')")
-  public List<RoleResponse> list() {
-    return roleService.findAll().stream().map(RoleResponse::from).toList();
+  public ListRolesResponse list() {
+    return new ListRolesResponse(roleService.findAll().stream().map(RoleResponse::from).toList());
   }
 
   /**
@@ -49,32 +53,52 @@ public class RoleController {
   @PostMapping
   @PreAuthorize("hasRole('IAM_ADMIN')")
   public ResponseEntity<RoleResponse> create(@RequestBody CreateRoleRequest request) {
-    Role role = roleService.create(request.name(), request.trustPolicyJson());
+    String displayName = request.displayName() != null ? request.displayName() : request.name();
+    Role role = roleService.create(displayName, request.trustPolicyJson());
     return ResponseEntity.status(HttpStatus.CREATED).body(RoleResponse.from(role));
   }
 
   /**
-   * Assigns a role to a user.
+   * Assigns a role to a user (AIP-136).
    *
-   * @param roleId role id
+   * @param role role id
    * @param request member payload
    * @return empty response
    */
-  @PostMapping("/{roleId}/assign")
+  @PostMapping("/{role}:assign")
   @PreAuthorize("hasRole('IAM_ADMIN')")
   public ResponseEntity<Void> assign(
-      @PathVariable String roleId, @RequestBody MemberRequest request) {
-    roleService.assignToUser(request.userId(), roleId);
+      @PathVariable String role, @RequestBody MemberRequest request) {
+    roleService.assignToUser(request.userId(), role);
+    return ResponseEntity.noContent().build();
+  }
+
+  /**
+   * Unassigns a role from a user (AIP-136).
+   *
+   * @param role role id
+   * @param request member payload
+   * @return empty response
+   */
+  @PostMapping("/{role}:unassign")
+  @PreAuthorize("hasRole('IAM_ADMIN')")
+  public ResponseEntity<Void> unassign(
+      @PathVariable String role, @RequestBody MemberRequest request) {
+    roleService.unassignFromUser(request.userId(), role);
     return ResponseEntity.noContent().build();
   }
 
   /** Request body for creating a role. */
-  public record CreateRoleRequest(String name, String trustPolicyJson) {}
+  public record CreateRoleRequest(String name, String displayName, String trustPolicyJson) {}
+
+  /** AIP list response. */
+  public record ListRolesResponse(List<RoleResponse> roles) {}
 
   /** IAM role summary. */
-  public record RoleResponse(String id, String name, String arn) {
+  public record RoleResponse(String name, String id, String displayName, String arn) {
     static RoleResponse from(Role role) {
-      return new RoleResponse(role.getId(), role.getName(), role.arn().value());
+      return new RoleResponse(
+          "roles/" + role.getId(), role.getId(), role.getName(), role.arn().value());
     }
   }
 }

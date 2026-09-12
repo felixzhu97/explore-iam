@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** Query API for management and authorization audit events. */
 @RestController
-@RequestMapping("/api/audit")
+@RequestMapping("/api/v1/auditEvents")
 public class AuditController {
 
   private final AuditService auditService;
@@ -30,13 +30,13 @@ public class AuditController {
   /**
    * Lists recent management and authorization audit events.
    *
-   * @param limit maximum events per category (capped at 200)
+   * @param pageSize maximum events per category (capped at 200)
    * @return combined audit events
    */
-  @GetMapping("/events")
+  @GetMapping
   @PreAuthorize("hasAnyRole('IAM_ADMIN', 'IAM_AUDITOR')")
-  public AuditEventsResponse listEvents(@RequestParam(defaultValue = "50") int limit) {
-    AuditQueryResult result = auditService.query(Math.min(limit, 200));
+  public AuditEventsResponse listEvents(@RequestParam(defaultValue = "50") int pageSize) {
+    AuditQueryResult result = auditService.query(Math.min(pageSize, 200));
     return new AuditEventsResponse(
         result.managementEvents().stream().map(ManagementEventResponse::from).toList(),
         result.authorizationDecisions().stream().map(AuthorizationDecisionResponse::from).toList());

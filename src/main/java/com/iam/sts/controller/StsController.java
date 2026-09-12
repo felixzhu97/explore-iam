@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** STS AssumeRole API. */
 @RestController
-@RequestMapping("/api/sts")
+@RequestMapping("/api/v1/sts")
 public class StsController {
 
   private final AssumeRoleService assumeRoleService;
