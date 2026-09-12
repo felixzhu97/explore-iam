@@ -127,8 +127,8 @@ Terms mapping Explore IAM security behavior to [Spring Security](https://docs.sp
 | Client Authentication Method | 客户端认证方式 | e.g. `client_secret_basic`, `client_secret_post`, `none` | `ClientAuthenticationMethod` | implemented |
 | Redirect URI | 重定向 URI | Allowed OAuth callback URL for a client | `RedirectUri` VO, `RegisteredClient.redirectUris` | implemented |
 | Scope | 范围 | OAuth scope string; OIDC std (`openid`, `profile`, `email`) plus GitHub-style product scopes (`write:ai_chat`, `admin:chat`) | `RegisteredClient.scopes` / Permission Point `oauthScope` | implemented |
-| Scope Catalog | 范围目录 | Curated set of OAuth scopes backed by Permission Points | Permission Point seeds | planned |
-| GitHub-Style Scope | GitHub 风格范围 | `{access}:{resource}` as in GitHub OAuth (`read:user`, `write:packages`, `admin:org`); access ∈ `read` \| `write` \| `admin` | Permission Point `oauthScope` | planned |
+| Scope Catalog | 范围目录 | Curated set of OAuth scopes backed by Permission Points | Permission Point seeds | implemented |
+| GitHub-Style Scope | GitHub 风格范围 | `{access}:{resource}` as in GitHub OAuth (`read:user`, `write:packages`, `admin:org`); access ∈ `read` \| `write` \| `admin` | Permission Point `oauthScope` | implemented |
 | Issuer | 签发者 | OIDC issuer identifier URL | `spring.security.oauth2.authorizationserver.issuer` | implemented |
 
 ### 4.4 Federation (OAuth2 Client)
@@ -273,10 +273,10 @@ Cross-bounded-context value objects in `com.iam.common.domain.vo`.
 | Policy ID Reference | 策略 ID 引用 | Attached policy document id | Behavior | `PolicyAttachment.policyId` | implemented |
 | Principal ARN | 主体 ARN | ARN the policy is attached to | Behavior | `PolicyAttachment.principalArn` | implemented |
 | Action | 操作 | API or resource operation identifier | Value Object | `Action` | see §5.5 |
-| Permission Point | 权限点 | Catalog entry: stable code, Action, Resource, and GitHub-style `oauthScope` for Relying Party JWT enforcement | Aggregate | `PermissionPoint` | planned |
-| Permission Point Code | 权限点编码 | Business key equal to `oauthScope` (e.g. `write:ai_chat`) | Attribute | `PermissionPoint.code` | planned |
-| OAuth Scope Accessor | OAuth 范围访问 | Scope string granted on access tokens | Behavior | `PermissionPoint.oauthScope` | planned |
-| Module | 模块 | Product area owning the permission (`ai`, `chat`, `oidc`) | Attribute | `PermissionPoint.module` | planned |
+| Permission Point | 权限点 | Catalog entry: stable code, Action, Resource, and GitHub-style `oauthScope` for Relying Party JWT enforcement | Aggregate | `PermissionPoint` | implemented |
+| Permission Point Code | 权限点编码 | Business key equal to `oauthScope` (e.g. `write:ai_chat`) | Attribute | `PermissionPoint.code` | implemented |
+| OAuth Scope Accessor | OAuth 范围访问 | Scope string granted on access tokens | Behavior | `PermissionPoint.oauthScope` | implemented |
+| Module | 模块 | Product area owning the permission (`ai`, `chat`, `oidc`) | Attribute | `PermissionPoint.module` | implemented |
 | Resource | 资源 | Target of an Action | Value Object | `Resource` | see §5.5 |
 | Condition | 条件 | Context keys constraining a statement | Value Object | `Condition` | planned |
 | Evaluation Context | 求值上下文 | Principal + Action + Resource | Value Object | `EvaluationContext` | implemented |
