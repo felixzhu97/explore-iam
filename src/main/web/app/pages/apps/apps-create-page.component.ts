@@ -1,33 +1,42 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
 import { ConsoleShellComponent } from '../../layout/console-shell.component';
+import {
+  BTN_PRIMARY,
+  BTN_SECONDARY,
+  CARD,
+  FIELD,
+  FIELD_TEXTAREA,
+} from '../../shared/console-ui';
 import { csrfHeaders } from '../../shared/csrf';
-import type { ClientView } from './clients-list-page.component';
+import type { ClientView } from './apps-list-page.component';
 
-const CARD =
-  'rounded-lg border border-[var(--console-border)] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]';
-const BTN_PRIMARY =
-  'inline-flex h-9 items-center justify-center rounded-md border border-transparent bg-[var(--console-accent-soft)] px-4 text-sm font-medium text-white no-underline hover:bg-[var(--console-accent)] disabled:cursor-not-allowed disabled:opacity-50';
-const BTN_SECONDARY =
-  'inline-flex h-9 items-center justify-center rounded-md border border-[var(--console-border)] bg-white px-4 text-sm font-medium text-[var(--console-fg)] no-underline hover:bg-[var(--console-bg)]';
-const FIELD =
-  'block h-10 w-full rounded-md border border-[var(--console-border)] bg-white px-3 py-2 text-sm leading-5 text-[var(--console-fg)] outline-none focus:border-[var(--console-accent)] focus:shadow-[0_0_0_3px_rgba(0,81,195,0.18)]';
-const FIELD_TEXTAREA =
-  'block h-auto min-h-20 w-full rounded-md border border-[var(--console-border)] bg-white px-3 pt-2.5 pb-2 text-sm leading-5 text-[var(--console-fg)] outline-none focus:border-[var(--console-accent)] focus:shadow-[0_0_0_3px_rgba(0,81,195,0.18)]';
+type PermissionPoint = {
+  code: string;
+  oauth_scope: string;
+  module: string;
+  action: string;
+  resource: string;
+  description: string;
+};
+
+type PermissionPointsResponse = {
+  permission_points: PermissionPoint[];
+  next_page_token: string | null;
+};
 
 @Component({
-  selector: 'app-clients-create-page',
+  selector: 'app-apps-create-page',
   imports: [ConsoleShellComponent, FormsModule, RouterLink],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-console-shell>
       <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 class="text-[1.75rem] font-semibold tracking-tight">创建 OAuth 客户端</h1>
-          <p class="mt-1 text-sm text-[var(--console-muted)]">创建新的 OAuth 客户端</p>
+          <h1 class="text-[1.75rem] font-semibold tracking-tight">创建应用</h1>
+          <p class="mt-1 text-sm text-[var(--console-muted)]">注册新的 OAuth 应用</p>
         </div>
         <a
           href="https://docs.spring.io/spring-authorization-server/reference/"
@@ -49,7 +58,7 @@ const FIELD_TEXTAREA =
 
       @if (createdClientId()) {
         <section class="${CARD} mt-6 p-6">
-          <h2 class="text-lg font-semibold">客户端已创建</h2>
+          <h2 class="text-lg font-semibold">应用已创建</h2>
           <p class="mt-1 text-sm text-[var(--console-muted)]">
             请立即保存密钥（仅显示一次，之后无法再查看）。
           </p>
@@ -64,25 +73,27 @@ const FIELD_TEXTAREA =
                 <dd class="mt-0.5 break-all font-mono text-[13px]">{{ createdSecret() }}</dd>
               </div>
             } @else {
-              <p class="text-sm text-[var(--console-muted)]">公共客户端（None / PKCE）未生成 client_secret。</p>
+              <p class="text-sm text-[var(--console-muted)]">
+                公共客户端（None / PKCE）未生成 client_secret。
+              </p>
             }
           </dl>
-          <a routerLink="/clients" class="${BTN_PRIMARY} mt-6">返回列表</a>
+          <a routerLink="/apps" class="${BTN_PRIMARY} mt-6">返回列表</a>
         </section>
       } @else {
         <div class="mt-6 grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_200px]">
           <div>
             <section class="${CARD} p-6 sm:p-8">
               @if (step() === 1) {
-                <h2 class="text-lg font-semibold">配置 OAuth 客户端</h2>
+                <h2 class="text-lg font-semibold">配置 OAuth 应用</h2>
                 <p class="mt-2 text-sm leading-relaxed text-[var(--console-muted)]">
-                  客户端默认视为机密客户端。公共客户端请将令牌身份验证方法设为
+                  应用默认视为机密客户端。公共客户端请将令牌身份验证方法设为
                   <strong class="font-medium text-[var(--console-fg)]">None (PKCE)</strong>。
                 </p>
 
                 <form class="mt-6 flex flex-col gap-5" (ngSubmit)="goStep2()" id="create-step-1">
                   <label class="flex flex-col gap-1.5 text-left">
-                    <span class="text-sm font-semibold">客户端名称</span>
+                    <span class="text-sm font-semibold">应用名称</span>
                     <input
                       class="${FIELD}"
                       name="clientName"
@@ -186,30 +197,44 @@ const FIELD_TEXTAREA =
               } @else {
                 <h2 class="text-lg font-semibold">选择权限范围</h2>
                 <p class="mt-2 text-sm leading-relaxed text-[var(--console-muted)]">
-                  至少选择 <strong class="font-medium text-[var(--console-fg)]">openid</strong>。创建后将按所选配置写入
-                  IAM。
+                  从 Permission Points 选择 scopes。若目录含
+                  <strong class="font-medium text-[var(--console-fg)]">openid</strong>，则必须勾选。
                 </p>
 
-                <form class="mt-6 flex flex-col gap-3" (ngSubmit)="onCreate()" id="create-step-2">
-                  <label class="flex items-center gap-2.5 text-sm">
-                    <input type="checkbox" class="size-4" [(ngModel)]="scopeOpenid" name="scopeOpenid" />
-                    openid
-                  </label>
-                  <label class="flex items-center gap-2.5 text-sm">
-                    <input type="checkbox" class="size-4" [(ngModel)]="scopeProfile" name="scopeProfile" />
-                    profile
-                  </label>
-                  <label class="flex items-center gap-2.5 text-sm">
-                    <input type="checkbox" class="size-4" [(ngModel)]="scopeEmail" name="scopeEmail" />
-                    email
-                  </label>
-                </form>
+                @if (scopesLoading()) {
+                  <p class="mt-6 text-sm text-[var(--console-muted)]">加载权限点…</p>
+                } @else if (permissionPoints().length === 0) {
+                  <p class="mt-6 text-sm text-[var(--console-muted)]">暂无可用权限点。</p>
+                } @else {
+                  <form class="mt-6 flex flex-col gap-3" (ngSubmit)="onCreate()" id="create-step-2">
+                    @for (point of permissionPoints(); track point.code) {
+                      <label class="flex items-start gap-2.5 text-sm">
+                        <input
+                          type="checkbox"
+                          class="mt-0.5 size-4"
+                          [checked]="selectedScopes().has(scopeOf(point))"
+                          (change)="toggleScope(scopeOf(point), $any($event.target).checked)"
+                          [name]="'scope-' + point.code"
+                        />
+                        <span>
+                          <span class="font-medium">{{ scopeOf(point) }}</span>
+                          <span class="mt-0.5 block text-xs text-[var(--console-muted)]">
+                            {{ point.module }} · {{ point.code }}
+                            @if (point.description) {
+                              — {{ point.description }}
+                            }
+                          </span>
+                        </span>
+                      </label>
+                    }
+                  </form>
+                }
               }
             </section>
 
             <div class="mt-4 flex items-center justify-between gap-3">
               @if (step() === 1) {
-                <a routerLink="/clients" class="${BTN_SECONDARY}">取消</a>
+                <a routerLink="/apps" class="${BTN_SECONDARY}">取消</a>
                 <button
                   type="submit"
                   form="create-step-1"
@@ -224,7 +249,7 @@ const FIELD_TEXTAREA =
                   type="submit"
                   form="create-step-2"
                   class="${BTN_PRIMARY}"
-                  [disabled]="submitting() || !scopeOpenid"
+                  [disabled]="submitting() || !canSubmitScopes()"
                 >
                   {{ submitting() ? '创建中…' : '创建' }}
                 </button>
@@ -250,7 +275,7 @@ const FIELD_TEXTAREA =
                       : 'text-[var(--console-muted)]'
                   "
                 >
-                  配置 OAuth 客户端
+                  配置 OAuth 应用
                 </p>
               </li>
               <li class="flex items-start gap-3">
@@ -279,16 +304,19 @@ const FIELD_TEXTAREA =
     </app-console-shell>
   `,
 })
-export class ClientsCreatePageComponent {
+export class AppsCreatePageComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
 
   readonly step = signal(1);
   readonly advancedOpen = signal(false);
   readonly submitting = signal(false);
+  readonly scopesLoading = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly createdClientId = signal<string | null>(null);
   readonly createdSecret = signal<string | null>(null);
+  readonly permissionPoints = signal<PermissionPoint[]>([]);
+  readonly selectedScopes = signal(new Set<string>());
 
   clientName = '';
   responseType = 'code';
@@ -299,9 +327,37 @@ export class ClientsCreatePageComponent {
   extraRedirectUrisText = '';
   postLogoutUrisText = '';
 
-  scopeOpenid = true;
-  scopeProfile = true;
-  scopeEmail = true;
+  ngOnInit(): void {
+    this.loadPermissionPoints();
+  }
+
+  scopeOf(point: PermissionPoint): string {
+    return point.oauth_scope || point.code;
+  }
+
+  toggleScope(scope: string, checked: boolean): void {
+    this.selectedScopes.update((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        next.add(scope);
+      } else {
+        next.delete(scope);
+      }
+      return next;
+    });
+  }
+
+  canSubmitScopes(): boolean {
+    const selected = this.selectedScopes();
+    if (selected.size === 0) {
+      return false;
+    }
+    const hasOpenid = this.permissionPoints().some((p) => this.scopeOf(p) === 'openid');
+    if (hasOpenid && !selected.has('openid')) {
+      return false;
+    }
+    return true;
+  }
 
   goStep2(): void {
     this.errorMessage.set(null);
@@ -312,17 +368,12 @@ export class ClientsCreatePageComponent {
   }
 
   onCreate(): void {
-    const scopes = [
-      this.scopeOpenid ? 'openid' : null,
-      this.scopeProfile ? 'profile' : null,
-      this.scopeEmail ? 'email' : null,
-    ].filter((s): s is string => !!s);
-
-    if (!this.scopeOpenid || scopes.length === 0) {
-      this.errorMessage.set('scopes must include openid');
+    if (!this.canSubmitScopes()) {
+      this.errorMessage.set('请选择有效的权限范围（若有 openid 则必须包含）');
       return;
     }
 
+    const scopes = [...this.selectedScopes()];
     const redirectUris = [this.redirectUri.trim(), ...splitLines(this.extraRedirectUrisText)];
     const grantTypes = this.grantPreset.split(',').map((g) => g.trim());
 
@@ -331,7 +382,7 @@ export class ClientsCreatePageComponent {
 
     this.http
       .post<ClientView>(
-        '/api/clients',
+        '/api/v1/clients',
         {
           clientName: this.clientName.trim(),
           redirectUris,
@@ -357,11 +408,39 @@ export class ClientsCreatePageComponent {
       });
   }
 
+  private loadPermissionPoints(): void {
+    this.scopesLoading.set(true);
+    this.http
+      .get<PermissionPointsResponse>('/api/v1/permissionPoints', {
+        withCredentials: true,
+        params: { page_size: '100' },
+      })
+      .subscribe({
+        next: (res) => {
+          const points = res.permission_points ?? [];
+          this.permissionPoints.set(points);
+          const initial = new Set<string>();
+          for (const point of points) {
+            const scope = this.scopeOf(point);
+            if (scope === 'openid' || scope === 'profile' || scope === 'email') {
+              initial.add(scope);
+            }
+          }
+          this.selectedScopes.set(initial);
+          this.scopesLoading.set(false);
+        },
+        error: (err: unknown) => {
+          this.scopesLoading.set(false);
+          this.handleError(err);
+        },
+      });
+  }
+
   private handleError(err: unknown): void {
     if (err instanceof HttpErrorResponse) {
       if (err.status === 401 || err.status === 403) {
         void this.router.navigate(['/login'], {
-          queryParams: { continue: '/clients/new' },
+          queryParams: { continue: '/apps/new' },
         });
         return;
       }

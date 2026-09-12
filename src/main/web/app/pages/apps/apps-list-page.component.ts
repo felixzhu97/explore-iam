@@ -1,8 +1,6 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   computed,
-  HostListener,
   inject,
   OnInit,
   signal,
@@ -12,19 +10,11 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { ConsoleShellComponent } from '../../layout/console-shell.component';
+import { BTN_PRIMARY, BTN_SECONDARY, CARD, FIELD } from '../../shared/console-ui';
 
 const DOCS_URL = 'https://docs.spring.io/spring-authorization-server/reference/';
 
-const CARD =
-  'rounded-lg border border-[var(--console-border)] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]';
-const BTN_PRIMARY =
-  'inline-flex h-9 items-center justify-center rounded-md border border-transparent bg-[var(--console-accent-soft)] px-4 text-sm font-medium text-white no-underline hover:bg-[var(--console-accent)] disabled:cursor-not-allowed disabled:opacity-50';
-const BTN_SECONDARY =
-  'inline-flex h-9 items-center justify-center rounded-md border border-[var(--console-border)] bg-white px-4 text-sm font-medium text-[var(--console-fg)] no-underline hover:bg-[var(--console-bg)]';
-const FIELD =
-  'block h-10 w-full rounded-md border border-[var(--console-border)] bg-white px-3 py-2 text-sm leading-5 text-[var(--console-fg)] outline-none focus:border-[var(--console-accent)] focus:shadow-[0_0_0_3px_rgba(0,81,195,0.18)]';
-
-export interface ClientView {
+export type ClientView = {
   id: string;
   clientId: string;
   clientName: string;
@@ -36,18 +26,20 @@ export interface ClientView {
   responseTypes: string[];
   authorizationGrantTypes: string[];
   clientAuthenticationMethods: string[];
-}
+};
 
 @Component({
-  selector: 'app-clients-list-page',
+  selector: 'app-apps-list-page',
   imports: [ConsoleShellComponent, RouterLink, FormsModule],
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(document:click)': 'onDocumentClick()',
+  },
   template: `
     <app-console-shell>
       <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 class="text-[1.75rem] font-semibold tracking-tight">OAuth 客户端</h1>
-          <p class="mt-1 text-sm text-[var(--console-muted)]">管理您的 OAuth 客户端</p>
+          <h1 class="text-[1.75rem] font-semibold tracking-tight">Apps</h1>
+          <p class="mt-1 text-sm text-[var(--console-muted)]">管理您的应用（OAuth 客户端）</p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
           <a
@@ -57,7 +49,7 @@ export interface ClientView {
             class="${BTN_SECONDARY}"
             >文档</a
           >
-          <a routerLink="/clients/new" class="${BTN_PRIMARY}">+ 创建客户端</a>
+          <a routerLink="/apps/new" class="${BTN_PRIMARY}">+ 创建应用</a>
         </div>
       </div>
 
@@ -76,7 +68,7 @@ export interface ClientView {
 
       <div class="mt-5">
         <label class="relative block max-w-md">
-          <span class="sr-only">搜索客户端</span>
+          <span class="sr-only">搜索应用</span>
           <svg
             class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[var(--console-muted)]"
             viewBox="0 0 24 24"
@@ -91,8 +83,8 @@ export interface ClientView {
           <input
             class="${FIELD} !pl-9"
             type="search"
-            name="clientSearch"
-            placeholder="搜索客户端…"
+            name="appSearch"
+            placeholder="搜索应用…"
             [(ngModel)]="searchModel"
           />
         </label>
@@ -104,10 +96,10 @@ export interface ClientView {
         } @else if (filtered().length === 0) {
           <div class="px-5 py-14 text-center">
             <p class="text-sm text-[var(--console-muted)]">
-              {{ clients().length === 0 ? '暂无客户端。创建一个以接入业务应用。' : '没有匹配的客户端。' }}
+              {{ apps().length === 0 ? '暂无应用。创建一个以接入业务应用。' : '没有匹配的应用。' }}
             </p>
-            @if (clients().length === 0) {
-              <a routerLink="/clients/new" class="${BTN_PRIMARY} mt-4">+ 创建客户端</a>
+            @if (apps().length === 0) {
+              <a routerLink="/apps/new" class="${BTN_PRIMARY} mt-4">+ 创建应用</a>
             }
           </div>
         } @else {
@@ -118,7 +110,7 @@ export interface ClientView {
                   <th
                     class="border-b border-[var(--console-border)] bg-[#fafafa] px-4 py-2.5 text-left text-xs font-semibold text-[var(--console-muted)]"
                   >
-                    客户端名称
+                    应用名称
                   </th>
                   <th
                     class="border-b border-[var(--console-border)] bg-[#fafafa] px-4 py-2.5 text-left text-xs font-semibold text-[var(--console-muted)]"
@@ -141,23 +133,26 @@ export interface ClientView {
                 </tr>
               </thead>
               <tbody>
-                @for (client of filtered(); track client.clientId) {
+                @for (app of filtered(); track app.clientId) {
                   <tr class="hover:bg-[#fafafa] last:[&_td]:border-b-0">
                     <td
                       class="border-b border-[var(--console-border)] px-4 py-3.5 align-top text-[var(--console-fg)]"
                     >
-                      <div class="flex items-center gap-2.5">
+                      <a
+                        [routerLink]="['/apps', app.clientId]"
+                        class="flex items-center gap-2.5 text-inherit no-underline hover:text-[var(--console-accent)]"
+                      >
                         <span
                           class="inline-flex size-7 shrink-0 items-center justify-center rounded bg-[#e8e8e8] text-xs font-semibold text-[var(--console-fg)]"
-                          >{{ initial(client.clientName) }}</span
+                          >{{ initial(app.clientName) }}</span
                         >
                         <div class="min-w-0">
-                          <div class="font-medium">{{ client.clientName }}</div>
+                          <div class="font-medium">{{ app.clientName }}</div>
                           <code class="text-[11px] text-[var(--console-muted)]">{{
-                            client.clientId
+                            app.clientId
                           }}</code>
                         </div>
-                      </div>
+                      </a>
                     </td>
                     <td
                       class="border-b border-[var(--console-border)] px-4 py-3.5 align-top text-[var(--console-fg)]"
@@ -165,9 +160,9 @@ export interface ClientView {
                       <button
                         type="button"
                         class="text-sm font-medium text-[var(--console-accent)] hover:underline"
-                        [title]="client.scopes.join(', ')"
+                        [title]="app.scopes.join(', ')"
                       >
-                        {{ client.scopes.length }} 个范围
+                        {{ app.scopes.length }} 个范围
                       </button>
                     </td>
                     <td
@@ -179,21 +174,21 @@ export interface ClientView {
                         <span
                           class="size-[0.4rem] rounded-full"
                           [style.background]="
-                            isPublic(client) ? '#d97706' : 'var(--console-accent)'
+                            isPublic(app) ? '#d97706' : 'var(--console-accent)'
                           "
                         ></span>
-                        {{ isPublic(client) ? 'Public' : 'Private' }}
+                        {{ isPublic(app) ? 'Public' : 'Private' }}
                       </span>
                     </td>
                     <td
                       class="max-w-[14rem] border-b border-[var(--console-border)] px-4 py-3.5 align-top text-[var(--console-fg)]"
                     >
                       <span class="break-all text-[var(--console-muted)]">{{
-                        primaryRedirect(client)
+                        primaryRedirect(app)
                       }}</span>
-                      @if (client.redirectUris.length > 1) {
+                      @if (app.redirectUris.length > 1) {
                         <span class="ml-1 text-xs text-[var(--console-muted)]"
-                          >+{{ client.redirectUris.length - 1 }}</span
+                          >+{{ app.redirectUris.length - 1 }}</span
                         >
                       }
                     </td>
@@ -204,8 +199,8 @@ export interface ClientView {
                         <button
                           type="button"
                           class="inline-flex size-8 items-center justify-center rounded-md text-[var(--console-muted)] hover:bg-[var(--console-bg)] hover:text-[var(--console-fg)]"
-                          [attr.aria-expanded]="menuFor() === client.clientId"
-                          (click)="toggleMenu(client.clientId, $event)"
+                          [attr.aria-expanded]="menuFor() === app.clientId"
+                          (click)="toggleMenu(app.clientId, $event)"
                         >
                           <span class="sr-only">操作</span>
                           <svg viewBox="0 0 24 24" class="size-4" fill="currentColor" aria-hidden="true">
@@ -214,16 +209,24 @@ export interface ClientView {
                             <circle cx="12" cy="19" r="1.5" />
                           </svg>
                         </button>
-                        @if (menuFor() === client.clientId) {
+                        @if (menuFor() === app.clientId) {
                           <div
                             class="absolute right-0 z-20 min-w-32 rounded-md border border-[var(--console-border)] bg-white p-1 shadow-[0_8px_24px_rgba(0,0,0,0.08)]"
                             role="menu"
                           >
+                            <a
+                              [routerLink]="['/apps', app.clientId]"
+                              class="block w-full cursor-pointer rounded border-none bg-transparent px-[0.6rem] py-[0.4rem] text-left text-[0.8125rem] text-[var(--console-fg)] no-underline hover:bg-[var(--console-bg)]"
+                              role="menuitem"
+                              (click)="menuFor.set(null)"
+                            >
+                              查看详情
+                            </a>
                             <button
                               type="button"
                               class="block w-full cursor-pointer rounded border-none bg-transparent px-[0.6rem] py-[0.4rem] text-left text-[0.8125rem] text-[var(--console-fg)] hover:bg-[var(--console-bg)]"
                               role="menuitem"
-                              (click)="copyClientId(client.clientId)"
+                              (click)="copyClientId(app.clientId)"
                             >
                               复制 ID
                             </button>
@@ -239,22 +242,20 @@ export interface ClientView {
           <div
             class="flex items-center justify-between border-t border-[var(--console-border)] px-4 py-2.5 text-xs text-[var(--console-muted)]"
           >
-            <span
-              >显示 1–{{ filtered().length }}，共 {{ filtered().length }} 个客户端</span
-            >
+            <span>显示 1–{{ filtered().length }}，共 {{ filtered().length }} 个应用</span>
           </div>
         }
       </section>
     </app-console-shell>
   `,
 })
-export class ClientsListPageComponent implements OnInit {
+export class AppsListPageComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
   readonly docsUrl = DOCS_URL;
-  readonly clients = signal<ClientView[]>([]);
+  readonly apps = signal<ClientView[]>([]);
   readonly loading = signal(true);
   readonly errorMessage = signal<string | null>(null);
   readonly copyHint = signal<string | null>(null);
@@ -264,9 +265,9 @@ export class ClientsListPageComponent implements OnInit {
   readonly filtered = computed(() => {
     const q = this.search().trim().toLowerCase();
     if (!q) {
-      return this.clients();
+      return this.apps();
     }
-    return this.clients().filter(
+    return this.apps().filter(
       (c) =>
         c.clientName.toLowerCase().includes(q) || c.clientId.toLowerCase().includes(q),
     );
@@ -285,9 +286,9 @@ export class ClientsListPageComponent implements OnInit {
       this.search.set(q);
     }
 
-    this.http.get<ClientView[]>('/api/clients', { withCredentials: true }).subscribe({
+    this.http.get<ClientView[]>('/api/v1/clients', { withCredentials: true }).subscribe({
       next: (list) => {
-        this.clients.set(list);
+        this.apps.set(list);
         this.loading.set(false);
       },
       error: (err: unknown) => {
@@ -297,7 +298,6 @@ export class ClientsListPageComponent implements OnInit {
     });
   }
 
-  @HostListener('document:click')
   onDocumentClick(): void {
     this.menuFor.set(null);
   }
@@ -334,7 +334,7 @@ export class ClientsListPageComponent implements OnInit {
   private handleError(err: unknown): void {
     if (err instanceof HttpErrorResponse) {
       if (err.status === 401 || err.status === 403) {
-        void this.router.navigate(['/login'], { queryParams: { continue: '/clients' } });
+        void this.router.navigate(['/login'], { queryParams: { continue: '/apps' } });
         return;
       }
       const message = (err.error as { message?: string } | null)?.message;
