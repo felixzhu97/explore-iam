@@ -2,6 +2,8 @@ package com.iam.common.domain.base;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -13,6 +15,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public abstract class AbstractNamedEntity extends AbstractEntity {
 
+  @NotBlank
+  @Size(max = 256)
   @Column(nullable = false, unique = true, length = 256)
   private String name;
 
