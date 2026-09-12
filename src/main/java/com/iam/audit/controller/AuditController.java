@@ -30,12 +30,13 @@ public class AuditController {
   /**
    * Lists recent management and authorization audit events.
    *
-   * @param pageSize maximum events per category (capped at 200)
+   * @param pageSize maximum events per category ({@code page_size}, capped at 200)
    * @return combined audit events
    */
   @GetMapping
   @PreAuthorize("hasAnyRole('IAM_ADMIN', 'IAM_AUDITOR')")
-  public AuditEventsResponse listEvents(@RequestParam(defaultValue = "50") int pageSize) {
+  public AuditEventsResponse listEvents(
+      @RequestParam(name = "page_size", defaultValue = "50") int pageSize) {
     AuditQueryResult result = auditService.query(Math.min(pageSize, 200));
     return new AuditEventsResponse(
         result.managementEvents().stream().map(ManagementEventResponse::from).toList(),
@@ -62,7 +63,7 @@ public class AuditController {
           event.getActor().getValue(),
           event.getAction(),
           event.getTarget().getType(),
-          event.getTarget().getId(),
+          event.getTarget().getTargetId(),
           event.getOutcome().name(),
           event.getOccurredAt().toString());
     }

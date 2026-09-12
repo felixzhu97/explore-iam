@@ -2,11 +2,14 @@ package com.iam.sts.domain.model;
 
 import com.iam.common.domain.base.AbstractImmutable;
 import com.iam.common.domain.base.DomainStrings;
-import com.iam.common.domain.converter.ArnAttributeConverter;
 import com.iam.common.domain.vo.Arn;
+import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.AccessLevel;
@@ -20,20 +23,27 @@ import lombok.NoArgsConstructor;
 public class AssumedRoleSession extends AbstractImmutable {
 
   @Getter(AccessLevel.NONE)
-  @Column(name = "role_arn", nullable = false, length = 512)
-  @Convert(converter = ArnAttributeConverter.class)
+  @Embedded
+  @AttributeOverride(
+      name = "value",
+      column = @Column(name = "role_arn", nullable = false, length = 512))
+  @Valid
   private Arn roleArn;
 
   @Getter(AccessLevel.NONE)
-  @Column(name = "session_name", nullable = false, length = 128)
+  @NotBlank
+  @Size(max = 128)
+  @Column(nullable = false, length = 128)
   private String sessionName;
 
   @Getter(AccessLevel.NONE)
-  @Column(name = "caller_principal", nullable = false, length = 512)
+  @NotBlank
+  @Size(max = 512)
+  @Column(nullable = false, length = 512)
   private String callerPrincipal;
 
   @Getter(AccessLevel.NONE)
-  @Column(name = "expires_at", nullable = false)
+  @Column(nullable = false)
   private Instant expiresAt;
 
   private AssumedRoleSession(
@@ -60,18 +70,6 @@ public class AssumedRoleSession extends AbstractImmutable {
         callerPrincipal,
         expiresAt,
         Instant.now());
-  }
-
-  /** Rebuilds from persistence. */
-  public static AssumedRoleSession reconstitute(
-      String id,
-      Arn roleArn,
-      String sessionName,
-      String callerPrincipal,
-      Instant expiresAt,
-      Instant createdAt) {
-    return new AssumedRoleSession(
-        id, roleArn, sessionName, callerPrincipal, expiresAt, createdAt);
   }
 
   /** Returns true when the session has expired. */
