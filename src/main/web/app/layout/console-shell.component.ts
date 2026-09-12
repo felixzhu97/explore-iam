@@ -278,21 +278,18 @@ type UserSubmenu = 'profile' | 'billing' | 'appearance' | 'language' | 'timezone
             }
 
             @if (!collapsed()) {
-              @if (showManageSection()) {
+              @if (showUsersSection()) {
                 <button
                   type="button"
                   class="console-nav-item console-nav-toggle w-full"
                   (click)="toggleManageAccount()"
                 >
                   <svg class="console-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-                    <circle cx="12" cy="12" r="3" />
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9c0 .7.4 1.3 1 1.5H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"
-                    />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+                    <circle cx="9" cy="7" r="3.5" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M22 21v-2a3.5 3.5 0 00-2.5-3.35M16.5 3.6a3.5 3.5 0 010 6.8" />
                   </svg>
-                  <span class="console-nav-label flex-1 text-left">管理账户</span>
+                  <span class="console-nav-label flex-1 text-left">Users and Access</span>
                   <svg
                     class="console-nav-chevron"
                     [class.console-nav-chevron-closed]="!manageAccountOpen()"
@@ -306,38 +303,149 @@ type UserSubmenu = 'profile' | 'billing' | 'appearance' | 'language' | 'timezone
                 </button>
                 <div
                   class="console-nav-sub"
-                  [class.console-nav-sub-open]="manageAccountOpen() && showClients()"
+                  [class.console-nav-sub-open]="manageAccountOpen() && showUsersSection()"
                 >
                   <div class="console-nav-sub-inner">
                     <div class="console-nav-tree">
-                      <a
-                        routerLink="/clients"
-                        routerLinkActive="console-nav-active"
-                        class="console-nav-item console-nav-child"
-                        title="OAuth 客户端"
-                      >
-                        <span class="console-nav-label">OAuth 客户端</span>
-                      </a>
+                      @if (showPeople()) {
+                        <a
+                          routerLink="/users-and-access/people"
+                          routerLinkActive="console-nav-active"
+                          class="console-nav-item console-nav-child"
+                          title="People"
+                        >
+                          <span class="console-nav-label">People</span>
+                        </a>
+                      }
+                      @if (showGroups()) {
+                        <a
+                          routerLink="/users-and-access/groups"
+                          routerLinkActive="console-nav-active"
+                          class="console-nav-item console-nav-child"
+                          title="Groups"
+                        >
+                          <span class="console-nav-label">Groups</span>
+                        </a>
+                      }
+                      @if (showRoles()) {
+                        <a
+                          routerLink="/users-and-access/roles"
+                          routerLinkActive="console-nav-active"
+                          class="console-nav-item console-nav-child"
+                          title="Roles"
+                        >
+                          <span class="console-nav-label">Roles</span>
+                        </a>
+                      }
                     </div>
                   </div>
                 </div>
               }
-            } @else if (showClients()) {
-              <a
-                routerLink="/clients"
-                routerLinkActive="console-nav-active"
-                class="console-nav-item"
-                title="OAuth 客户端"
-              >
-                <svg class="console-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-                  <circle cx="12" cy="12" r="3" />
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9c0 .7.4 1.3 1 1.5H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"
-                  />
-                </svg>
-              </a>
+
+              @if (showPermissionsSection()) {
+                <p class="console-nav-section-label mt-2 mb-0.5 px-2 text-[0.6875rem] font-semibold tracking-wide text-[var(--console-muted)] uppercase">
+                  Permissions
+                </p>
+                @if (showPoints()) {
+                  <a
+                    routerLink="/permissions/points"
+                    routerLinkActive="console-nav-active"
+                    class="console-nav-item"
+                    title="Points"
+                  >
+                    <svg class="console-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" />
+                      <path stroke-linecap="round" d="M12 12l8-4.5M12 12v9M12 12L4 7.5" />
+                    </svg>
+                    <span class="console-nav-label">Points</span>
+                  </a>
+                }
+                @if (showPolicies()) {
+                  <a
+                    routerLink="/permissions/policies"
+                    routerLinkActive="console-nav-active"
+                    class="console-nav-item"
+                    title="Policies"
+                  >
+                    <svg class="console-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M8 4h9a2 2 0 012 2v14l-4-2-4 2-4-2-4 2V6a2 2 0 012-2h1" />
+                    </svg>
+                    <span class="console-nav-label">Policies</span>
+                  </a>
+                }
+              }
+
+              @if (showApps()) {
+                <a
+                  routerLink="/apps"
+                  routerLinkActive="console-nav-active"
+                  class="console-nav-item"
+                  title="Apps"
+                >
+                  <svg class="console-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                    <rect x="4" y="4" width="7" height="7" rx="1.5" />
+                    <rect x="13" y="4" width="7" height="7" rx="1.5" />
+                    <rect x="4" y="13" width="7" height="7" rx="1.5" />
+                    <rect x="13" y="13" width="7" height="7" rx="1.5" />
+                  </svg>
+                  <span class="console-nav-label">Apps</span>
+                </a>
+              }
+
+              @if (showActivity()) {
+                <a
+                  routerLink="/activity"
+                  routerLinkActive="console-nav-active"
+                  class="console-nav-item"
+                  title="Activity"
+                >
+                  <svg class="console-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 19V5M4 19h16M8 15l3-4 2.5 3L17 9" />
+                  </svg>
+                  <span class="console-nav-label">Activity</span>
+                </a>
+              }
+            } @else {
+              @if (showPeople()) {
+                <a
+                  routerLink="/users-and-access/people"
+                  routerLinkActive="console-nav-active"
+                  class="console-nav-item"
+                  title="People"
+                >
+                  <svg class="console-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+                    <circle cx="9" cy="7" r="3.5" />
+                  </svg>
+                </a>
+              }
+              @if (showApps()) {
+                <a
+                  routerLink="/apps"
+                  routerLinkActive="console-nav-active"
+                  class="console-nav-item"
+                  title="Apps"
+                >
+                  <svg class="console-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                    <rect x="4" y="4" width="7" height="7" rx="1.5" />
+                    <rect x="13" y="4" width="7" height="7" rx="1.5" />
+                    <rect x="4" y="13" width="7" height="7" rx="1.5" />
+                    <rect x="13" y="13" width="7" height="7" rx="1.5" />
+                  </svg>
+                </a>
+              }
+              @if (showActivity()) {
+                <a
+                  routerLink="/activity"
+                  routerLinkActive="console-nav-active"
+                  class="console-nav-item"
+                  title="Activity"
+                >
+                  <svg class="console-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 19V5M4 19h16M8 15l3-4 2.5 3L17 9" />
+                  </svg>
+                </a>
+              }
             }
           </nav>
 
@@ -524,20 +632,67 @@ export class ConsoleShellComponent implements OnInit {
     return this.matches('账户主页') || this.matches('home') || this.q() === '';
   }
 
-  showClients(): boolean {
+  showPeople(): boolean {
     return (
-      this.matches('oauth') ||
-      this.matches('客户端') ||
-      this.matches('client') ||
+      this.matches('people') ||
+      this.matches('用户') ||
+      this.matches('user') ||
       this.q() === ''
     );
   }
 
-  showManageSection(): boolean {
+  showGroups(): boolean {
+    return this.matches('group') || this.matches('组') || this.q() === '';
+  }
+
+  showRoles(): boolean {
+    return this.matches('role') || this.matches('角色') || this.q() === '';
+  }
+
+  showUsersSection(): boolean {
     return (
-      this.showClients() ||
-      this.matches('管理') ||
-      this.matches('账户') ||
+      this.showPeople() ||
+      this.showGroups() ||
+      this.showRoles() ||
+      this.matches('users and access') ||
+      this.matches('access') ||
+      this.q() === ''
+    );
+  }
+
+  showPoints(): boolean {
+    return (
+      this.matches('point') ||
+      this.matches('权限点') ||
+      this.matches('permission') ||
+      this.q() === ''
+    );
+  }
+
+  showPolicies(): boolean {
+    return this.matches('polic') || this.matches('策略') || this.q() === '';
+  }
+
+  showPermissionsSection(): boolean {
+    return this.showPoints() || this.showPolicies() || this.q() === '';
+  }
+
+  showApps(): boolean {
+    return (
+      this.matches('app') ||
+      this.matches('应用') ||
+      this.matches('oauth') ||
+      this.matches('client') ||
+      this.matches('客户端') ||
+      this.q() === ''
+    );
+  }
+
+  showActivity(): boolean {
+    return (
+      this.matches('activity') ||
+      this.matches('审计') ||
+      this.matches('audit') ||
       this.q() === ''
     );
   }
