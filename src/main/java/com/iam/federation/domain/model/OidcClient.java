@@ -1,5 +1,6 @@
 package com.iam.federation.domain.model;
 
+import com.iam.common.domain.vo.Scope;
 import com.iam.federation.domain.vo.ClientId;
 import com.iam.federation.domain.vo.RedirectUri;
 import java.time.Instant;
@@ -7,6 +8,7 @@ import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * OIDC Relying Party registered with Explore IAM (maps to Spring Authorization Server {@code
@@ -22,7 +24,7 @@ public class OidcClient {
   private final String clientUri;
   private final Set<RedirectUri> redirectUris;
   private final Set<RedirectUri> postLogoutRedirectUris;
-  private Set<String> scopes;
+  private Set<Scope> scopes;
   private final Set<String> responseTypes;
   private final Set<String> clientAuthenticationMethods;
   private final Set<String> authorizationGrantTypes;
@@ -37,7 +39,7 @@ public class OidcClient {
       String clientUri,
       Set<RedirectUri> redirectUris,
       Set<RedirectUri> postLogoutRedirectUris,
-      Set<String> scopes,
+      Set<Scope> scopes,
       Set<String> responseTypes,
       Set<String> clientAuthenticationMethods,
       Set<String> authorizationGrantTypes,
@@ -53,7 +55,7 @@ public class OidcClient {
         copyUris(
             postLogoutRedirectUris == null ? Set.of() : postLogoutRedirectUris,
             "postLogoutRedirectUris");
-    this.scopes = copyStrings(scopes, "scopes");
+    this.scopes = copyScopes(scopes);
     this.responseTypes = copyStrings(responseTypes, "responseTypes");
     this.clientAuthenticationMethods =
         copyStrings(clientAuthenticationMethods, "clientAuthenticationMethods");
@@ -114,7 +116,7 @@ public class OidcClient {
         clientUri,
         redirectUris,
         postLogoutRedirectUris,
-        scopes,
+        toScopes(scopes),
         responseTypes,
         clientAuthenticationMethods,
         authorizationGrantTypes,
@@ -148,7 +150,7 @@ public class OidcClient {
         null,
         redirectUris,
         postLogoutRedirectUris,
-        scopes,
+        toScopes(scopes),
         Set.of("code"),
         Set.of("client_secret_basic", "client_secret_post"),
         Set.of("authorization_code", "refresh_token"),
@@ -180,7 +182,7 @@ public class OidcClient {
         null,
         redirectUris,
         postLogoutRedirectUris,
-        scopes,
+        toScopes(scopes),
         Set.of("code"),
         Set.of("none"),
         Set.of("authorization_code", "refresh_token"),
@@ -214,7 +216,7 @@ public class OidcClient {
       String clientUri,
       Set<RedirectUri> redirectUris,
       Set<RedirectUri> postLogoutRedirectUris,
-      Set<String> scopes,
+      Set<Scope> scopes,
       Set<String> responseTypes,
       Set<String> clientAuthenticationMethods,
       Set<String> authorizationGrantTypes,
@@ -259,8 +261,25 @@ public class OidcClient {
     return Set.copyOf(copy);
   }
 
-  private static void requireOpenIdScope(Set<String> scopes) {
-    if (!scopes.contains("openid")) {
+  private static Set<Scope> toScopes(Set<String> values) {
+    Objects.requireNonNull(values, "scopes");
+    LinkedHashSet<Scope> copy = new LinkedHashSet<>();
+    for (String value : values) {
+      if (value == null || value.isBlank()) {
+        throw new IllegalArgumentException("scopes contains a blank value");
+      }
+      copy.add(Scope.of(value.trim()));
+    }
+    return Set.copyOf(copy);
+  }
+
+  private static Set<Scope> copyScopes(Set<Scope> scopes) {
+    Objects.requireNonNull(scopes, "scopes");
+    return Set.copyOf(new LinkedHashSet<>(scopes));
+  }
+
+  private static void requireOpenIdScope(Set<Scope> scopes) {
+    if (!scopes.contains(Scope.of("openid"))) {
       throw new IllegalArgumentException("scopes must include openid");
     }
   }
@@ -319,8 +338,15 @@ public class OidcClient {
   }
 
   /** Returns registered OAuth scopes. */
-  public Set<String> scopes() {
+  public Set<Scope> scopes() {
     return scopes;
+  }
+
+  /** Returns registered OAuth scope string values. */
+  public Set<String> scopeValues() {
+    return scopes.stream()
+        .map(Scope::value)
+        .collect(Collectors.toCollection(LinkedHashSet::new));
   }
 
   /**
@@ -329,7 +355,7 @@ public class OidcClient {
    * @param newScopes replacement scope set
    */
   public void replaceScopes(Set<String> newScopes) {
-    Set<String> copy = copyStrings(newScopes, "scopes");
+    Set<Scope> copy = toScopes(newScopes);
     requireOpenIdScope(copy);
     this.scopes = copy;
   }

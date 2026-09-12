@@ -23,7 +23,7 @@ class PermissionPointTest {
             new Resource("arn:ai:::chat/*"),
             "chat");
 
-    assertThat(point.oauthScope()).isEqualTo("write:ai_chat");
+    assertThat(point.oauthScopeValue()).isEqualTo("write:ai_chat");
     assertThat(point.matchesScope("write:ai_chat")).isTrue();
   }
 

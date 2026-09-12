@@ -58,7 +58,7 @@ public final class OidcClientMapper {
         .forEach(grant -> builder.authorizationGrantType(new AuthorizationGrantType(grant)));
     client.redirectUris().forEach(uri -> builder.redirectUri(uri.value()));
     client.postLogoutRedirectUris().forEach(uri -> builder.postLogoutRedirectUri(uri.value()));
-    client.scopes().forEach(builder::scope);
+    client.scopes().forEach(scope -> builder.scope(scope.value()));
     return builder.build();
   }
 
@@ -86,7 +86,9 @@ public final class OidcClientMapper {
         registeredClient.getPostLogoutRedirectUris().stream()
             .map(RedirectUri::new)
             .collect(Collectors.toCollection(LinkedHashSet::new)),
-        new LinkedHashSet<>(registeredClient.getScopes()),
+        registeredClient.getScopes().stream()
+            .map(com.iam.common.domain.vo.Scope::of)
+            .collect(Collectors.toCollection(LinkedHashSet::new)),
         responseTypes,
         registeredClient.getClientAuthenticationMethods().stream()
             .map(ClientAuthenticationMethod::getValue)

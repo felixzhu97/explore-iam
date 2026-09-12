@@ -259,7 +259,7 @@ public class OidcClientService {
           client.postLogoutRedirectUris().stream()
               .map(RedirectUri::value)
               .collect(Collectors.toCollection(LinkedHashSet::new)),
-          client.scopes(),
+          client.scopeValues(),
           client.responseTypes(),
           client.authorizationGrantTypes(),
           client.clientAuthenticationMethods());
@@ -291,7 +291,7 @@ public class OidcClientService {
           client.postLogoutRedirectUris().stream()
               .map(RedirectUri::value)
               .collect(Collectors.toCollection(LinkedHashSet::new)),
-          client.scopes(),
+          client.scopeValues(),
           client.responseTypes(),
           client.authorizationGrantTypes(),
           client.clientAuthenticationMethods());
