@@ -82,7 +82,7 @@ const BTN_PRIMARY =
               #homeSearch
               type="search"
               class="min-w-0 flex-1 border-0 bg-transparent text-sm text-[var(--console-fg)] outline-none"
-              placeholder="搜索客户端、文档或设置…"
+              placeholder="搜索应用、文档或设置…"
               [value]="searchQuery()"
               (input)="searchQuery.set($any($event.target).value)"
               (keydown.enter)="onSearchEnter()"
@@ -99,13 +99,13 @@ const BTN_PRIMARY =
             <header class="mb-3 flex items-center justify-between gap-2">
               <h2 class="m-0 text-[0.8125rem] font-semibold">
                 <a
-                  routerLink="/clients"
+                  routerLink="/apps"
                   class="text-inherit no-underline hover:text-[var(--console-accent)]"
-                  >OAuth 客户端</a
+                  >应用</a
                 >
               </h2>
               <a
-                routerLink="/clients"
+                routerLink="/apps"
                 class="text-xs text-[var(--console-accent)] no-underline hover:underline"
                 >查看全部</a
               >
@@ -114,16 +114,15 @@ const BTN_PRIMARY =
               <p class="m-0 text-[0.8125rem] text-[var(--console-muted)]">加载中…</p>
             } @else if (clients().length === 0) {
               <p class="m-0 text-[0.8125rem] text-[var(--console-muted)]">
-                尚无客户端。创建后将显示在此处。
+                尚无应用。创建后将显示在此处。
               </p>
-              <a routerLink="/clients/new" class="${BTN_PRIMARY} mt-3 inline-flex">创建客户端</a>
+              <a routerLink="/apps/new" class="${BTN_PRIMARY} mt-3 inline-flex">创建应用</a>
             } @else {
               <ul class="m-0 list-none p-0">
                 @for (c of clients().slice(0, 5); track c.clientId) {
                   <li>
                     <a
-                      [routerLink]="['/clients']"
-                      [queryParams]="{ q: c.clientId }"
+                      [routerLink]="['/apps', c.clientId]"
                       class="-mx-1 flex cursor-pointer items-center gap-[0.65rem] rounded-md px-1 py-[0.45rem] text-inherit no-underline hover:bg-[var(--console-bg)]"
                     >
                       <span
@@ -153,7 +152,7 @@ const BTN_PRIMARY =
             <header class="mb-3 flex items-center justify-between gap-2">
               <h2 class="m-0 text-[0.8125rem] font-semibold">
                 <a
-                  routerLink="/clients/new"
+                  routerLink="/apps/new"
                   class="text-inherit no-underline hover:text-[var(--console-accent)]"
                   >快速操作</a
                 >
@@ -163,7 +162,7 @@ const BTN_PRIMARY =
               注册 Relying Party，获取 client_id / secret。
             </p>
             <a
-              routerLink="/clients/new"
+              routerLink="/apps/new"
               class="${BTN_PRIMARY} mt-4 inline-flex w-full justify-center"
               >Ship something new</a
             >
@@ -299,7 +298,7 @@ const BTN_PRIMARY =
             @for (m of miniMetrics(); track m.id) {
               @if (m.id === 'clients') {
                 <a
-                  routerLink="/clients"
+                  routerLink="/apps"
                   class="${CARD} flex min-h-[7.5rem] cursor-pointer flex-col px-4 pt-[0.9rem] pb-[0.65rem] text-inherit no-underline transition-[border-color] duration-[160ms] hover:border-[var(--console-accent-soft)]"
                 >
                   <div class="flex items-baseline justify-between gap-2">
@@ -367,8 +366,8 @@ export class HomePageComponent implements OnInit {
   readonly seed = signal(1);
 
   readonly recents = [
-    { label: 'OAuth 客户端', group: '管理账户', path: '/clients', external: false },
-    { label: '创建客户端', group: '管理账户', path: '/clients/new', external: false },
+    { label: '应用', group: 'Apps', path: '/apps', external: false },
+    { label: '创建应用', group: 'Apps', path: '/apps/new', external: false },
     {
       label: 'Authorization Server 文档',
       group: '文档',
@@ -448,7 +447,7 @@ export class HomePageComponent implements OnInit {
       },
       {
         id: 'clients',
-        title: '已注册客户端',
+        title: '已注册应用',
         value: String(clientsCount),
         delta: null,
         deltaLabel: null,
@@ -461,7 +460,7 @@ export class HomePageComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.http.get<ClientSummary[]>('/api/clients', { withCredentials: true }).subscribe({
+    this.http.get<ClientSummary[]>('/api/v1/clients', { withCredentials: true }).subscribe({
       next: (list) => {
         this.clients.set(list.map((c) => ({ clientId: c.clientId, clientName: c.clientName })));
         this.clientsLoading.set(false);
@@ -485,11 +484,11 @@ export class HomePageComponent implements OnInit {
   onSearchEnter(): void {
     const q = this.searchQuery().trim().toLowerCase();
     if (!q) {
-      void this.router.navigateByUrl('/clients');
+      void this.router.navigateByUrl('/apps');
       return;
     }
     if (q.includes('new') || q.includes('创建') || q.includes('注册')) {
-      void this.router.navigateByUrl('/clients/new');
+      void this.router.navigateByUrl('/apps/new');
       return;
     }
     if (q.includes('doc') || q.includes('文档') || q.includes('oauth')) {
@@ -500,7 +499,7 @@ export class HomePageComponent implements OnInit {
       );
       return;
     }
-    void this.router.navigate(['/clients'], { queryParams: { q: this.searchQuery().trim() } });
+    void this.router.navigate(['/apps'], { queryParams: { q: this.searchQuery().trim() } });
   }
 
   initial(name: string): string {

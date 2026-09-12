@@ -25,7 +25,7 @@
   --radius-lg: var(--radius);
 }
 
-/* Align with explore-ai app theme (black primary + Apple-like neutrals) */
+/* Align with explore-ai app theme (black primary + neutral grays) */
 :root {
   --radius: 0.625rem;
   --background: #f5f5f7;
