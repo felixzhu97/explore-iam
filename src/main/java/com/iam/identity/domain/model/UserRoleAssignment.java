@@ -27,7 +27,7 @@ public class UserRoleAssignment {
   @Getter(AccessLevel.PACKAGE)
   @ManyToOne(fetch = FetchType.LAZY)
   @MapsId("userId")
-  @JoinColumn(name = "user_id", nullable = false)
+  @JoinColumn(nullable = false)
   private IamUser user;
 
   UserRoleAssignment(IamUser user, String roleId) {
