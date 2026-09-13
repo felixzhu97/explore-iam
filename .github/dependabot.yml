@@ -18,6 +18,10 @@ updates:
       npm:
         patterns:
           - "*"
+    ignore:
+      # Angular 22 peer range is typescript >=6.0 <6.1
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: "gradle"
     directory: "/"
     schedule:
