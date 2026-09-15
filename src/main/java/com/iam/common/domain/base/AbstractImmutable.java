@@ -8,6 +8,7 @@ import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 /** Immutable aggregate root base with identity and creation timestamp. */
 @MappedSuperclass
@@ -19,7 +20,8 @@ public abstract class AbstractImmutable {
   @Column(length = 36, nullable = false)
   private String id;
 
-  @Column(name = "created_at", nullable = false, updatable = false)
+  @CreationTimestamp
+  @Column(nullable = false, updatable = false)
   private Instant createdAt;
 
   /** Subclass constructor supplying identity and timestamps. */
