@@ -11,7 +11,8 @@ Style standards: global [c4-model](~/.cursor/skills/scrum-team/developers/develo
 | Track | Files | Style |
 |-------|-------|-------|
 | **Structural C4** | C1–C3, Deployment | `C4_blue_new` theme (wireframe) |
-| **Domain + Dynamics** | Code domain model, `C4-Dynamic-*` | [`style-zinc.puml`](style-zinc.puml)（白底 + 彩色边框/标题，IAM 风格） |
+| **Domain model** | `C4-Code-Domain-Model.puml` | 白底黑字黑边框（对齐 explore-chat Code 图） |
+| **Dynamics** | `C4-Dynamic-*` | [`style-zinc.puml`](style-zinc.puml) 或内联白底（见各文件） |
 
 ## File set
 
@@ -25,7 +26,7 @@ Style standards: global [c4-model](~/.cursor/skills/scrum-team/developers/develo
 | `C4-Dynamic-SSOLogin.puml` | Dynamic | OIDC Authorization Code (confidential + public PKCE) |
 | `C4-Dynamic-NativePkceLogin.puml` | Dynamic | Native iOS ASWebAuthenticationSession + PKCE → RP Bearer |
 | `C4-Dynamic-PolicyEvaluation.puml` | Dynamic | AssumeRole + PolicyEngine (Deny > Allow > implicit Deny) |
-| `style-zinc.puml` | Shared | Code + Dynamic 共用样式（白底、标题色区分 stereotype） |
+| `style-zinc.puml` | Shared | Dynamic 序列图可选样式（Code 领域模型内联白底黑边框） |
 
 ## Stack & ports
 
