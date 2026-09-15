@@ -1,56 +1,74 @@
 package com.iam.policy.domain.model;
 
 import com.iam.common.domain.base.AbstractImmutable;
-import com.iam.common.domain.converter.ActionAttributeConverter;
-import com.iam.common.domain.converter.ResourceAttributeConverter;
 import com.iam.common.domain.vo.Action;
 import com.iam.common.domain.vo.Resource;
-import jakarta.persistence.Convert;
+import com.iam.common.domain.vo.Scope;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
-import java.util.regex.Pattern;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * Catalog entry linking a GitHub-style OAuth scope to an Action and Resource.
+ * Catalog entry linking an OAuth {@link Scope} to an {@link Action} and {@link Resource}.
  *
- * <p>Scope format matches GitHub OAuth scopes ({@code read:user}, {@code write:packages},
- * {@code admin:org}) except for OIDC standard scopes {@code openid}, {@code profile}, {@code
- * email}.
+ * <p>Scope format matches GitHub OAuth scopes ({@code read:packages}, {@code admin:org}) except for
+ * OIDC standard scopes {@code openid}, {@code profile}, {@code email}.
  */
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public class PermissionPoint extends AbstractImmutable {
 
-  private static final Pattern GITHUB_STYLE =
-      Pattern.compile("^(read|write|admin|delete):[a-z][a-z0-9_]*$");
-  private static final Set<String> OIDC_SCOPES = Set.of("openid", "profile", "email");
-
+  @NotBlank
+  @Size(max = 128)
+  @Column(nullable = false, unique = true, length = 128)
   private String code;
 
-  private String oauthScope;
+  @Embedded
+  @AttributeOverride(
+      name = "value",
+      column = @Column(name = "oauth_scope", nullable = false, length = 128))
+  @Valid
+  private Scope oauthScope;
 
+  @NotBlank
+  @Size(max = 64)
+  @Column(nullable = false, length = 64)
   private String module;
 
-  @Convert(converter = ActionAttributeConverter.class)
+  @Embedded
+  @AttributeOverride(
+      name = "value",
+      column = @Column(name = "action", nullable = false, length = 128))
+  @Valid
   private Action action;
 
-  @Convert(converter = ResourceAttributeConverter.class)
+  @Embedded
+  @AttributeOverride(
+      name = "value",
+      column = @Column(name = "resource", nullable = false, length = 512))
+  @Valid
   private Resource resource;
 
+  @Size(max = 512)
+  @Column(nullable = false, length = 512)
   private String description;
 
   private PermissionPoint(
       String id,
       String code,
-      String oauthScope,
+      Scope oauthScope,
       String module,
       Action action,
       Resource resource,
@@ -58,11 +76,12 @@ public class PermissionPoint extends AbstractImmutable {
       Instant createdAt) {
     super(id, createdAt);
     this.code = requireCode(code);
-    this.oauthScope = requireOauthScope(oauthScope, module);
-    if (!this.code.equals(this.oauthScope)) {
+    this.module = requireModule(module);
+    this.oauthScope = Objects.requireNonNull(oauthScope, "oauthScope");
+    requireModuleCompatibleScope(this.module, this.oauthScope);
+    if (!this.code.equals(this.oauthScope.value())) {
       throw new IllegalArgumentException("code must equal oauthScope");
     }
-    this.module = requireModule(module);
     this.action = Objects.requireNonNull(action, "action");
     this.resource = Objects.requireNonNull(resource, "resource");
     this.description = description == null ? "" : description.trim();
@@ -89,38 +108,12 @@ public class PermissionPoint extends AbstractImmutable {
     return new PermissionPoint(
         UUID.randomUUID().toString(),
         code,
-        oauthScope,
+        Scope.of(oauthScope),
         module,
         action,
         resource,
         description,
         Instant.now());
-  }
-
-  /**
-   * Rebuilds from persistence.
-   *
-   * @param id internal id
-   * @param code business key
-   * @param oauthScope oauth scope
-   * @param module module
-   * @param action action
-   * @param resource resource
-   * @param description description
-   * @param createdAt created at
-   * @return reconstituted aggregate
-   */
-  public static PermissionPoint reconstitute(
-      String id,
-      String code,
-      String oauthScope,
-      String module,
-      Action action,
-      Resource resource,
-      String description,
-      Instant createdAt) {
-    return new PermissionPoint(
-        id, code, oauthScope, module, action, resource, description, createdAt);
   }
 
   /**
@@ -130,16 +123,17 @@ public class PermissionPoint extends AbstractImmutable {
    * @return whether scopes match
    */
   public boolean matchesScope(String scope) {
-    return oauthScope.equals(scope);
+    return oauthScope.value().equals(scope);
   }
 
   /** Returns the OAuth scope string for access tokens. */
-  public String oauthScope() {
-    return oauthScope;
+  public String oauthScopeValue() {
+    return oauthScope.value();
   }
 
-  static void validateOauthScope(String oauthScope, String module) {
-    requireOauthScope(oauthScope, module);
+  /** Returns the OAuth scope string for controllers and DTO mapping. */
+  public String oauthScope() {
+    return oauthScopeValue();
   }
 
   private static String requireCode(String code) {
@@ -160,25 +154,10 @@ public class PermissionPoint extends AbstractImmutable {
     return trimmed;
   }
 
-  private static String requireOauthScope(String oauthScope, String module) {
-    Objects.requireNonNull(oauthScope, "oauthScope");
-    String trimmed = oauthScope.trim();
-    if (trimmed.isEmpty()) {
-      throw new IllegalArgumentException("oauthScope must not be blank");
-    }
-    String normalizedModule = module == null ? "" : module.trim().toLowerCase(Locale.ROOT);
-    if ("oidc".equals(normalizedModule)) {
-      if (!OIDC_SCOPES.contains(trimmed)) {
-        throw new IllegalArgumentException(
-            "oidc module scopes must be openid, profile, or email");
-      }
-      return trimmed;
-    }
-    if (!GITHUB_STYLE.matcher(trimmed).matches()) {
+  private static void requireModuleCompatibleScope(String module, Scope scope) {
+    if ("oidc".equals(module) && !scope.isOidcStandard()) {
       throw new IllegalArgumentException(
-          "oauthScope must use GitHub style {access}:{resource}"
-              + " (e.g. write:ai_chat, admin:chat)");
+          "oidc module scopes must be openid, profile, or email");
     }
-    return trimmed;
   }
 }
