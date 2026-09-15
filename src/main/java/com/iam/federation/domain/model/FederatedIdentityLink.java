@@ -4,6 +4,8 @@ import com.iam.common.domain.base.AbstractImmutable;
 import com.iam.common.domain.base.DomainStrings;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.AccessLevel;
@@ -17,13 +19,19 @@ import lombok.NoArgsConstructor;
 public class FederatedIdentityLink extends AbstractImmutable {
 
   @Getter(AccessLevel.NONE)
-  @Column(name = "iam_user_id", nullable = false, length = 36)
+  @NotBlank
+  @Size(max = 36)
+  @Column(nullable = false, length = 36)
   private String iamUserId;
 
+  @NotBlank
+  @Size(max = 64)
   @Column(nullable = false, length = 64)
   private String provider;
 
-  @Column(name = "external_subject", nullable = false, length = 512)
+  @NotBlank
+  @Size(max = 512)
+  @Column(nullable = false, length = 512)
   private String externalSubject;
 
   private FederatedIdentityLink(
@@ -39,12 +47,6 @@ public class FederatedIdentityLink extends AbstractImmutable {
       String iamUserId, String provider, String externalSubject) {
     return new FederatedIdentityLink(
         UUID.randomUUID().toString(), iamUserId, provider, externalSubject, Instant.now());
-  }
-
-  /** Rebuilds from persistence. */
-  public static FederatedIdentityLink reconstitute(
-      String id, String iamUserId, String provider, String externalSubject, Instant createdAt) {
-    return new FederatedIdentityLink(id, iamUserId, provider, externalSubject, createdAt);
   }
 
   /** Returns the linked local IAM user id. */

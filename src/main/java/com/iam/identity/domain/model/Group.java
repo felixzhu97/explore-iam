@@ -40,20 +40,6 @@ public class Group extends AbstractNamedEntity {
     return new Group(UUID.randomUUID().toString(), name, now, now);
   }
 
-  /**
-   * Rebuilds a group from persistence.
-   *
-   * @param id internal id
-   * @param name group name
-   * @param createdAt creation timestamp
-   * @param updatedAt last update timestamp
-   * @return reconstituted aggregate
-   */
-  public static Group reconstitute(
-      String id, String name, Instant createdAt, Instant updatedAt) {
-    return new Group(id, name, createdAt, updatedAt);
-  }
-
   /** Returns the ARN for this group. */
   public Arn arn() {
     return new Arn("arn:iam::explore-iam:group/" + getName());

@@ -36,7 +36,7 @@ class ManagementEventTest {
 
     assertThat(event.getAction()).isEqualTo("auth:login");
     assertThat(event.getTarget().getType()).isEqualTo("User");
-    assertThat(event.getTarget().getId()).isEqualTo("demo");
+    assertThat(event.getTarget().getTargetId()).isEqualTo("demo");
     assertThat(event.wasSuccessful()).isTrue();
     assertThat(event.involvesActor(actor)).isTrue();
     assertThat(event.targets(new AuditTarget("User", "demo"))).isTrue();
