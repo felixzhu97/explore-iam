@@ -1,6 +1,5 @@
 package com.iam.common.domain.base;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.Version;
 import java.time.Instant;
@@ -8,6 +7,7 @@ import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.UpdateTimestamp;
 
 /** Mutable aggregate root base with optimistic locking and last-modified timestamp. */
 @MappedSuperclass
@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public abstract class AbstractEntity extends AbstractImmutable {
 
-  @Column(name = "updated_at", nullable = false)
+  @UpdateTimestamp
   private Instant updatedAt;
 
   @Version
@@ -27,7 +27,10 @@ public abstract class AbstractEntity extends AbstractImmutable {
     this.updatedAt = Objects.requireNonNull(updatedAt, "updatedAt");
   }
 
-  /** Updates the last-modified timestamp after a domain mutation. */
+  /**
+   * Updates the last-modified timestamp after a domain mutation. Hibernate {@link UpdateTimestamp}
+   * also refreshes this field on flush.
+   */
   protected void touch() {
     this.updatedAt = Instant.now();
   }
