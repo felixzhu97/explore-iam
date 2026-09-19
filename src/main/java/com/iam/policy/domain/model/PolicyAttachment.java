@@ -1,11 +1,14 @@
 package com.iam.policy.domain.model;
 
 import com.iam.common.domain.base.AbstractImmutable;
-import com.iam.common.domain.converter.ArnAttributeConverter;
 import com.iam.common.domain.vo.Arn;
+import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.AccessLevel;
@@ -19,12 +22,17 @@ import lombok.NoArgsConstructor;
 public class PolicyAttachment extends AbstractImmutable {
 
   @Getter(AccessLevel.NONE)
-  @Column(name = "policy_id", nullable = false, length = 36)
+  @NotBlank
+  @Size(max = 36)
+  @Column(nullable = false, length = 36)
   private String policyId;
 
   @Getter(AccessLevel.NONE)
-  @Column(name = "principal_arn", nullable = false, length = 512)
-  @Convert(converter = ArnAttributeConverter.class)
+  @Embedded
+  @AttributeOverride(
+      name = "value",
+      column = @Column(name = "principal_arn", nullable = false, length = 512))
+  @Valid
   private Arn principalArn;
 
   private PolicyAttachment(String id, String policyId, Arn principalArn, Instant createdAt) {
@@ -43,20 +51,6 @@ public class PolicyAttachment extends AbstractImmutable {
   public static PolicyAttachment attach(String policyId, Arn principalArn) {
     return new PolicyAttachment(
         UUID.randomUUID().toString(), policyId, principalArn, Instant.now());
-  }
-
-  /**
-   * Rebuilds from persistence.
-   *
-   * @param id attachment id
-   * @param policyId policy document id
-   * @param principalArn target principal
-   * @param createdAt creation timestamp
-   * @return reconstituted attachment
-   */
-  public static PolicyAttachment reconstitute(
-      String id, String policyId, Arn principalArn, Instant createdAt) {
-    return new PolicyAttachment(id, policyId, principalArn, createdAt);
   }
 
   /** Returns the attached policy document id. */
