@@ -21,18 +21,18 @@ import lombok.NoArgsConstructor;
 public class PolicyDocument extends AbstractNamedEntity {
 
   @Getter(AccessLevel.NONE)
-  @Column(name = "document_json", nullable = false, columnDefinition = "clob")
+  @Column(nullable = false, columnDefinition = "clob")
   @Convert(converter = PolicyStatementsJsonConverter.class)
-  private List<PolicyStatement> statements;
+  private List<PolicyStatement> documentJson;
 
   private PolicyDocument(
       String id,
       String name,
-      List<PolicyStatement> statements,
+      List<PolicyStatement> documentJson,
       Instant createdAt,
       Instant updatedAt) {
     super(id, name, createdAt, updatedAt);
-    this.statements = List.copyOf(new ArrayList<>(requireStatements(statements)));
+    this.documentJson = List.copyOf(new ArrayList<>(requireStatements(documentJson)));
   }
 
   /**
@@ -47,28 +47,9 @@ public class PolicyDocument extends AbstractNamedEntity {
     return new PolicyDocument(UUID.randomUUID().toString(), name, statements, now, now);
   }
 
-  /**
-   * Rebuilds from persistence.
-   *
-   * @param id internal id
-   * @param name display name
-   * @param statements policy statements
-   * @param createdAt creation time
-   * @param updatedAt last update time
-   * @return reconstituted aggregate
-   */
-  public static PolicyDocument reconstitute(
-      String id,
-      String name,
-      List<PolicyStatement> statements,
-      Instant createdAt,
-      Instant updatedAt) {
-    return new PolicyDocument(id, name, statements, createdAt, updatedAt);
-  }
-
   /** Returns an unmodifiable view of policy statements. */
   public List<PolicyStatement> statements() {
-    return Collections.unmodifiableList(statements);
+    return Collections.unmodifiableList(documentJson);
   }
 
   private static List<PolicyStatement> requireStatements(List<PolicyStatement> statements) {

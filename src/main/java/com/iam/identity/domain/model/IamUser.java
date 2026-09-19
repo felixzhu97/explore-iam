@@ -6,6 +6,9 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,14 +26,20 @@ public class IamUser extends AbstractEntity {
 
   private static final String FEDERATED_NO_PASSWORD = "{noop}federated-no-password";
 
+  @NotBlank
+  @Size(max = 128)
   @Column(nullable = false, unique = true, length = 128)
   private String username;
 
+  @Email
+  @Size(max = 320)
   @Column(length = 320)
   private String email;
 
   @Getter(AccessLevel.NONE)
-  @Column(name = "password_hash", nullable = false, length = 255)
+  @NotBlank
+  @Size(max = 255)
+  @Column(nullable = false, length = 255)
   private String passwordHash;
 
   @Getter(AccessLevel.NONE)
@@ -85,29 +94,6 @@ public class IamUser extends AbstractEntity {
             + ":"
             + DomainStrings.requireNonBlank(subject, "subject");
     return create(username, email, FEDERATED_NO_PASSWORD);
-  }
-
-  /**
-   * Rebuilds an aggregate from persistence.
-   *
-   * @param id internal id
-   * @param username unique login name
-   * @param email contact email
-   * @param passwordHash encoded password
-   * @param enabled whether login is allowed
-   * @param createdAt creation timestamp
-   * @param updatedAt last update timestamp
-   * @return reconstituted aggregate
-   */
-  public static IamUser reconstitute(
-      String id,
-      String username,
-      String email,
-      String passwordHash,
-      boolean enabled,
-      Instant createdAt,
-      Instant updatedAt) {
-    return new IamUser(id, username, email, passwordHash, enabled, createdAt, updatedAt);
   }
 
   /** Disables the user so form login is rejected. */
