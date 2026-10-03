@@ -224,6 +224,22 @@ Cross-bounded-context value objects in `com.iam.common.domain.vo`.
 
 ---
 
+## 5.6 Zero Trust | 零信任
+
+Architecture vocabulary for the Explore ecosystem; see [Zero Trust Architecture](developer/zero-trust/Zero-Trust-Architecture.md).
+
+| Preferred Term (English) | 中文 | Definition | Explore Mapping | Status |
+| ------------------------ | ---- | ---------- | --------------- | ------ |
+| Zero Trust | 零信任 | No implicit trust from network location; every request is authenticated, authorized, and continuously verified (NIST SP 800-207) | Ecosystem security model | planned |
+| Policy Decision Point (PDP) | 策略决策点 | Component that decides whether a subject may access a resource | explore-iam (token issuance, `PolicyEngine`, Permission Point scopes) | partial |
+| Policy Enforcement Point (PEP) | 策略执行点 | Component that enforces the PDP decision on each request | AI / Chat resource servers, Chat Socket.IO gateway, ML gateway (target) | partial |
+| Service Identity | 服务身份 | Workload principal used for service-to-service calls | OAuth2 `client_credentials` client per workload | planned |
+| Token Audience | 令牌受众 | `aud` claim restricting which resource server may accept a token (RFC 8707) | Per-service audience on access tokens | planned |
+| Token Exchange | 令牌交换 | Swap a user token for a downstream token on behalf of the user (RFC 8693) | AI / Chat → ML calls | planned |
+| Sender-Constrained Token | 发送方约束令牌 | Token bound to a client key so stolen tokens cannot be replayed (DPoP RFC 9449, mTLS RFC 8705) | Public clients (DPoP), internal workloads (mTLS) | planned |
+
+---
+
 ## 6. Identity | 身份
 
 | Preferred Term (English) | 中文 | Definition | Type | Code Mapping | Status |
@@ -407,4 +423,5 @@ Permission Point `oauthScope` / `code` uses GitHub OAuth scope shape
 
 - [Guideline](Guideline.md) — IAM domain principles and related standards
 - [C4 model](developer/c4-model/)
+- [Zero Trust Architecture](developer/zero-trust/Zero-Trust-Architecture.md)
 - [User Story Map](product-owner/User-Story-Map.md)
