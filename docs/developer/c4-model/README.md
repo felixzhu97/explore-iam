@@ -10,7 +10,7 @@ Style standards: global [c4-model](~/.cursor/skills/scrum-team/developers/develo
 
 | Track | Files | Style |
 |-------|-------|-------|
-| **Structural C4** | C1–C3, Deployment | `C4_blue_new` theme (wireframe) |
+| **Structural C4** | C1–C3, Deployment, ZeroTrust-Target | `C4_blue_new` theme (wireframe) |
 | **Domain model** | `C4-Code-Domain-Model.puml` | 白底黑字黑边框（对齐 explore-chat Code 图） |
 | **Dynamics** | `C4-Dynamic-*` | [`style-zinc.puml`](style-zinc.puml) 或内联白底（见各文件） |
 
@@ -23,6 +23,8 @@ Style standards: global [c4-model](~/.cursor/skills/scrum-team/developers/develo
 | `C3-Component.puml` | Component | **Single** diagram: Angular Console + backend modules (`controller → service → domain ← infra`) |
 | `C4-Code-Domain-Model.puml` | Code | DDD class model with `AbstractEntity` / `AbstractImmutable` kernel |
 | `C4-Deployment.puml` | Deployment | **Single** view: local H2 + Render Starter (Docker) |
+| `C4-ZeroTrust-Target.puml` | Container (target) | Zero Trust target: IAM as PDP, AI / Chat / ML as PEPs, audience-bound and exchanged tokens, private ML network — see [Zero Trust Architecture](../zero-trust/Zero-Trust-Architecture.md) |
+| `C4-Dynamic-ZeroTrust-Target.puml` | Dynamic (macro, target) | Zero Trust runtime: MFA + audience-bound DPoP tokens → PEP verification → online PDP for high-risk ops → token exchange to ML → revocation + SIEM; phases tagged with the roadmap in [Zero Trust Architecture](../zero-trust/Zero-Trust-Architecture.md) |
 | `C4-Dynamic-SSOLogin.puml` | Dynamic | OIDC Authorization Code (confidential + public PKCE) |
 | `C4-Dynamic-NativePkceLogin.puml` | Dynamic | Native iOS ASWebAuthenticationSession + PKCE → RP Bearer |
 | `C4-Dynamic-PolicyEvaluation.puml` | Dynamic | AssumeRole + PolicyEngine (Deny > Allow > implicit Deny) |
@@ -53,6 +55,7 @@ Online: [PlantUML server](https://www.plantuml.com/plantuml/uml/).
 2. `C4-Code-Domain-Model.puml` (ubiquitous language)
 3. `C4-Dynamic-*` (runtime paths)
 4. `C4-Deployment.puml` (where it runs)
+5. `C4-ZeroTrust-Target.puml` + `C4-Dynamic-ZeroTrust-Target.puml` (where security is heading)
 
 ## AWS IAM mapping
 
@@ -69,3 +72,4 @@ Online: [PlantUML server](https://www.plantuml.com/plantuml/uml/).
 - [Glossary](../../Glossary.md) — Preferred Terms (English)
 - [README](../../../README.md) — features, getting started
 - [User Story Map](../../product-owner/User-Story-Map.md)
+- [Zero Trust Architecture](../zero-trust/Zero-Trust-Architecture.md)
