@@ -23,6 +23,7 @@ Style standards: global [c4-model](~/.cursor/skills/scrum-team/developers/develo
 | `C3-Component.puml` | Component | **Single** diagram: Angular Console + backend modules (`controller → service → domain ← infra`) |
 | `C4-Code-Domain-Model.puml` | Code | DDD class model with `AbstractEntity` / `AbstractImmutable` kernel |
 | `C4-Deployment.puml` | Deployment | **Single** view: local H2 + Render Starter (Docker) |
+| `C4-Dynamic-Overview.puml` | Dynamic (macro) | End-to-end lifecycle: govern identity & policy → onboard Relying Party → SSO → Bearer API calls → STS → audit / what-if; `ref` to the detailed flows below |
 | `C4-Dynamic-SSOLogin.puml` | Dynamic | OIDC Authorization Code (confidential + public PKCE) |
 | `C4-Dynamic-NativePkceLogin.puml` | Dynamic | Native iOS ASWebAuthenticationSession + PKCE → RP Bearer |
 | `C4-Dynamic-PolicyEvaluation.puml` | Dynamic | AssumeRole + PolicyEngine (Deny > Allow > implicit Deny) |
@@ -51,7 +52,7 @@ Online: [PlantUML server](https://www.plantuml.com/plantuml/uml/).
 
 1. C1 → C2 → C3 (structure)
 2. `C4-Code-Domain-Model.puml` (ubiquitous language)
-3. `C4-Dynamic-*` (runtime paths)
+3. `C4-Dynamic-Overview.puml` (macro runtime), then the other `C4-Dynamic-*` (detailed paths)
 4. `C4-Deployment.puml` (where it runs)
 
 ## AWS IAM mapping

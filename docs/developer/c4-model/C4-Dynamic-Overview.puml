@@ -1,0 +1,73 @@
+@startuml C4-Dynamic-Overview
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+title Dynamic — Explore IAM overview (govern → onboard → sign in → access → audit)
+
+autonumber
+actor "IAM Administrator\n/ Auditor" as admin
+actor "App Developer" as dev
+actor "End User" as user
+participant "Business App\nRelying Party (web / iOS)" as rp <<ui>>
+participant "Business API\nResource Server" as rs <<java>>
+participant "IAM Application :9100\nConsole · REST · OIDC Provider" as iam <<java>>
+participant "External IdP\nGoogle / GitHub" as idp <<external>>
+database "Metadata DB" as db <<db>>
+
+== Govern identity and policy ==
+admin -> iam: Console → /api/v1/users · groups · roles\npolicies · permissionPoints
+iam -> iam: Method Security (IAM_ADMIN)
+iam -> db: Save aggregates + ManagementEvent
+iam --> admin: 201 / 200
+
+== Onboard a Relying Party ==
+dev -> iam: POST /api/v1/clients\n(redirect URIs, scopes, PKCE for public clients)
+iam -> db: Save OidcClient → RegisteredClient\n+ ManagementEvent
+iam --> dev: client_id (+ client_secret if confidential)
+dev -> rp: Configure issuer, client_id, redirect URI
+
+== Sign in (SSO) ==
+user -> rp: Open app
+rp -> iam: /oauth2/authorize (Authorization Code + PKCE)
+alt No IAM session
+  iam --> user: Login Page (/login)
+  user -> iam: Form Login
+  opt Federated login
+    iam <-> idp: OAuth2 Login → FederatedIdentityLink
+  end
+  iam -> db: Authentication Event → ManagementEvent
+end
+iam --> rp: Redirect with code
+rp -> iam: POST /oauth2/token
+iam --> rp: Access Token (sub, email, permissions)\n+ ID / Refresh Token
+ref over rp, iam : C4-Dynamic-SSOLogin · C4-Dynamic-NativePkceLogin
+
+== Call protected APIs ==
+rp -> rs: Authorization: Bearer access_token
+rs -> iam: /.well-known/jwks.json (cached)
+rs -> rs: Verify iss, signature, exp;\nscope → SCOPE_* authorities
+rs --> rp: 200 / 403
+
+== Temporary credentials (STS, optional) ==
+admin -> iam: POST /api/v1/sts/assume-role\n(roleArn, sessionName; IAM session)
+iam -> db: Save AssumedRoleSession\n+ ManagementEvent (sts:AssumeRole)
+iam --> admin: Temporary JWT (role_arn, expiresAt)
+ref over admin, iam : C4-Dynamic-PolicyEvaluation
+
+== Review and what-if ==
+admin -> iam: GET /api/v1/auditEvents
+iam -> db: Query ManagementEvent + AuthorizationDecisionLog
+iam --> admin: Audit events
+admin -> iam: POST /api/v1/policies:evaluate
+iam -> iam: PolicyEngine:\nexplicit Deny > Allow > implicit Deny
+iam -> db: Append AuthorizationDecisionLog
+iam --> admin: Decision + ReasonCode
+
+note over rs, iam
+  As-built: tokens carry no aud yet;
+  PolicyEngine runs only via :evaluate (what-if)
+end note
+
+@enduml
