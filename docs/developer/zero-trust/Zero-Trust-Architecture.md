@@ -3,7 +3,8 @@
 > 以 Explore IAM 为身份中枢，覆盖 Explore AI、Explore Chat、Explore ML 的零信任现状、差距与分阶段路线图。
 
 术语以 [Glossary §5.6 Zero Trust](../../Glossary.md#56-zero-trust--零信任) 为准；目标拓扑见
-[C4-ZeroTrust-Target.puml](../c4-model/C4-ZeroTrust-Target.puml)。
+[C4-ZeroTrust-Target.puml](../c4-model/C4-ZeroTrust-Target.puml)，目标运行时见
+[C4-Dynamic-ZeroTrust-Target.puml](../c4-model/C4-Dynamic-ZeroTrust-Target.puml)。
 
 ---
 

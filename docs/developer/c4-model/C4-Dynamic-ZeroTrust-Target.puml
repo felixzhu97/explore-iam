@@ -1,0 +1,71 @@
+@startuml C4-Dynamic-ZeroTrust-Target
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+title Dynamic — Zero Trust target (IAM as PDP, resource servers as PEPs)
+
+autonumber
+actor "End User" as user
+actor "IAM Administrator" as admin
+participant "Client\niOS (DPoP) / Web BFF" as client <<ui>>
+participant "Explore AI API\nPEP" as ai <<java>>
+participant "Explore IAM\nPDP :9100" as iam <<java>>
+participant "Key Management\nKMS" as kms <<external>>
+participant "Explore ML\nPEP (private network)" as ml <<python>>
+participant "Audit Sink / SIEM" as siem <<external>>
+
+== Sign in (Phase 0 aud · Phase 1 MFA, rotation · Phase 3 per-user scope, DPoP) ==
+user -> client: Sign in
+client -> iam: /oauth2/authorize\nPKCE S256 + resource=explore-ai
+iam -> user: WebAuthn / Passkey (MFA)
+iam -> iam: Grant only the user's scopes\n(users / groups / roles)
+client -> iam: POST /oauth2/token + DPoP proof
+iam -> kms: Sign with current key
+iam --> client: Access Token 5–15 min\naud=explore-ai, cnf=DPoP key\n+ rotating Refresh Token
+iam -> siem: Token issued (traceparent)
+
+== Request at the PEP (Phase 0) ==
+client -> ai: Bearer + DPoP proof + traceparent
+ai -> iam: JWKS (cached, current + next key)
+ai -> ai: Verify iss, signature, exp,\naud=explore-ai, scope, DPoP
+
+== High-risk operation (Phase 3) ==
+ai -> iam: Evaluate(principal, action, resource,\nconditions: MFA freshness, device)
+iam -> iam: PolicyEngine:\nexplicit Deny > Allow > implicit Deny
+alt Deny or step-up required
+  iam --> ai: Deny / step-up
+  ai --> client: 403 or re-authenticate
+else Allow
+  iam --> ai: Allow + ReasonCode
+end
+
+== Call downstream on behalf of the user (Phase 2) ==
+ai -> iam: Token Exchange (RFC 8693)\nsubject_token=user token, audience=explore-ml\n(client_credentials service identity)
+iam --> ai: Downstream token\naud=explore-ml, sub=user, act=explore-ai,\nscope narrowed
+ai -> ml: Downstream token + traceparent (TLS / mTLS)
+ml -> ml: Verify iss, signature, exp,\naud=explore-ml, scope
+ml --> ai: Result
+ai --> client: 200
+ai -> siem: Access log (traceparent)
+ml -> siem: Access log (traceparent)
+
+== Continuous verification and revocation (Phase 1 · Phase 4) ==
+alt Administrator disables the user
+  admin -> iam: POST /api/v1/users/{user}:disable
+else Refresh token reuse detected
+  client -> iam: Reused Refresh Token
+end
+iam -> iam: Revoke session, token family,\nSTS sessions
+iam -> siem: Revocation event (traceparent)
+client -> iam: Next refresh
+iam --> client: invalid_grant → sign in again
+
+note over ai, ml
+  Explore Chat follows the same PEP path
+  (aud=explore-chat; Socket.IO origin allow-list).
+  Status and gaps: Zero-Trust-Architecture.md
+end note
+
+@enduml
