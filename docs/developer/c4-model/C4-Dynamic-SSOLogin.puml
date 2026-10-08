@@ -23,7 +23,7 @@ alt No local session
     iam --> user: 8. Redirect to IdP
     user -> idp: 9. Authenticate
     idp --> iam: 10. OAuth2 callback
-    iam -> db: 11. Upsert FederatedIdentityLink + IamUser
+    iam -> db: 11. Upsert FederatedIdentity + User
   end
 end
 iam --> user: 12. Consent (if required) + redirect with code
