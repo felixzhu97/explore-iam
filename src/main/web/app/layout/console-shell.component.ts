@@ -311,7 +311,7 @@ type UserSubmenu = 'profile' | 'billing' | 'appearance' | 'language' | 'timezone
                   <div class="console-nav-sub-inner">
                     <div class="console-nav-tree">
                       <a
-                        routerLink="/clients"
+                        routerLink="/oauth-clients"
                         routerLinkActive="console-nav-active"
                         class="console-nav-item console-nav-child"
                         title="OAuth 客户端"
@@ -324,7 +324,7 @@ type UserSubmenu = 'profile' | 'billing' | 'appearance' | 'language' | 'timezone
               }
             } @else if (showClients()) {
               <a
-                routerLink="/clients"
+                routerLink="/oauth-clients"
                 routerLinkActive="console-nav-active"
                 class="console-nav-item"
                 title="OAuth 客户端"

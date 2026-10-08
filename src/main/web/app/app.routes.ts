@@ -7,16 +7,16 @@ export const routes: Routes = [
       import('./pages/login/login-page.component').then((m) => m.LoginPageComponent),
   },
   {
-    path: 'clients/new',
+    path: 'oauth-clients/new',
     loadComponent: () =>
-      import('./pages/clients/clients-create-page.component').then(
-        (m) => m.ClientsCreatePageComponent,
+      import('./pages/oauth-clients/oauth-clients-create-page.component').then(
+        (m) => m.OAuthClientsCreatePageComponent,
       ),
   },
   {
-    path: 'clients',
+    path: 'oauth-clients',
     loadComponent: () =>
-      import('./pages/clients/clients-list-page.component').then((m) => m.ClientsListPageComponent),
+      import('./pages/oauth-clients/oauth-clients-list-page.component').then((m) => m.OAuthClientsListPageComponent),
   },
   {
     path: '',
