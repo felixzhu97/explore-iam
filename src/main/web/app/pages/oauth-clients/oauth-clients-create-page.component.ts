@@ -5,7 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 
 import { ConsoleShellComponent } from '../../layout/console-shell.component';
 import { csrfHeaders } from '../../shared/csrf';
-import type { ClientView } from './clients-list-page.component';
+import type { OAuthClientView } from './oauth-clients-list-page.component';
 
 const CARD =
   'rounded-lg border border-[var(--console-border)] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]';
@@ -19,7 +19,7 @@ const FIELD_TEXTAREA =
   'block h-auto min-h-20 w-full rounded-md border border-[var(--console-border)] bg-white px-3 pt-2.5 pb-2 text-sm leading-5 text-[var(--console-fg)] outline-none focus:border-[var(--console-accent)] focus:shadow-[0_0_0_3px_rgba(0,81,195,0.18)]';
 
 @Component({
-  selector: 'app-clients-create-page',
+  selector: 'app-oauth-clients-create-page',
   imports: [ConsoleShellComponent, FormsModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -67,7 +67,7 @@ const FIELD_TEXTAREA =
               <p class="text-sm text-[var(--console-muted)]">公共客户端（None / PKCE）未生成 client_secret。</p>
             }
           </dl>
-          <a routerLink="/clients" class="${BTN_PRIMARY} mt-6">返回列表</a>
+          <a routerLink="/oauth-clients" class="${BTN_PRIMARY} mt-6">返回列表</a>
         </section>
       } @else {
         <div class="mt-6 grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_200px]">
@@ -190,7 +190,7 @@ const FIELD_TEXTAREA =
                   IAM。
                 </p>
 
-                <form class="mt-6 flex flex-col gap-3" (ngSubmit)="onCreate()" id="create-step-2">
+                <form class="mt-6 flex flex-col gap-3" (ngSubmit)="createOAuthClient()" id="create-step-2">
                   <label class="flex items-center gap-2.5 text-sm">
                     <input type="checkbox" class="size-4" [(ngModel)]="scopeOpenid" name="scopeOpenid" />
                     openid
@@ -209,7 +209,7 @@ const FIELD_TEXTAREA =
 
             <div class="mt-4 flex items-center justify-between gap-3">
               @if (step() === 1) {
-                <a routerLink="/clients" class="${BTN_SECONDARY}">取消</a>
+                <a routerLink="/oauth-clients" class="${BTN_SECONDARY}">取消</a>
                 <button
                   type="submit"
                   form="create-step-1"
@@ -279,7 +279,7 @@ const FIELD_TEXTAREA =
     </app-console-shell>
   `,
 })
-export class ClientsCreatePageComponent {
+export class OAuthClientsCreatePageComponent {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
 
@@ -311,7 +311,7 @@ export class ClientsCreatePageComponent {
     this.step.set(2);
   }
 
-  onCreate(): void {
+  createOAuthClient(): void {
     const scopes = [
       this.scopeOpenid ? 'openid' : null,
       this.scopeProfile ? 'profile' : null,
@@ -330,8 +330,8 @@ export class ClientsCreatePageComponent {
     this.errorMessage.set(null);
 
     this.http
-      .post<ClientView>(
-        '/api/clients',
+      .post<OAuthClientView>(
+        '/api/v1/oauthClients',
         {
           clientName: this.clientName.trim(),
           redirectUris,
@@ -361,7 +361,7 @@ export class ClientsCreatePageComponent {
     if (err instanceof HttpErrorResponse) {
       if (err.status === 401 || err.status === 403) {
         void this.router.navigate(['/login'], {
-          queryParams: { continue: '/clients/new' },
+          queryParams: { continue: '/oauth-clients/new' },
         });
         return;
       }

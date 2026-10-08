@@ -24,7 +24,7 @@ const BTN_SECONDARY =
 const FIELD =
   'block h-10 w-full rounded-md border border-[var(--console-border)] bg-white px-3 py-2 text-sm leading-5 text-[var(--console-fg)] outline-none focus:border-[var(--console-accent)] focus:shadow-[0_0_0_3px_rgba(0,81,195,0.18)]';
 
-export interface ClientView {
+export interface OAuthClientView {
   id: string;
   clientId: string;
   clientName: string;
@@ -39,7 +39,7 @@ export interface ClientView {
 }
 
 @Component({
-  selector: 'app-clients-list-page',
+  selector: 'app-oauth-clients-list-page',
   imports: [ConsoleShellComponent, RouterLink, FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -57,7 +57,7 @@ export interface ClientView {
             class="${BTN_SECONDARY}"
             >文档</a
           >
-          <a routerLink="/clients/new" class="${BTN_PRIMARY}">+ 创建客户端</a>
+          <a routerLink="/oauth-clients/new" class="${BTN_PRIMARY}">+ 创建客户端</a>
         </div>
       </div>
 
@@ -104,10 +104,10 @@ export interface ClientView {
         } @else if (filtered().length === 0) {
           <div class="px-5 py-14 text-center">
             <p class="text-sm text-[var(--console-muted)]">
-              {{ clients().length === 0 ? '暂无客户端。创建一个以接入业务应用。' : '没有匹配的客户端。' }}
+              {{ oauthClients().length === 0 ? '暂无客户端。创建一个以接入业务应用。' : '没有匹配的客户端。' }}
             </p>
-            @if (clients().length === 0) {
-              <a routerLink="/clients/new" class="${BTN_PRIMARY} mt-4">+ 创建客户端</a>
+            @if (oauthClients().length === 0) {
+              <a routerLink="/oauth-clients/new" class="${BTN_PRIMARY} mt-4">+ 创建客户端</a>
             }
           </div>
         } @else {
@@ -248,13 +248,13 @@ export interface ClientView {
     </app-console-shell>
   `,
 })
-export class ClientsListPageComponent implements OnInit {
+export class OAuthClientsListPageComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
   readonly docsUrl = DOCS_URL;
-  readonly clients = signal<ClientView[]>([]);
+  readonly oauthClients = signal<OAuthClientView[]>([]);
   readonly loading = signal(true);
   readonly errorMessage = signal<string | null>(null);
   readonly copyHint = signal<string | null>(null);
@@ -264,9 +264,9 @@ export class ClientsListPageComponent implements OnInit {
   readonly filtered = computed(() => {
     const q = this.search().trim().toLowerCase();
     if (!q) {
-      return this.clients();
+      return this.oauthClients();
     }
-    return this.clients().filter(
+    return this.oauthClients().filter(
       (c) =>
         c.clientName.toLowerCase().includes(q) || c.clientId.toLowerCase().includes(q),
     );
@@ -284,10 +284,13 @@ export class ClientsListPageComponent implements OnInit {
     if (q) {
       this.search.set(q);
     }
+    this.listOAuthClients();
+  }
 
-    this.http.get<ClientView[]>('/api/clients', { withCredentials: true }).subscribe({
+  listOAuthClients(): void {
+    this.http.get<OAuthClientView[]>('/api/v1/oauthClients', { withCredentials: true }).subscribe({
       next: (list) => {
-        this.clients.set(list);
+        this.oauthClients.set(list);
         this.loading.set(false);
       },
       error: (err: unknown) => {
@@ -307,11 +310,11 @@ export class ClientsListPageComponent implements OnInit {
     return trimmed ? trimmed.charAt(0).toUpperCase() : '?';
   }
 
-  isPublic(client: ClientView): boolean {
+  isPublic(client: OAuthClientView): boolean {
     return client.clientAuthenticationMethods?.includes('none') ?? false;
   }
 
-  primaryRedirect(client: ClientView): string {
+  primaryRedirect(client: OAuthClientView): string {
     return client.redirectUris[0] ?? '—';
   }
 
@@ -334,7 +337,7 @@ export class ClientsListPageComponent implements OnInit {
   private handleError(err: unknown): void {
     if (err instanceof HttpErrorResponse) {
       if (err.status === 401 || err.status === 403) {
-        void this.router.navigate(['/login'], { queryParams: { continue: '/clients' } });
+        void this.router.navigate(['/login'], { queryParams: { continue: '/oauth-clients' } });
         return;
       }
       const message = (err.error as { message?: string } | null)?.message;

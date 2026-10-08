@@ -19,7 +19,7 @@ import {
   formatDelta,
 } from '../../shared/charts/chart-option.util';
 
-interface ClientSummary {
+interface OAuthClientSummary {
   clientId: string;
   clientName: string;
 }
@@ -99,30 +99,30 @@ const BTN_PRIMARY =
             <header class="mb-3 flex items-center justify-between gap-2">
               <h2 class="m-0 text-[0.8125rem] font-semibold">
                 <a
-                  routerLink="/clients"
+                  routerLink="/oauth-clients"
                   class="text-inherit no-underline hover:text-[var(--console-accent)]"
                   >OAuth 客户端</a
                 >
               </h2>
               <a
-                routerLink="/clients"
+                routerLink="/oauth-clients"
                 class="text-xs text-[var(--console-accent)] no-underline hover:underline"
                 >查看全部</a
               >
             </header>
-            @if (clientsLoading()) {
+            @if (oauthClientsLoading()) {
               <p class="m-0 text-[0.8125rem] text-[var(--console-muted)]">加载中…</p>
-            } @else if (clients().length === 0) {
+            } @else if (oauthClients().length === 0) {
               <p class="m-0 text-[0.8125rem] text-[var(--console-muted)]">
                 尚无客户端。创建后将显示在此处。
               </p>
-              <a routerLink="/clients/new" class="${BTN_PRIMARY} mt-3 inline-flex">创建客户端</a>
+              <a routerLink="/oauth-clients/new" class="${BTN_PRIMARY} mt-3 inline-flex">创建客户端</a>
             } @else {
               <ul class="m-0 list-none p-0">
-                @for (c of clients().slice(0, 5); track c.clientId) {
+                @for (c of oauthClients().slice(0, 5); track c.clientId) {
                   <li>
                     <a
-                      [routerLink]="['/clients']"
+                      [routerLink]="['/oauth-clients']"
                       [queryParams]="{ q: c.clientId }"
                       class="-mx-1 flex cursor-pointer items-center gap-[0.65rem] rounded-md px-1 py-[0.45rem] text-inherit no-underline hover:bg-[var(--console-bg)]"
                     >
@@ -153,7 +153,7 @@ const BTN_PRIMARY =
             <header class="mb-3 flex items-center justify-between gap-2">
               <h2 class="m-0 text-[0.8125rem] font-semibold">
                 <a
-                  routerLink="/clients/new"
+                  routerLink="/oauth-clients/new"
                   class="text-inherit no-underline hover:text-[var(--console-accent)]"
                   >快速操作</a
                 >
@@ -163,7 +163,7 @@ const BTN_PRIMARY =
               注册 Relying Party，获取 client_id / secret。
             </p>
             <a
-              routerLink="/clients/new"
+              routerLink="/oauth-clients/new"
               class="${BTN_PRIMARY} mt-4 inline-flex w-full justify-center"
               >Ship something new</a
             >
@@ -297,9 +297,9 @@ const BTN_PRIMARY =
 
           <div class="mt-4 grid grid-cols-2 gap-4 min-[900px]:grid-cols-4">
             @for (m of miniMetrics(); track m.id) {
-              @if (m.id === 'clients') {
+              @if (m.id === 'oauth-clients') {
                 <a
-                  routerLink="/clients"
+                  routerLink="/oauth-clients"
                   class="${CARD} flex min-h-[7.5rem] cursor-pointer flex-col px-4 pt-[0.9rem] pb-[0.65rem] text-inherit no-underline transition-[border-color] duration-[160ms] hover:border-[var(--console-accent-soft)]"
                 >
                   <div class="flex items-baseline justify-between gap-2">
@@ -362,13 +362,13 @@ export class HomePageComponent implements OnInit {
   readonly rangeLabels = RANGE_LABELS;
   readonly range = signal<RangeKey>('24h');
   readonly searchQuery = signal('');
-  readonly clients = signal<ClientSummary[]>([]);
-  readonly clientsLoading = signal(true);
+  readonly oauthClients = signal<OAuthClientSummary[]>([]);
+  readonly oauthClientsLoading = signal(true);
   readonly seed = signal(1);
 
   readonly recents = [
-    { label: 'OAuth 客户端', group: '管理账户', path: '/clients', external: false },
-    { label: '创建客户端', group: '管理账户', path: '/clients/new', external: false },
+    { label: 'OAuth 客户端', group: '管理账户', path: '/oauth-clients', external: false },
+    { label: '创建客户端', group: '管理账户', path: '/oauth-clients/new', external: false },
     {
       label: 'Authorization Server 文档',
       group: '文档',
@@ -382,7 +382,7 @@ export class HomePageComponent implements OnInit {
 
   readonly primaryMetrics = computed((): MetricCard[] => {
     const s = this.series();
-    const clientsCount = this.clients().length;
+    const oauthClientsCount = this.oauthClients().length;
     return [
       {
         id: 'auth-requests',
@@ -398,7 +398,7 @@ export class HomePageComponent implements OnInit {
       {
         id: 'token-issues',
         title: 'Token 签发',
-        value: clientsCount === 0 && s.tokenTotal === 0 ? '0' : formatCompact(s.tokenTotal),
+        value: oauthClientsCount === 0 && s.tokenTotal === 0 ? '0' : formatCompact(s.tokenTotal),
         delta: null,
         deltaLabel: null,
         empty: s.tokenTotal === 0,
@@ -411,7 +411,7 @@ export class HomePageComponent implements OnInit {
 
   readonly miniMetrics = computed((): MetricCard[] => {
     const s = this.series();
-    const clientsCount = this.clients().length;
+    const oauthClientsCount = this.oauthClients().length;
     return [
       {
         id: 'auth-failures',
@@ -447,9 +447,9 @@ export class HomePageComponent implements OnInit {
         wide: false,
       },
       {
-        id: 'clients',
+        id: 'oauth-clients',
         title: '已注册客户端',
-        value: String(clientsCount),
+        value: String(oauthClientsCount),
         delta: null,
         deltaLabel: null,
         empty: false,
@@ -461,13 +461,17 @@ export class HomePageComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.http.get<ClientSummary[]>('/api/clients', { withCredentials: true }).subscribe({
+    this.listOAuthClients();
+  }
+
+  listOAuthClients(): void {
+    this.http.get<OAuthClientSummary[]>('/api/v1/oauthClients', { withCredentials: true }).subscribe({
       next: (list) => {
-        this.clients.set(list.map((c) => ({ clientId: c.clientId, clientName: c.clientName })));
-        this.clientsLoading.set(false);
+        this.oauthClients.set(list.map((c) => ({ clientId: c.clientId, clientName: c.clientName })));
+        this.oauthClientsLoading.set(false);
       },
       error: () => {
-        this.clientsLoading.set(false);
+        this.oauthClientsLoading.set(false);
       },
     });
   }
@@ -485,11 +489,11 @@ export class HomePageComponent implements OnInit {
   onSearchEnter(): void {
     const q = this.searchQuery().trim().toLowerCase();
     if (!q) {
-      void this.router.navigateByUrl('/clients');
+      void this.router.navigateByUrl('/oauth-clients');
       return;
     }
     if (q.includes('new') || q.includes('创建') || q.includes('注册')) {
-      void this.router.navigateByUrl('/clients/new');
+      void this.router.navigateByUrl('/oauth-clients/new');
       return;
     }
     if (q.includes('doc') || q.includes('文档') || q.includes('oauth')) {
@@ -500,7 +504,7 @@ export class HomePageComponent implements OnInit {
       );
       return;
     }
-    void this.router.navigate(['/clients'], { queryParams: { q: this.searchQuery().trim() } });
+    void this.router.navigate(['/oauth-clients'], { queryParams: { q: this.searchQuery().trim() } });
   }
 
   initial(name: string): string {
