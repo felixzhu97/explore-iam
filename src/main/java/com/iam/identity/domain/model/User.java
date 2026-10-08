@@ -42,13 +42,11 @@ public class User extends AbstractEntity {
   @Column(length = 320)
   private String email;
 
-  @Getter(AccessLevel.NONE)
   @NotBlank
   @Size(max = 255)
   @Column(nullable = false, length = 255)
   private String passwordHash;
 
-  @Getter(AccessLevel.NONE)
   @Column(nullable = false)
   private boolean enabled;
 
@@ -79,7 +77,7 @@ public class User extends AbstractEntity {
    * @param passwordHash encoded password
    * @return new aggregate
    */
-  public static User create(String username, String email, String passwordHash) {
+  public static User createUser(String username, String email, String passwordHash) {
     Instant now = Instant.now();
     return new User(
         UUID.randomUUID().toString(), username, email, passwordHash, true, now, now);
@@ -93,23 +91,23 @@ public class User extends AbstractEntity {
    * @param email optional email from the IdP
    * @return new aggregate
    */
-  public static User createForFederatedLogin(
+  public static User createFederatedUser(
       String provider, String subject, String email) {
     String username =
         DomainStrings.requireNonBlank(provider, "provider")
             + ":"
             + DomainStrings.requireNonBlank(subject, "subject");
-    return create(username, email, FEDERATED_NO_PASSWORD);
+    return createUser(username, email, FEDERATED_NO_PASSWORD);
   }
 
   /** Disables the user so form login is rejected. */
-  public void disable() {
+  public void disableUser() {
     this.enabled = false;
     touch();
   }
 
   /** Re-enables the user for form login. */
-  public void enable() {
+  public void enableUser() {
     this.enabled = true;
     touch();
   }
@@ -174,20 +172,6 @@ public class User extends AbstractEntity {
   public List<String> assignedRoleIds() {
     return Collections.unmodifiableList(
         roleAssignments.stream().map(RoleBinding::roleId).toList());
-  }
-
-  /**
-   * Returns the encoded credential for Spring Security authentication only.
-   *
-   * @return password hash suitable for {@code UserDetails#getPassword()}
-   */
-  public String encodedPasswordHash() {
-    return passwordHash;
-  }
-
-  /** Returns true when form login is permitted for this user. */
-  public boolean isLoginEnabled() {
-    return enabled;
   }
 
   private static String requirePasswordHash(String passwordHash) {

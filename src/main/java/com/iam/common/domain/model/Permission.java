@@ -41,7 +41,7 @@ public class Permission extends AbstractEmbeddable {
    * @param requested requested action
    * @return whether the pattern matches
    */
-  public boolean matches(Permission requested) {
+  public boolean matchesPermission(Permission requested) {
     if ("*".equals(this.value) || "*".equals(requested.value)) {
       return true;
     }

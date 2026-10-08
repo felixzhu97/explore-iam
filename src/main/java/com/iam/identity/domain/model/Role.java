@@ -21,29 +21,27 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public class Role extends AbstractNamedEntity {
 
-  @Getter(AccessLevel.NONE)
   @Embedded
   @AttributeOverride(
       name = "value",
       column = @Column(name = "arn", nullable = false, unique = true, length = 512))
   @Valid
-  private ResourceName arn;
+  private ResourceName resourceName;
 
-  @Getter(AccessLevel.NONE)
   @Column(columnDefinition = "clob")
   @Convert(converter = ImpersonationPolicyConverter.class)
-  private ImpersonationPolicy trustPolicyJson;
+  private ImpersonationPolicy trustPolicy;
 
   private Role(
       String id,
       String name,
-      ResourceName arn,
-      ImpersonationPolicy trustPolicyJson,
+      ResourceName resourceName,
+      ImpersonationPolicy trustPolicy,
       Instant createdAt,
       Instant updatedAt) {
     super(id, name, createdAt, updatedAt);
-    this.arn = arn;
-    this.trustPolicyJson = trustPolicyJson;
+    this.resourceName = resourceName;
+    this.trustPolicy = trustPolicy;
   }
 
   /**
@@ -53,11 +51,16 @@ public class Role extends AbstractNamedEntity {
    * @param trustPolicy optional trust policy JSON
    * @return new aggregate
    */
-  public static Role create(String name, ImpersonationPolicy trustPolicy) {
+  public static Role createRole(String name, ImpersonationPolicy trustPolicy) {
     Instant now = Instant.now();
     String slug = name.trim().toLowerCase().replace(' ', '-');
     return new Role(
-        UUID.randomUUID().toString(), name, ResourceName.role(slug), trustPolicy, now, now);
+        UUID.randomUUID().toString(),
+        name,
+        ResourceName.createRoleResourceName(slug),
+        trustPolicy,
+        now,
+        now);
   }
 
   /**
@@ -67,22 +70,12 @@ public class Role extends AbstractNamedEntity {
    * @param trustPolicyJson trust policy JSON; blank uses allow-all default
    * @return new aggregate
    */
-  public static Role create(String name, String trustPolicyJson) {
+  public static Role createRole(String name, String trustPolicyJson) {
     ImpersonationPolicy trust =
         trustPolicyJson == null || trustPolicyJson.isBlank()
-            ? ImpersonationPolicy.allowAll()
+            ? ImpersonationPolicy.createPermissiveImpersonationPolicy()
             : new ImpersonationPolicy(trustPolicyJson);
-    return create(name, trust);
-  }
-
-  /** Returns this role's ARN. */
-  public ResourceName arn() {
-    return arn;
-  }
-
-  /** Returns the trust policy governing who may assume this role. */
-  public ImpersonationPolicy trustPolicy() {
-    return trustPolicyJson;
+    return createRole(name, trust);
   }
 
   /** Returns the Spring Security authority for this role. */

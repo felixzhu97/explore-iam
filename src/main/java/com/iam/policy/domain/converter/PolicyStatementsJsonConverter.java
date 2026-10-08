@@ -57,7 +57,7 @@ public class PolicyStatementsJsonConverter
         @SuppressWarnings("unchecked")
         List<String> resources = (List<String>) row.get("resources");
         statements.add(
-            PolicyStatement.of(
+            PolicyStatement.createPolicyStatement(
                 effect,
                 actions.stream().map(Permission::new).collect(Collectors.toSet()),
                 resources.stream().map(Resource::new).collect(Collectors.toSet())));

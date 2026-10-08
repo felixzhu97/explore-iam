@@ -34,7 +34,7 @@ class PermissionBootstrapConfig implements ApplicationRunner {
         continue;
       }
       permissionRepository.save(
-          Permission.create(
+          Permission.createPermission(
               seed.code(),
               seed.code(),
               seed.module(),

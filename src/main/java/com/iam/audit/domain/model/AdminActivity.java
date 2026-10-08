@@ -79,7 +79,7 @@ public class AdminActivity extends AbstractAuditEvent {
    * @param outcome success or failure
    * @return new aggregate
    */
-  public static AdminActivity logManagementAction(
+  public static AdminActivity recordAdminActivity(
       AuditActor actor, String action, AuditTarget target, AuditOutcome outcome) {
     return new AdminActivity(
         UUID.randomUUID().toString(), actor, action, target, outcome, Instant.now());
@@ -92,8 +92,8 @@ public class AdminActivity extends AbstractAuditEvent {
    * @param outcome success or failure
    * @return new aggregate
    */
-  public static AdminActivity logAuthentication(AuditActor actor, AuditOutcome outcome) {
-    return logManagementAction(
+  public static AdminActivity recordSignInActivity(AuditActor actor, AuditOutcome outcome) {
+    return recordAdminActivity(
         actor, AUTH_LOGIN_ACTION, new AuditTarget(USER_TARGET_TYPE, actor.getValue()), outcome);
   }
 

@@ -97,7 +97,7 @@ public class Permission extends AbstractImmutable {
    * @param description human-readable purpose
    * @return new aggregate
    */
-  public static Permission create(
+  public static Permission createPermission(
       String code,
       String oauthScope,
       String module,
@@ -107,7 +107,7 @@ public class Permission extends AbstractImmutable {
     return new Permission(
         UUID.randomUUID().toString(),
         code,
-        Scope.of(oauthScope),
+        Scope.parseScope(oauthScope),
         module,
         action,
         resource,
@@ -121,18 +121,8 @@ public class Permission extends AbstractImmutable {
    * @param scope oauth scope from a token
    * @return whether scopes match
    */
-  public boolean matchesScope(String scope) {
+  public boolean matchesOAuthScope(String scope) {
     return oauthScope.value().equals(scope);
-  }
-
-  /** Returns the OAuth scope string for access tokens. */
-  public String oauthScopeValue() {
-    return oauthScope.value();
-  }
-
-  /** Returns the OAuth scope string for controllers and DTO mapping. */
-  public String oauthScope() {
-    return oauthScopeValue();
   }
 
   private static String requireCode(String code) {

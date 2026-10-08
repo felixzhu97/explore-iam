@@ -41,7 +41,7 @@ public class Resource extends AbstractEmbeddable {
    * @param requested requested resource
    * @return whether the pattern matches
    */
-  public boolean matches(Resource requested) {
+  public boolean matchesResource(Resource requested) {
     if ("*".equals(this.value) || "*".equals(requested.value)) {
       return true;
     }

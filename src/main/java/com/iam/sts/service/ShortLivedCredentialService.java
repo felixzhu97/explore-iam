@@ -57,21 +57,22 @@ public class ShortLivedCredentialService {
    * @return access token and session metadata
    */
   @Transactional
-  public AssumeRoleResult assumeRole(AssumeRoleCommand command) {
+  public AssumeRoleResult createShortLivedCredential(AssumeRoleCommand command) {
     Objects.requireNonNull(command, "command");
     ResourceName roleArn = new ResourceName(command.roleArn());
     Role role =
         roleRepository
-            .findByArn(roleArn.value())
+            .findByResourceName(roleArn.value())
             .orElseThrow(() -> new IllegalArgumentException("role not found: " + roleArn));
     String caller = currentPrincipal();
     Instant expiresAt = Instant.now().plus(sessionTtl);
     ShortLivedCredential session =
         sessionRepository.save(
-            ShortLivedCredential.create(roleArn, command.sessionName(), caller, expiresAt));
+            ShortLivedCredential.createShortLivedCredential(
+                roleArn, command.sessionName(), caller, expiresAt));
     String accessToken = encodeToken(session, role);
     adminActivityRecorder.recordSuccess("sts:AssumeRole", "Role", role.getId());
-    return new AssumeRoleResult(accessToken, session.expiresAt(), session.getId());
+    return new AssumeRoleResult(accessToken, session.getExpiresAt(), session.getId());
   }
 
   private String encodeToken(ShortLivedCredential session, Role role) {
@@ -79,11 +80,11 @@ public class ShortLivedCredentialService {
     JwtClaimsSet claims =
         JwtClaimsSet.builder()
             .issuer("explore-iam-sts")
-            .subject(session.callerPrincipal())
+            .subject(session.getCallerPrincipal())
             .issuedAt(now)
-            .expiresAt(session.expiresAt())
-            .claim("role_arn", session.roleArn().value())
-            .claim("session_name", session.sessionName())
+            .expiresAt(session.getExpiresAt())
+            .claim("role_arn", session.getRoleArn().value())
+            .claim("session_name", session.getSessionName())
             .claim("session_id", session.getId())
             .claim("role_name", role.getName())
             .build();

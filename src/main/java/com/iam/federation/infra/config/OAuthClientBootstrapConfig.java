@@ -65,9 +65,9 @@ public class OAuthClientBootstrapConfig {
                 .collect(Collectors.toCollection(LinkedHashSet::new));
         OAuthClient client =
             seed.isPublicClient()
-                ? OAuthClient.seedPublic(
+                ? OAuthClient.createPublicBootstrapOAuthClient(
                     clientId, seed.getClientName(), redirectUris, postLogout, desiredScopes)
-                : OAuthClient.seed(
+                : OAuthClient.createBootstrapOAuthClient(
                     clientId,
                     seed.getClientName(),
                     passwordEncoder.encode(seed.getClientSecret()),

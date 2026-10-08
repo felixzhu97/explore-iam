@@ -54,7 +54,7 @@ public class RoleController {
   @PreAuthorize("hasRole('IAM_ADMIN')")
   public ResponseEntity<RoleResponse> create(@RequestBody CreateRoleRequest request) {
     String displayName = request.displayName() != null ? request.displayName() : request.name();
-    Role role = roleService.create(displayName, request.trustPolicyJson());
+    Role role = roleService.createRole(displayName, request.trustPolicyJson());
     return ResponseEntity.status(HttpStatus.CREATED).body(RoleResponse.from(role));
   }
 
@@ -98,7 +98,7 @@ public class RoleController {
   public record RoleResponse(String name, String id, String displayName, String arn) {
     static RoleResponse from(Role role) {
       return new RoleResponse(
-          "roles/" + role.getId(), role.getId(), role.getName(), role.arn().value());
+          "roles/" + role.getId(), role.getId(), role.getName(), role.getResourceName().value());
     }
   }
 }

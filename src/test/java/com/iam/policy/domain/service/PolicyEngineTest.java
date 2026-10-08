@@ -39,10 +39,10 @@ class PolicyEngineTest {
   @DisplayName("should allow when explicit allow matches")
   void shouldAllowWhenExplicitAllowMatches() {
     AllowPolicy policy =
-        AllowPolicy.create(
+        AllowPolicy.createAllowPolicy(
             "read-bucket",
             List.of(
-                PolicyStatement.of(
+                PolicyStatement.createPolicyStatement(
                     Effect.ALLOW,
                     Set.of(new Permission("s3:GetObject")),
                     Set.of(new Resource("*")))));
@@ -60,18 +60,18 @@ class PolicyEngineTest {
   @DisplayName("should deny over allow when explicit deny matches")
   void shouldDenyOverAllowWhenExplicitDenyMatches() {
     AllowPolicy allowPolicy =
-        AllowPolicy.create(
+        AllowPolicy.createAllowPolicy(
             "allow-all",
             List.of(
-                PolicyStatement.of(
+                PolicyStatement.createPolicyStatement(
                     Effect.ALLOW,
                     Set.of(new Permission("*")),
                     Set.of(new Resource("*")))));
     AllowPolicy denyPolicy =
-        AllowPolicy.create(
+        AllowPolicy.createAllowPolicy(
             "deny-delete",
             List.of(
-                PolicyStatement.of(
+                PolicyStatement.createPolicyStatement(
                     Effect.DENY,
                     Set.of(new Permission("s3:DeleteObject")),
                     Set.of(new Resource("*")))));

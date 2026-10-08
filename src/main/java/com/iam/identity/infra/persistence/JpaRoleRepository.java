@@ -22,8 +22,8 @@ class JpaRoleRepository implements RoleRepository {
   }
 
   @Override
-  public Optional<Role> findByArn(String arn) {
-    return roleRepository.findByArn(new ResourceName(arn));
+  public Optional<Role> findByResourceName(String resourceName) {
+    return roleRepository.findByResourceName(new ResourceName(resourceName));
   }
 
   @Override

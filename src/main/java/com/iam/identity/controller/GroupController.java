@@ -58,7 +58,7 @@ public class GroupController {
   public ResponseEntity<GroupResponse> create(@RequestBody CreateGroupRequest request) {
     String displayName =
         request.displayName() != null ? request.displayName() : request.name();
-    Group group = groupService.create(displayName);
+    Group group = groupService.createGroup(displayName);
     return ResponseEntity.status(HttpStatus.CREATED).body(GroupResponse.from(group));
   }
 

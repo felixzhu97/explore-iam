@@ -13,7 +13,7 @@ class OAuthClientReplaceScopesTest {
   @DisplayName("should replace scopes with GitHub style product scopes when openid present")
   void shouldReplaceScopesWithGitHubStyleProductScopesWhenOpenidPresent() {
     OAuthClient client =
-        OAuthClient.seedPublic(
+        OAuthClient.createPublicBootstrapOAuthClient(
             new ClientId("explore-ai-ios"),
             "Explore AI iOS",
             Set.of(new RedirectUri("com.explore.ai://oauth/callback")),

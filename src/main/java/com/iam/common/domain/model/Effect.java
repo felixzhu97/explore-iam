@@ -11,7 +11,7 @@ public enum Effect {
    * @param raw effect name
    * @return matching effect
    */
-  public static Effect fromString(String raw) {
+  public static Effect parseEffect(String raw) {
     if (raw == null || raw.isBlank()) {
       throw new IllegalArgumentException("effect must not be blank");
     }

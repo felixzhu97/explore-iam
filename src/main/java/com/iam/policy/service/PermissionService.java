@@ -38,13 +38,13 @@ public class PermissionService {
    * @return saved aggregate
    */
   @Transactional
-  public Permission create(CreatePermissionCommand command) {
+  public Permission createPermission(CreatePermissionCommand command) {
     if (permissionRepository.existsByCode(command.code())) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "permission exists");
     }
     try {
       Permission point =
-          Permission.create(
+          Permission.createPermission(
               command.code(),
               command.oauthScope(),
               command.module(),

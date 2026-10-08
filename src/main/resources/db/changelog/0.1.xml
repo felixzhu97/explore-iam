@@ -143,7 +143,7 @@
             <column name="arn" type="varchar(512)">
                 <constraints nullable="false" unique="true"/>
             </column>
-            <column name="trust_policy_json" type="clob"/>
+            <column name="trust_policy" type="clob"/>
             <column name="created_at" type="timestamp">
                 <constraints nullable="false"/>
             </column>
@@ -188,7 +188,7 @@
             <column name="name" type="varchar(256)">
                 <constraints nullable="false" unique="true"/>
             </column>
-            <column name="document_json" type="clob">
+            <column name="statements" type="clob">
                 <constraints nullable="false"/>
             </column>
             <column name="created_at" type="timestamp">

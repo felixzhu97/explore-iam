@@ -37,7 +37,7 @@ public class PrincipalId extends AbstractEmbeddable {
   }
 
   /** Generates a new random principal id. */
-  public static PrincipalId generate() {
+  public static PrincipalId generatePrincipalId() {
     return new PrincipalId(UUID.randomUUID().toString());
   }
 

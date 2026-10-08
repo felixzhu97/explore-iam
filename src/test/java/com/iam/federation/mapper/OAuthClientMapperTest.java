@@ -16,7 +16,7 @@ class OAuthClientMapperTest {
   @DisplayName("should require proof key when mapping public client")
   void shouldRequireProofKeyWhenMappingPublicClient() {
     OAuthClient client =
-        OAuthClient.seedPublic(
+        OAuthClient.createPublicBootstrapOAuthClient(
             new ClientId("explore-ai-ios"),
             "Explore AI iOS",
             Set.of(new RedirectUri("com.explore.ai://oauth/callback")),

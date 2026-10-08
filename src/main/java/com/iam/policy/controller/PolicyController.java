@@ -45,7 +45,7 @@ public class PolicyController {
   @PreAuthorize("hasRole('IAM_ADMIN')")
   public ResponseEntity<PolicyResponse> create(@RequestBody CreatePolicyRequest request) {
     AllowPolicy policy =
-        policyService.create(
+        policyService.createAllowPolicy(
             new CreatePolicyCommand(
                 request.name(),
                 request.statements().stream()
@@ -77,8 +77,8 @@ public class PolicyController {
   public PolicyBindingResponse attach(
       @PathVariable String policy, @RequestBody AttachPolicyRequest request) {
     PolicyBinding attachment =
-        policyService.attach(policy, new ResourceName(request.principalArn()));
-    return new PolicyBindingResponse(attachment.getId(), attachment.principalArn().value());
+        policyService.createPolicyBinding(policy, new ResourceName(request.principalArn()));
+    return new PolicyBindingResponse(attachment.getId(), attachment.getPrincipalArn().value());
   }
 
   /**

@@ -41,7 +41,7 @@ public class OAuthClientController {
   @PreAuthorize("hasRole('IAM_ADMIN')")
   public ResponseEntity<ClientResponse> register(@RequestBody RegisterClientRequest request) {
     RegisteredOAuthClientResult result =
-        oauthClientService.register(
+        oauthClientService.createOAuthClient(
             new RegisterOAuthClientCommand(
                 request.clientName(),
                 request.redirectUris(),

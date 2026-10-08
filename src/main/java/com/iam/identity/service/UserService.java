@@ -65,13 +65,13 @@ public class UserService {
    * @return created user
    */
   @Transactional
-  public User create(String username, String email, String password) {
+  public User createUser(String username, String email, String password) {
     if (userRepository.findByUsername(username).isPresent()) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "username exists");
     }
     User user =
         userRepository.save(
-            User.create(username, email, passwordEncoder.encode(password)));
+            User.createUser(username, email, passwordEncoder.encode(password)));
     adminActivityRecorder.recordSuccess("identity:CreateUser", "User", user.getId());
     return user;
   }
@@ -85,7 +85,7 @@ public class UserService {
   @Transactional
   public User disable(String userId) {
     User user = get(userId);
-    user.disable();
+    user.disableUser();
     User saved = userRepository.save(user);
     adminActivityRecorder.recordSuccess("identity:DisableUser", "User", userId);
     return saved;
@@ -100,7 +100,7 @@ public class UserService {
   @Transactional
   public User enable(String userId) {
     User user = get(userId);
-    user.enable();
+    user.enableUser();
     User saved = userRepository.save(user);
     adminActivityRecorder.recordSuccess("identity:EnableUser", "User", userId);
     return saved;

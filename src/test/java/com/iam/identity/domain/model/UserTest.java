@@ -10,7 +10,7 @@ class UserTest {
   @Test
   @DisplayName("should assign role idempotently when assigning same role twice")
   void shouldAssignRoleIdempotentlyWhenAssigningSameRoleTwice() {
-    User user = User.create("demo", "demo@example.com", "{noop}secret");
+    User user = User.createUser("demo", "demo@example.com", "{noop}secret");
 
     user.assignRole("role-1");
     user.assignRole("role-1");
@@ -21,7 +21,7 @@ class UserTest {
   @Test
   @DisplayName("should derive federated username from provider and subject")
   void shouldDeriveFederatedUsernameFromProviderAndSubject() {
-    User user = User.createForFederatedLogin("google", "sub-123", "user@example.com");
+    User user = User.createFederatedUser("google", "sub-123", "user@example.com");
 
     assertThat(user.getUsername()).isEqualTo("google:sub-123");
     assertThat(user.getEmail()).isEqualTo("user@example.com");

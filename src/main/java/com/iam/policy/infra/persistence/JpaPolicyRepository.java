@@ -46,7 +46,7 @@ class JpaPolicyRepository implements PolicyRepository {
   public List<AllowPolicy> findAttachedToPrincipal(ResourceName principalArn) {
     List<AllowPolicy> policies = new ArrayList<>();
     for (PolicyBinding attachment : attachmentRepository.findByPrincipalArn(principalArn)) {
-      findById(attachment.policyId()).ifPresent(policies::add);
+      findById(attachment.getPolicyId()).ifPresent(policies::add);
     }
     return policies;
   }

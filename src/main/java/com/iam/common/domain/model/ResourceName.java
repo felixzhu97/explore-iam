@@ -46,7 +46,7 @@ public class ResourceName extends AbstractEmbeddable {
    * @param username login name
    * @return user ARN
    */
-  public static ResourceName user(String username) {
+  public static ResourceName createUserResourceName(String username) {
     return new ResourceName("arn:iam::explore-iam:user/" + username);
   }
 
@@ -56,7 +56,7 @@ public class ResourceName extends AbstractEmbeddable {
    * @param roleName role name slug
    * @return role ARN
    */
-  public static ResourceName role(String roleName) {
+  public static ResourceName createRoleResourceName(String roleName) {
     return new ResourceName("arn:iam::explore-iam:role/" + roleName);
   }
 

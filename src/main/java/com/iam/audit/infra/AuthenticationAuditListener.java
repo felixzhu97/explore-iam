@@ -28,7 +28,7 @@ public class AuthenticationAuditListener {
   @EventListener
   public void onSuccess(AuthenticationSuccessEvent event) {
     auditService.save(
-        AdminActivity.logAuthentication(
+        AdminActivity.recordSignInActivity(
             new AuditActor(event.getAuthentication().getName()), AuditOutcome.SUCCESS));
   }
 
@@ -38,6 +38,6 @@ public class AuthenticationAuditListener {
     String actorName =
         event.getAuthentication() == null ? "unknown" : event.getAuthentication().getName();
     auditService.save(
-        AdminActivity.logAuthentication(new AuditActor(actorName), AuditOutcome.FAILURE));
+        AdminActivity.recordSignInActivity(new AuditActor(actorName), AuditOutcome.FAILURE));
   }
 }

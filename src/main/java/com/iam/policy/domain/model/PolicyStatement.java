@@ -33,7 +33,7 @@ public class PolicyStatement {
    * @param resources target resources
    * @return statement value object
    */
-  public static PolicyStatement of(
+  public static PolicyStatement createPolicyStatement(
       Effect effect, Set<Permission> actions, Set<Resource> resources) {
     return new PolicyStatement(effect, actions, resources);
   }
@@ -60,7 +60,7 @@ public class PolicyStatement {
    * @param resource requested resource
    * @return true when both action and resource match
    */
-  public boolean matches(Permission action, Resource resource) {
+  public boolean matchesPermissionAndResource(Permission action, Resource resource) {
     return matchesAction(action) && matchesResource(resource);
   }
 
