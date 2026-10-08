@@ -59,6 +59,6 @@ public class AuditService {
 
   /** Combined audit query result. */
   public record AuditQueryResult(
-      List<AdminActivity> managementEvents,
-      List<DataAccessLog> authorizationDecisions) {}
+      List<AdminActivity> adminActivities,
+      List<DataAccessLog> dataAccessLogs) {}
 }

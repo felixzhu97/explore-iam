@@ -55,7 +55,7 @@ public class GroupController {
    */
   @PostMapping
   @PreAuthorize("hasRole('IAM_ADMIN')")
-  public ResponseEntity<GroupResponse> create(@RequestBody CreateGroupRequest request) {
+  public ResponseEntity<GroupResponse> createGroup(@RequestBody CreateGroupRequest request) {
     String displayName =
         request.displayName() != null ? request.displayName() : request.name();
     Group group = groupService.createGroup(displayName);

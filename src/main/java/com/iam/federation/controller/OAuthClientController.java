@@ -2,7 +2,7 @@ package com.iam.federation.controller;
 
 import com.iam.federation.service.OAuthClientService;
 import com.iam.federation.service.OAuthClientService.OAuthClientView;
-import com.iam.federation.service.OAuthClientService.RegisterOAuthClientCommand;
+import com.iam.federation.service.OAuthClientService.CreateOAuthClientCommand;
 import com.iam.federation.service.OAuthClientService.RegisteredOAuthClientResult;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** HTTP API for listing and registering OIDC clients. */
 @RestController
-@RequestMapping("/api/v1/clients")
+@RequestMapping("/api/v1/oauthClients")
 public class OAuthClientController {
 
   private final OAuthClientService oauthClientService;
@@ -39,10 +39,10 @@ public class OAuthClientController {
    */
   @PostMapping
   @PreAuthorize("hasRole('IAM_ADMIN')")
-  public ResponseEntity<ClientResponse> register(@RequestBody RegisterClientRequest request) {
+  public ResponseEntity<OAuthClientResponse> createOAuthClient(@RequestBody CreateOAuthClientRequest request) {
     RegisteredOAuthClientResult result =
         oauthClientService.createOAuthClient(
-            new RegisterOAuthClientCommand(
+            new CreateOAuthClientCommand(
                 request.clientName(),
                 request.redirectUris(),
                 request.postLogoutRedirectUris(),
@@ -61,7 +61,7 @@ public class OAuthClientController {
    */
   @GetMapping
   @PreAuthorize("hasAnyRole('IAM_ADMIN', 'IAM_AUDITOR')")
-  public List<ClientResponse> list() {
+  public List<OAuthClientResponse> listOAuthClients() {
     return oauthClientService.findAll().stream().map(OAuthClientController::toResponse).toList();
   }
 
@@ -73,7 +73,7 @@ public class OAuthClientController {
    */
   @GetMapping("/{clientId}")
   @PreAuthorize("hasAnyRole('IAM_ADMIN', 'IAM_AUDITOR')")
-  public ResponseEntity<ClientResponse> get(@PathVariable String clientId) {
+  public ResponseEntity<OAuthClientResponse> getOAuthClient(@PathVariable String clientId) {
     return oauthClientService
         .findByClientId(clientId)
         .map(view -> ResponseEntity.ok(toResponse(view)))
@@ -87,15 +87,15 @@ public class OAuthClientController {
    * @param request scopes payload
    * @return updated client
    */
-  @PostMapping("/{clientId}:updateScopes")
+  @PostMapping("/{clientId}:replaceScopes")
   @PreAuthorize("hasRole('IAM_ADMIN')")
-  public ClientResponse updateScopes(
+  public OAuthClientResponse replaceOAuthClientScopes(
       @PathVariable String clientId, @RequestBody UpdateScopesRequest request) {
-    return toResponse(oauthClientService.updateScopes(clientId, request.scopes()));
+    return toResponse(oauthClientService.replaceOAuthClientScopes(clientId, request.scopes()));
   }
 
-  private static ClientResponse toResponse(RegisteredOAuthClientResult result) {
-    return new ClientResponse(
+  private static OAuthClientResponse toResponse(RegisteredOAuthClientResult result) {
+    return new OAuthClientResponse(
         result.id(),
         result.clientId(),
         result.clientName(),
@@ -109,8 +109,8 @@ public class OAuthClientController {
         result.clientAuthenticationMethods());
   }
 
-  private static ClientResponse toResponse(OAuthClientView view) {
-    return new ClientResponse(
+  private static OAuthClientResponse toResponse(OAuthClientView view) {
+    return new OAuthClientResponse(
         view.id(),
         view.clientId(),
         view.clientName(),

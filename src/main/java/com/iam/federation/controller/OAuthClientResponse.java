@@ -3,7 +3,7 @@ package com.iam.federation.controller;
 import java.util.Set;
 
 /** API representation of a registered OIDC client. */
-public record ClientResponse(
+public record OAuthClientResponse(
     String id,
     String clientId,
     String clientName,

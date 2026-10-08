@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @see <a href="https://google.aip.dev/158">AIP-158</a>
  */
 @RestController
-@RequestMapping("/api/v1/permissionPoints")
+@RequestMapping("/api/v1/permissions")
 public class PermissionController {
 
   private final PermissionService permissionService;
@@ -76,7 +76,7 @@ public class PermissionController {
    */
   @PostMapping
   @PreAuthorize("hasRole('IAM_ADMIN')")
-  public ResponseEntity<PermissionResponse> create(
+  public ResponseEntity<PermissionResponse> createPermission(
       @RequestBody CreatePermissionRequest request) {
     String oauthScope = request.oauthScope() != null ? request.oauthScope() : request.code();
     Permission created =

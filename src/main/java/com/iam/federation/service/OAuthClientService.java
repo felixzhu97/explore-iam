@@ -79,7 +79,7 @@ public class OAuthClientService {
    * @return created client including one-time secret
    */
   @Transactional
-  public RegisteredOAuthClientResult createOAuthClient(RegisterOAuthClientCommand command) {
+  public RegisteredOAuthClientResult createOAuthClient(CreateOAuthClientCommand command) {
     Objects.requireNonNull(command, "command");
     Set<RedirectUri> redirectUris = toRedirectUris(command.redirectUris());
     Set<RedirectUri> postLogout =
@@ -125,7 +125,7 @@ public class OAuthClientService {
    * @return updated view
    */
   @Transactional
-  public OAuthClientView updateScopes(String clientId, List<String> scopes) {
+  public OAuthClientView replaceOAuthClientScopes(String clientId, List<String> scopes) {
     OAuthClient client =
         oauthClientRepository
             .findByClientId(new ClientId(clientId))
@@ -222,7 +222,7 @@ public class OAuthClientService {
   }
 
   /** Input for registering an OIDC client. */
-  public record RegisterOAuthClientCommand(
+  public record CreateOAuthClientCommand(
       String clientName,
       List<String> redirectUris,
       List<String> postLogoutRedirectUris,
