@@ -1,5 +1,8 @@
 @startuml C4-Dynamic-PolicyEvaluation
-!include style-zinc.puml
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+
 title Dynamic — Short-lived credentials and policy evaluation
 
 actor "Caller" as caller
@@ -28,13 +31,6 @@ engine -> engine: 14. Explicit Deny > Allow > implicit Deny
 engine --> api: 15. AccessDecision
 api -> db: 16. Append audit records
 api --> caller: 17. 200 or 403
-
-legend right
-  |= Role |= Color |
-  | Actor | Emerald |
-  | <<java>> | Blue |
-  | <<db>> | Amber |
-endlegend
 
 note right of engine
   Glossary: Deny > Allow > Implicit Deny
