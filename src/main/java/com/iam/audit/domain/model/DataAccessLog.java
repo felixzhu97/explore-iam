@@ -75,7 +75,7 @@ public class DataAccessLog extends AbstractAuditEvent {
   }
 
   /** Captures an authorization decision for persistence. */
-  public static DataAccessLog capture(
+  public static DataAccessLog recordDataAccessLog(
       PrincipalId principalId,
       Permission action,
       Resource resource,
@@ -101,13 +101,13 @@ public class DataAccessLog extends AbstractAuditEvent {
    * @param reasonCode machine-readable reason
    * @return new aggregate
    */
-  public static DataAccessLog fromEvaluation(
+  public static DataAccessLog recordAccessDecisionLog(
       PrincipalId principalId,
       Permission action,
       Resource resource,
       Effect effect,
       ReasonCode reasonCode) {
-    return capture(principalId, action, resource, effect, reasonCode);
+    return recordDataAccessLog(principalId, action, resource, effect, reasonCode);
   }
 
   public boolean isAllowed() {

@@ -10,7 +10,7 @@ class GroupTest {
   @Test
   @DisplayName("should add member idempotently when adding same user twice")
   void shouldAddMemberIdempotentlyWhenAddingSameUserTwice() {
-    Group group = Group.create("developers");
+    Group group = Group.createGroup("developers");
 
     group.addMember("user-1");
     group.addMember("user-1");
@@ -21,7 +21,7 @@ class GroupTest {
   @Test
   @DisplayName("should remove member when removeMember is called")
   void shouldRemoveMemberWhenRemoveMemberIsCalled() {
-    Group group = Group.create("developers");
+    Group group = Group.createGroup("developers");
     group.addMember("user-1");
 
     group.removeMember("user-1");

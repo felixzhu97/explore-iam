@@ -21,13 +21,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public class PolicyBinding extends AbstractImmutable {
 
-  @Getter(AccessLevel.NONE)
   @NotBlank
   @Size(max = 36)
   @Column(nullable = false, length = 36)
   private String policyId;
 
-  @Getter(AccessLevel.NONE)
   @Embedded
   @AttributeOverride(
       name = "value",
@@ -48,18 +46,8 @@ public class PolicyBinding extends AbstractImmutable {
    * @param principalArn target principal
    * @return new attachment
    */
-  public static PolicyBinding attach(String policyId, ResourceName principalArn) {
+  public static PolicyBinding createPolicyBinding(String policyId, ResourceName principalArn) {
     return new PolicyBinding(
         UUID.randomUUID().toString(), policyId, principalArn, Instant.now());
-  }
-
-  /** Returns the attached policy document id. */
-  public String policyId() {
-    return policyId;
-  }
-
-  /** Returns the principal ARN this policy is attached to. */
-  public ResourceName principalArn() {
-    return principalArn;
   }
 }

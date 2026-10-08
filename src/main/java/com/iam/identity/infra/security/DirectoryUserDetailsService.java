@@ -44,8 +44,8 @@ public class DirectoryUserDetailsService implements UserDetailsService {
         .forEach(role -> authorities.add(new SimpleGrantedAuthority(role.authority())));
     return org.springframework.security.core.userdetails.User.builder()
         .username(user.getUsername())
-        .password(user.encodedPasswordHash())
-        .disabled(!user.isLoginEnabled())
+        .password(user.getPasswordHash())
+        .disabled(!user.isEnabled())
         .authorities(authorities)
         .build();
   }

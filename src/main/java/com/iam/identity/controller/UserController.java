@@ -70,7 +70,7 @@ public class UserController {
   @PreAuthorize("hasRole('IAM_ADMIN')")
   public ResponseEntity<UserResponse> create(@RequestBody CreateUserRequest request) {
     User created =
-        userService.create(request.username(), request.email(), request.password());
+        userService.createUser(request.username(), request.email(), request.password());
     return ResponseEntity.status(HttpStatus.CREATED).body(UserResponse.from(created));
   }
 
@@ -130,7 +130,7 @@ public class UserController {
           user.getId(),
           user.getUsername(),
           user.getEmail(),
-          user.isLoginEnabled());
+          user.isEnabled());
     }
   }
 }

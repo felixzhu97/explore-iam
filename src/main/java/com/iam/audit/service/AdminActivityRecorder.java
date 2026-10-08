@@ -44,7 +44,7 @@ public class AdminActivityRecorder {
   public void record(String action, String targetType, String targetId, AuditOutcome outcome) {
     AuditActor actor = SecurityAuditSupport.currentActor();
     auditService.save(
-        AdminActivity.logManagementAction(
+        AdminActivity.recordAdminActivity(
             actor, action, new AuditTarget(targetType, targetId), outcome));
   }
 }

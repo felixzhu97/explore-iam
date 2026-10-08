@@ -10,7 +10,7 @@ skinparam class {
   FontColor #000000
 }
 
-title Code diagram (C4) — Domain model (aligned to com.iam.*.domain)
+title Code diagram (C4) — Domain model (Google Cloud IAM naming)
 hide empty members
 
 legend right
@@ -23,7 +23,7 @@ legend right
   | <<DomainService>> | 领域服务 |
 endlegend
 
-package "com.iam.common.domain.base" as pkg_kernel {
+package "Domain Kernel" as pkg_kernel {
   class AbstractImmutable <<Abstract>> {
     +id: String
     +createdAt: Instant @CreationTimestamp
@@ -52,33 +52,33 @@ AbstractEntity --|> AbstractImmutable
 AbstractNamedEntity --|> AbstractEntity
 AbstractAuditEvent --|> AbstractImmutable
 
-package "com.iam.common.domain.vo" as pkg_common {
-  class Arn <<ValueObject>> {
+package "Common" as pkg_common {
+  class ResourceName <<ValueObject>> {
     +value: String
     --
-    +{static} user(username)
-    +{static} role(roleName)
+    +{static} createUserResourceName(username)
+    +{static} createRoleResourceName(roleName)
   }
-  class Action <<ValueObject>> {
+  class "Permission" as Permission <<ValueObject>> {
     +value: String
     --
-    +matches(requested)
+    +matchesPermission(requested)
   }
   class Resource <<ValueObject>> {
     +value: String
     --
-    +matches(requested)
+    +matchesResource(requested)
   }
   class Scope <<ValueObject>> {
     +value: String
     --
-    +{static} of(raw)
+    +{static} parseScope(raw)
     +isOidcStandard()
   }
   class PrincipalId <<ValueObject>> {
     +value: String
     --
-    +{static} generate()
+    +{static} generatePrincipalId()
   }
   class ReasonCode <<ValueObject>> {
     +value: String
@@ -87,49 +87,51 @@ package "com.iam.common.domain.vo" as pkg_common {
     ALLOW
     DENY
     --
-    +{static} fromString(raw)
+    +{static} parseEffect(raw)
   }
 }
 
-Arn --|> AbstractEmbeddable
-Action --|> AbstractEmbeddable
+ResourceName --|> AbstractEmbeddable
+Permission --|> AbstractEmbeddable
 Resource --|> AbstractEmbeddable
+Scope --|> AbstractEmbeddable
 PrincipalId --|> AbstractEmbeddable
 ReasonCode --|> AbstractEmbeddable
 
-package "com.iam.identity.domain" as pkg_identity {
-  class IamUser <<AggregateRoot>> {
+package "Identity" as pkg_identity {
+  class User <<AggregateRoot>> {
     +username: String
     +email: String
+    +passwordHash: String
+    +enabled: boolean
     --
-    +{static} create(username, email, passwordHash)
-    +{static} createForFederatedLogin(provider, subject, email)
-    +disable()
-    +enable()
+    +{static} createUser(username, email, passwordHash)
+    +{static} createFederatedUser(provider, subject, email)
+    +disableUser()
+    +enableUser()
+    +resetPassword(passwordHash)
     +changeEmail(email)
     +assignRole(roleId)
+    +unassignRole(roleId)
     +hasRole(roleId)
     +assignedRoleIds()
-    +encodedPasswordHash()
-    +isLoginEnabled()
   }
   class Group <<AggregateRoot>> {
     +name: String
     --
-    +{static} create(name)
-    +arn()
+    +{static} createGroup(name)
+    +getResourceName()
     +addMember(userId)
     +removeMember(userId)
     +hasMember(userId)
     +memberUserIds()
   }
   class GroupMember <<Entity>> {
-    +groupId: String
     +userId: String
     --
     +userId()
   }
-  class UserRoleAssignment <<Entity>> {
+  class RoleBinding <<Entity>> {
     +userId: String
     +roleId: String
     --
@@ -137,147 +139,128 @@ package "com.iam.identity.domain" as pkg_identity {
   }
   class Role <<AggregateRoot>> {
     +name: String
-    +arn: Arn
-    +trustPolicy: TrustPolicyDocument
+    +resourceName: ResourceName
+    +trustPolicy: ImpersonationPolicy
     --
-    +{static} create(name, trustPolicy)
-    +arn()
-    +trustPolicy()
+    +{static} createRole(name, trustPolicy)
+    +{static} createRole(name, trustPolicyJson)
     +authority()
   }
-  class TrustPolicyDocument <<ValueObject>> {
+  class ImpersonationPolicy <<ValueObject>> {
     +json: String
     --
-    +{static} allowAll()
+    +{static} createPermissiveImpersonationPolicy()
   }
 }
 
-IamUser --|> AbstractEntity
+User --|> AbstractEntity
 Group --|> AbstractNamedEntity
 Role --|> AbstractNamedEntity
-TrustPolicyDocument --|> AbstractEmbeddable
 Group "1" *-- "0..*" GroupMember : members
-IamUser "1" *-- "0..*" UserRoleAssignment : roles
-Role --> Arn
-Role --> TrustPolicyDocument
+User "1" *-- "0..*" RoleBinding : roleBindings
+Role --> ResourceName
+Role --> ImpersonationPolicy
 
-package "com.iam.policy.domain" as pkg_policy {
-  class PolicyDocument <<AggregateRoot>> {
+package "Policy" as pkg_policy {
+  class AllowPolicy <<AggregateRoot>> {
     +name: String
     +statements: List<PolicyStatement>
     --
-    +{static} create(name, statements)
-    +statements()
+    +{static} createAllowPolicy(name, statements)
   }
   class PolicyStatement <<ValueObject>> {
     +effect: Effect
-    +actions: Set<Action>
+    +actions: Set<Permission>
     +resources: Set<Resource>
     --
-    +{static} of(effect, actions, resources)
-    +matches(action, resource)
+    +{static} createPolicyStatement(effect, actions, resources)
+    +matchesPermissionAndResource(action, resource)
   }
-  class PolicyAttachment <<AggregateRoot>> {
+  class PolicyBinding <<AggregateRoot>> {
     +policyId: String
-    +principalArn: Arn
+    +principalArn: ResourceName
     --
-    +{static} attach(policyId, principalArn)
-    +policyId()
-    +principalArn()
+    +{static} createPolicyBinding(policyId, principalArn)
   }
-  class PermissionPoint <<AggregateRoot>> {
+  class "Permission" as PermissionCatalogEntry <<AggregateRoot>> {
     +code: String
     +oauthScope: Scope
     +module: String
-    +action: Action
+    +action: Permission
     +resource: Resource
     +description: String
     --
-    +{static} create(code, oauthScope, module, action, resource, description)
-    +oauthScope()
-    +oauthScopeValue()
-    +matchesScope(scope)
+    +{static} createPermission(code, oauthScope, module, action, resource, description)
+    +matchesOAuthScope(scope)
   }
-  class EvaluationContext <<ValueObject>> {
+  class AccessTuple <<ValueObject>> {
     +principalId: PrincipalId
-    +action: Action
+    +action: Permission
     +resource: Resource
   }
-  class AuthorizationDecision <<ValueObject>> {
+  class AccessDecision <<ValueObject>> {
     +effect: Effect
     +reasonCode: ReasonCode
     --
     +isAllowed()
   }
-}
-
-package "com.iam.policy.domain.service" as pkg_policy_svc {
   class PolicyEngine <<DomainService>> {
     +evaluate(context, policies)
   }
 }
 
-PolicyDocument --|> AbstractNamedEntity
-PolicyAttachment --|> AbstractImmutable
-PermissionPoint --|> AbstractImmutable
-PolicyDocument "1" *-- "1..*" PolicyStatement : document_json
-PolicyAttachment --> PolicyDocument : references policyId
-PolicyAttachment --> Arn
-PermissionPoint --> Action
-PermissionPoint --> Resource
-PermissionPoint --> Scope : oauthScope
-EvaluationContext --> PrincipalId
-EvaluationContext --> Action
-EvaluationContext --> Resource
-AuthorizationDecision --> Effect
-AuthorizationDecision --> ReasonCode
-PolicyEngine ..> PolicyDocument : reads
-PolicyEngine ..> AuthorizationDecision : returns
-PermissionPoint ..> PolicyEngine : catalog for Action/Resource
+AllowPolicy --|> AbstractNamedEntity
+PolicyBinding --|> AbstractImmutable
+PermissionCatalogEntry --|> AbstractImmutable
+AllowPolicy "1" *-- "1..*" PolicyStatement : statements
+PolicyBinding --> AllowPolicy : references policyId
+PolicyBinding --> ResourceName
+PermissionCatalogEntry --> Permission
+PermissionCatalogEntry --> Resource
+PermissionCatalogEntry --> Scope : oauthScope
+AccessTuple --> PrincipalId
+AccessTuple --> Permission
+AccessTuple --> Resource
+AccessDecision --> Effect
+AccessDecision --> ReasonCode
+PolicyEngine ..> AllowPolicy : reads
+PolicyEngine ..> AccessDecision : returns
+PermissionCatalogEntry ..> PolicyEngine : catalog for Permission/Resource
 
-package "com.iam.sts.domain" as pkg_sts {
-  class AssumedRoleSession <<AggregateRoot>> {
-    +roleArn: Arn
+package "Short-lived credentials" as pkg_sts {
+  class ShortLivedCredential <<AggregateRoot>> {
+    +roleArn: ResourceName
     +sessionName: String
     +callerPrincipal: String
     +expiresAt: Instant
     --
-    +{static} create(roleArn, sessionName, callerPrincipal, expiresAt)
+    +{static} createShortLivedCredential(roleArn, sessionName, callerPrincipal, expiresAt)
     +isExpired(now)
-    +roleArn()
-    +sessionName()
-    +callerPrincipal()
-    +expiresAt()
   }
 }
 
-AssumedRoleSession --|> AbstractImmutable
-AssumedRoleSession --> Arn
+ShortLivedCredential --|> AbstractImmutable
+ShortLivedCredential --> ResourceName
 
-package "com.iam.federation.domain" as pkg_federation {
-  class OidcClient <<AggregateRoot>> {
+package "Federation" as pkg_federation {
+  class OAuthClient <<AggregateRoot>> {
     +clientId: ClientId
     +redirectUris: Set<RedirectUri>
-    +scopes: Set<Scope>
+    +scopes: Set<String>
     --
-    +{static} register(...)
-    +{static} seed(...)
-    +{static} seedPublic(...)
-    +{static} reconstitute(...)
+    +{static} createOAuthClient(...)
+    +{static} createBootstrapOAuthClient(...)
+    +{static} createPublicBootstrapOAuthClient(...)
+    +{static} restoreOAuthClient(...)
     +isPublicClient()
-    +clientId()
-    +redirectUris()
-    +scopes()
-    +scopeValues()
     +replaceScopes(scopes)
   }
-  class FederatedIdentityLink <<AggregateRoot>> {
-    +iamUserId: String
+  class FederatedIdentity <<AggregateRoot>> {
+    +userId: String
     +provider: String
     +externalSubject: String
     --
-    +{static} create(iamUserId, provider, externalSubject)
-    +linkedUserId()
+    +{static} createFederatedIdentity(userId, provider, externalSubject)
   }
   class ClientId <<ValueObject>> {
     +value: String
@@ -285,7 +268,7 @@ package "com.iam.federation.domain" as pkg_federation {
   class RedirectUri <<ValueObject>> {
     +value: String
   }
-  note right of OidcClient
+  note right of OAuthClient
     Public clients (explore-ai-ios / explore-chat-ios):
     requireProofKey; custom-scheme RedirectUri
     (com.explore.*://oauth/callback) allowed.
@@ -293,15 +276,12 @@ package "com.iam.federation.domain" as pkg_federation {
   end note
 }
 
-FederatedIdentityLink --|> AbstractImmutable
-ClientId --|> AbstractEmbeddable
-RedirectUri --|> AbstractEmbeddable
-OidcClient --> ClientId
-OidcClient --> RedirectUri
-OidcClient --> Scope : scopes
-FederatedIdentityLink ..> IamUser : links
+FederatedIdentity --|> AbstractImmutable
+OAuthClient --> ClientId
+OAuthClient --> RedirectUri
+FederatedIdentity ..> User : links
 
-package "com.iam.audit.domain" as pkg_audit {
+package "Audit" as pkg_audit {
   class AuditActor <<ValueObject>> {
     +value: String
   }
@@ -311,28 +291,28 @@ package "com.iam.audit.domain" as pkg_audit {
     --
     +matches(type, targetId)
   }
-  class ManagementEvent <<AggregateRoot>> {
+  class AdminActivity <<AggregateRoot>> {
     +actor: AuditActor
     +action: String
     +target: AuditTarget
     +outcome: AuditOutcome
     --
-    +{static} logManagementAction(actor, action, target, outcome)
-    +{static} logAuthentication(actor, outcome)
+    +{static} recordAdminActivity(actor, action, target, outcome)
+    +{static} recordSignInActivity(actor, outcome)
     +wasSuccessful()
     +wasFailure()
     +involvesActor(candidate)
     +targets(candidate)
   }
-  class AuthorizationDecisionLog <<AggregateRoot>> {
+  class DataAccessLog <<AggregateRoot>> {
     +principalId: PrincipalId
-    +action: Action
+    +action: Permission
     +resource: Resource
     +effect: Effect
     +reasonCode: ReasonCode
     --
-    +{static} capture(principalId, action, resource, effect, reasonCode)
-    +{static} fromEvaluation(principalId, action, resource, effect, reasonCode)
+    +{static} recordDataAccessLog(principalId, action, resource, effect, reasonCode)
+    +{static} recordAccessDecisionLog(principalId, action, resource, effect, reasonCode)
     +isAllowed()
     +isDenied()
     +wasExplicitDeny()
@@ -344,23 +324,24 @@ package "com.iam.audit.domain" as pkg_audit {
   }
 }
 
-ManagementEvent --|> AbstractAuditEvent
-AuthorizationDecisionLog --|> AbstractAuditEvent
-ManagementEvent --> AuditActor
-ManagementEvent --> AuditTarget
-ManagementEvent --> AuditOutcome
-AuthorizationDecisionLog --> PrincipalId
-AuthorizationDecisionLog --> Action
-AuthorizationDecisionLog --> Resource
-AuthorizationDecisionLog --> Effect
-AuthorizationDecisionLog --> ReasonCode
-AuthorizationDecisionLog ..> AuthorizationDecision : captures
+AdminActivity --|> AbstractAuditEvent
+DataAccessLog --|> AbstractAuditEvent
+AdminActivity --> AuditActor
+AdminActivity --> AuditTarget
+AdminActivity --> AuditOutcome
+DataAccessLog --> PrincipalId
+DataAccessLog --> Permission
+DataAccessLog --> Resource
+DataAccessLog --> Effect
+DataAccessLog --> ReasonCode
+DataAccessLog ..> AccessDecision : records
 
 note as N_LAYERS
   Layering (per module): controller → service → domain ← infra
+  Package titles are business domains, not Java packages.
   Kernel: @CreationTimestamp / @UpdateTimestamp; Bean Validation on fields.
-  Persisted string VOs: @Embeddable (Arn, Action, Resource, …).
-  reconstitute: OidcClient only (non-JPA aggregate).
+  Persisted string VOs: @Embeddable (ResourceName, Permission, Resource, …).
+  restoreOAuthClient: OAuthClient only (non-JPA aggregate).
   Preferred Terms: docs/Glossary.md
 end note
 

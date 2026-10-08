@@ -12,7 +12,7 @@ interface SpringDataRoleRepository extends JpaRepository<Role, String> {
 
   Optional<Role> findByName(String name);
 
-  Optional<Role> findByArn(ResourceName arn);
+  Optional<Role> findByResourceName(ResourceName resourceName);
 
   @Query(
       """

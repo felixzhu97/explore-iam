@@ -21,7 +21,7 @@ Style standards: global [c4-model](~/.cursor/skills/scrum-team/developers/develo
 | `C1-Context.puml` | Context | People, Explore IAM boundary, Relying Parties, external IdPs |
 | `C2-Container.puml` | Container | IAM Application monolith (:9100), metadata database |
 | `C3-Component.puml` | Component | **Single** diagram: Angular Console + backend modules (`controller → service → domain ← infra`) |
-| `C4-Code-Domain-Model.puml` | Code | DDD class model with `AbstractEntity` / `AbstractImmutable` kernel |
+| `C4-Code-Domain-Model.puml` | Code | DDD class model grouped by business domain (Domain Kernel, Common, Identity, Policy, Short-lived credentials, Federation, Audit) |
 | `C4-Deployment.puml` | Deployment | **Single** view: local H2 + Render Starter (Docker) |
 | `C4-Dynamic-SSOLogin.puml` | Dynamic | OIDC Authorization Code (confidential + public PKCE) |
 | `C4-Dynamic-NativePkceLogin.puml` | Dynamic | Native iOS ASWebAuthenticationSession + PKCE → RP Bearer |
@@ -42,7 +42,8 @@ Style standards: global [c4-model](~/.cursor/skills/scrum-team/developers/develo
 ## Render
 
 ```bash
-plantuml -tpng docs/developer/c4-model/*.puml
+cd docs/developer/c4-model
+PLANTUML_LIMIT_SIZE=16384 plantuml -tpng -o png C4-Code-Domain-Model.puml
 ```
 
 Online: [PlantUML server](https://www.plantuml.com/plantuml/uml/).
@@ -54,15 +55,22 @@ Online: [PlantUML server](https://www.plantuml.com/plantuml/uml/).
 3. `C4-Dynamic-*` (runtime paths)
 4. `C4-Deployment.puml` (where it runs)
 
-## AWS IAM mapping
+## Google Cloud IAM mapping
 
-| AWS IAM | Explore IAM |
-|---------|-------------|
-| IAM User / Group / Role | `IamUser`, `Group`, `Role` |
-| Identity / Resource policy | `PolicyDocument`, `PolicyEngine` |
-| STS AssumeRole | `AssumeRoleService`, `AssumedRoleSession` |
-| IAM Identity Center / federation | OIDC Provider + `FederatedIdentityLink` |
-| CloudTrail | `ManagementEvent`, `AuthorizationDecisionLog` |
+Vocabulary follows [Google Cloud IAM](https://cloud.google.com/iam/docs/overview).
+
+| Google Cloud IAM | Explore IAM |
+|------------------|-------------|
+| Principal (user, group) | `User`, `Group` |
+| Role / role binding | `Role`, `RoleBinding` |
+| Allow policy | `AllowPolicy`, `PolicyStatement`, `PolicyEngine` |
+| Policy binding | `PolicyBinding` |
+| Permission | `Permission` (common value object and policy catalog entry) |
+| Resource name | `ResourceName` |
+| Short-lived credentials | `ShortLivedCredential` |
+| Workforce / workload identity federation | OIDC Provider + `FederatedIdentity` |
+| OAuth client | `OAuthClient` |
+| Cloud Audit Logs (Admin Activity, Data Access) | `AdminActivity`, `DataAccessLog` |
 
 ## Related docs
 

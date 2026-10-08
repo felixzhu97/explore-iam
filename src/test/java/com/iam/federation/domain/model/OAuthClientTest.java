@@ -13,7 +13,7 @@ class OAuthClientTest {
   void shouldRejectScopesWithoutOpenidWhenRegisteringClient() {
     assertThatThrownBy(
             () ->
-                OAuthClient.register(
+                OAuthClient.createOAuthClient(
                     "demo",
                     "hash",
                     null,

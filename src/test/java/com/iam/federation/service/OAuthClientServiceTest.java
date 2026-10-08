@@ -51,7 +51,7 @@ class OAuthClientServiceTest {
     when(oauthClientRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
     var result =
-        oauthClientService.register(
+        oauthClientService.createOAuthClient(
             new OAuthClientService.RegisterOAuthClientCommand(
                 "Demo App",
                 List.of("http://localhost:3000/callback"),
@@ -85,7 +85,7 @@ class OAuthClientServiceTest {
     when(oauthClientRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
     var result =
-        oauthClientService.register(
+        oauthClientService.createOAuthClient(
             new OAuthClientService.RegisterOAuthClientCommand(
                 "SPA",
                 List.of("http://localhost:4200/callback"),
@@ -109,7 +109,7 @@ class OAuthClientServiceTest {
   void shouldRejectInvalidGrantType() {
     assertThatThrownBy(
             () ->
-                oauthClientService.register(
+                oauthClientService.createOAuthClient(
                     new OAuthClientService.RegisterOAuthClientCommand(
                         "Bad",
                         List.of("http://localhost:3000/callback"),
@@ -128,7 +128,7 @@ class OAuthClientServiceTest {
   void shouldRejectInvalidRedirectUri() {
     assertThatThrownBy(
             () ->
-                oauthClientService.register(
+                oauthClientService.createOAuthClient(
                     new OAuthClientService.RegisterOAuthClientCommand(
                         "Bad", List.of("not-a-uri"), null, null, null, null, null, null)))
         .isInstanceOf(IllegalArgumentException.class);

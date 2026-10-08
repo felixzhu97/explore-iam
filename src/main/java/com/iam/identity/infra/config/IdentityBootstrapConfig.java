@@ -60,7 +60,7 @@ public class IdentityBootstrapConfig {
             .orElseGet(
                 () -> {
                   User created =
-                      User.create(
+                      User.createUser(
                           properties.getUsername(),
                           properties.getEmail(),
                           passwordEncoder.encode(properties.getPassword()));
@@ -80,7 +80,9 @@ public class IdentityBootstrapConfig {
             () -> {
               Role created =
                   roleRepository.save(
-                      Role.create(IAM_ADMIN_ROLE, ImpersonationPolicy.allowAll()));
+                      Role.createRole(
+                          IAM_ADMIN_ROLE,
+                          ImpersonationPolicy.createPermissiveImpersonationPolicy()));
               log.info("Seeded IAM role '{}'", IAM_ADMIN_ROLE);
               return created;
             });

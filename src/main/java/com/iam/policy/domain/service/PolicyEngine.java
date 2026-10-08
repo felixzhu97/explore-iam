@@ -21,8 +21,8 @@ public class PolicyEngine {
   public AccessDecision evaluate(AccessTuple context, List<AllowPolicy> policies) {
     boolean allowMatched = false;
     for (AllowPolicy policy : policies) {
-      for (PolicyStatement statement : policy.statements()) {
-        if (!statement.matches(context.action(), context.resource())) {
+      for (PolicyStatement statement : policy.getStatements()) {
+        if (!statement.matchesPermissionAndResource(context.action(), context.resource())) {
           continue;
         }
         if (statement.effect() == Effect.DENY) {

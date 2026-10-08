@@ -10,8 +10,8 @@ class RoleTest {
   @Test
   @DisplayName("should use allow-all trust policy when json is blank")
   void shouldUseAllowAllTrustPolicyWhenJsonIsBlank() {
-    Role role = Role.create("IAM_ADMIN", "  ");
+    Role role = Role.createRole("IAM_ADMIN", "  ");
 
-    assertThat(role.trustPolicy().json()).contains("sts:AssumeRole");
+    assertThat(role.getTrustPolicy().json()).contains("sts:AssumeRole");
   }
 }

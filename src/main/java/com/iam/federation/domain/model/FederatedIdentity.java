@@ -18,7 +18,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public class FederatedIdentity extends AbstractImmutable {
 
-  @Getter(AccessLevel.NONE)
   @NotBlank
   @Size(max = 36)
   @Column(nullable = false, length = 36)
@@ -43,15 +42,10 @@ public class FederatedIdentity extends AbstractImmutable {
   }
 
   /** Creates a new federated identity link. */
-  public static FederatedIdentity create(
+  public static FederatedIdentity createFederatedIdentity(
       String userId, String provider, String externalSubject) {
     return new FederatedIdentity(
         UUID.randomUUID().toString(), userId, provider, externalSubject, Instant.now());
-  }
-
-  /** Returns the linked local IAM user id. */
-  public String linkedUserId() {
-    return userId;
   }
 
   private static String requireProvider(String provider) {

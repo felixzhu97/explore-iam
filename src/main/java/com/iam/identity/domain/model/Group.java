@@ -35,13 +35,13 @@ public class Group extends AbstractNamedEntity {
    * @param name unique group name
    * @return new aggregate
    */
-  public static Group create(String name) {
+  public static Group createGroup(String name) {
     Instant now = Instant.now();
     return new Group(UUID.randomUUID().toString(), name, now, now);
   }
 
-  /** Returns the ARN for this group. */
-  public ResourceName arn() {
+  /** Returns the resource name for this group. */
+  public ResourceName getResourceName() {
     return new ResourceName("arn:iam::explore-iam:group/" + getName());
   }
 

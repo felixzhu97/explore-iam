@@ -35,7 +35,7 @@ public class StsController {
   @PreAuthorize("isAuthenticated()")
   public AssumeRoleResponse assumeRole(@RequestBody AssumeRoleRequest request) {
     AssumeRoleResult result =
-        shortLivedCredentialService.assumeRole(
+        shortLivedCredentialService.createShortLivedCredential(
             new AssumeRoleCommand(request.roleArn(), request.sessionName()));
     return new AssumeRoleResponse(
         result.accessToken(), result.expiration().toString(), result.sessionId());

@@ -80,7 +80,7 @@ public class PermissionController {
       @RequestBody CreatePermissionRequest request) {
     String oauthScope = request.oauthScope() != null ? request.oauthScope() : request.code();
     Permission created =
-        permissionService.create(
+        permissionService.createPermission(
             new CreatePermissionCommand(
                 request.code(),
                 oauthScope,
@@ -119,7 +119,7 @@ public class PermissionController {
       return new PermissionResponse(
           "permissionPoints/" + point.getCode(),
           point.getCode(),
-          point.oauthScope(),
+          point.getOauthScope().value(),
           point.getModule(),
           point.getAction().value(),
           point.getResource().value(),

@@ -66,19 +66,19 @@ public class PolicyService {
    * @return saved policy
    */
   @Transactional
-  public AllowPolicy create(CreatePolicyCommand command) {
+  public AllowPolicy createAllowPolicy(CreatePolicyCommand command) {
     Objects.requireNonNull(command, "command");
     List<PolicyStatement> statements =
         command.statements().stream()
             .map(
                 s ->
-                    PolicyStatement.of(
+                    PolicyStatement.createPolicyStatement(
                         Effect.valueOf(s.effect()),
                         s.actions().stream().map(Permission::new).collect(Collectors.toSet()),
                         s.resources().stream().map(Resource::new).collect(Collectors.toSet())))
             .toList();
     AllowPolicy policy =
-        policyRepository.save(AllowPolicy.create(command.name(), statements));
+        policyRepository.save(AllowPolicy.createAllowPolicy(command.name(), statements));
     adminActivityRecorder.recordSuccess("policy:CreatePolicy", "AllowPolicy", policy.getId());
     return policy;
   }
@@ -91,12 +91,12 @@ public class PolicyService {
    * @return attachment
    */
   @Transactional
-  public PolicyBinding attach(String policyId, ResourceName principalArn) {
+  public PolicyBinding createPolicyBinding(String policyId, ResourceName principalArn) {
     policyRepository
         .findById(policyId)
         .orElseThrow(() -> new IllegalArgumentException("Policy not found: " + policyId));
     PolicyBinding attachment =
-        policyRepository.saveAttachment(PolicyBinding.attach(policyId, principalArn));
+        policyRepository.saveAttachment(PolicyBinding.createPolicyBinding(policyId, principalArn));
     adminActivityRecorder.recordSuccess(
         "policy:AttachPolicy", "PolicyBinding", attachment.getId());
     return attachment;
@@ -120,7 +120,7 @@ public class PolicyService {
         policyEngine.evaluate(
             context, policyRepository.findAttachedToPrincipal(principalArn));
     auditService.save(
-        DataAccessLog.fromEvaluation(
+        DataAccessLog.recordAccessDecisionLog(
             context.principalId(),
             context.action(),
             context.resource(),

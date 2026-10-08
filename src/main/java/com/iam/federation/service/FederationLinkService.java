@@ -42,7 +42,7 @@ public class FederationLinkService {
         linkRepository.findByProviderAndExternalSubject(provider, subject);
     if (existing.isPresent()) {
       return userRepository
-          .findById(existing.get().linkedUserId())
+          .findById(existing.get().getUserId())
           .orElseThrow(() -> new IllegalStateException("linked user missing"));
     }
     String username = provider + ":" + subject;
@@ -52,8 +52,8 @@ public class FederationLinkService {
             .orElseGet(
                 () ->
                     userRepository.save(
-                        User.createForFederatedLogin(provider, subject, email)));
-    linkRepository.save(FederatedIdentity.create(user.getId(), provider, subject));
+                        User.createFederatedUser(provider, subject, email)));
+    linkRepository.save(FederatedIdentity.createFederatedIdentity(user.getId(), provider, subject));
     return user;
   }
 }

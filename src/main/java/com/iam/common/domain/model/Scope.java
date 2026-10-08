@@ -56,7 +56,7 @@ public class Scope extends AbstractEmbeddable {
    * @param raw raw scope
    * @return scope VO
    */
-  public static Scope of(String raw) {
+  public static Scope parseScope(String raw) {
     return new Scope(raw);
   }
 

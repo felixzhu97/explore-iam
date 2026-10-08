@@ -53,8 +53,8 @@ public class RoleService {
    * @return persisted role
    */
   @Transactional
-  public Role create(String name, String trustPolicyJson) {
-    Role role = roleRepository.save(Role.create(name, trustPolicyJson));
+  public Role createRole(String name, String trustPolicyJson) {
+    Role role = roleRepository.save(Role.createRole(name, trustPolicyJson));
     adminActivityRecorder.recordSuccess("identity:CreateRole", "Role", role.getId());
     return role;
   }

@@ -91,7 +91,7 @@ public class OAuthClient {
    * @param authorizationGrantTypes allowed grant types
    * @return new aggregate
    */
-  public static OAuthClient register(
+  public static OAuthClient createOAuthClient(
       String clientName,
       String clientSecretHash,
       String clientUri,
@@ -130,7 +130,7 @@ public class OAuthClient {
    * @param scopes requested scopes
    * @return seeded aggregate
    */
-  public static OAuthClient seed(
+  public static OAuthClient createBootstrapOAuthClient(
       ClientId clientId,
       String clientName,
       String clientSecretHash,
@@ -163,7 +163,7 @@ public class OAuthClient {
    * @param scopes requested scopes
    * @return seeded public aggregate
    */
-  public static OAuthClient seedPublic(
+  public static OAuthClient createPublicBootstrapOAuthClient(
       ClientId clientId,
       String clientName,
       Set<RedirectUri> redirectUris,
@@ -203,7 +203,7 @@ public class OAuthClient {
    * @param requireAuthorizationConsent whether consent is required
    * @return reconstituted aggregate
    */
-  public static OAuthClient reconstitute(
+  public static OAuthClient restoreOAuthClient(
       String id,
       ClientId clientId,
       Instant clientIdIssuedAt,

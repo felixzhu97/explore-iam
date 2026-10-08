@@ -57,8 +57,8 @@ public class GroupService {
    * @return persisted group
    */
   @Transactional
-  public Group create(String name) {
-    Group group = groupRepository.save(Group.create(name));
+  public Group createGroup(String name) {
+    Group group = groupRepository.save(Group.createGroup(name));
     adminActivityRecorder.recordSuccess("identity:CreateGroup", "Group", group.getId());
     return group;
   }

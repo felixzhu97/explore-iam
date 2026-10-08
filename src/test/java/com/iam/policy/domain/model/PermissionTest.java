@@ -14,7 +14,7 @@ class PermissionTest {
   @DisplayName("should accept GitHub style write scope when module is ai")
   void shouldAcceptGitHubStyleWriteScopeWhenModuleIsAi() {
     Permission point =
-        Permission.create(
+        Permission.createPermission(
             "write:ai_chat",
             "write:ai_chat",
             "ai",
@@ -22,8 +22,8 @@ class PermissionTest {
             new Resource("arn:ai:::chat/*"),
             "chat");
 
-    assertThat(point.oauthScope()).isEqualTo("write:ai_chat");
-    assertThat(point.matchesScope("write:ai_chat")).isTrue();
+    assertThat(point.getOauthScope().value()).isEqualTo("write:ai_chat");
+    assertThat(point.matchesOAuthScope("write:ai_chat")).isTrue();
   }
 
   @Test
@@ -31,7 +31,7 @@ class PermissionTest {
   void shouldRejectDottedProductScopeWhenModuleIsAi() {
     assertThatThrownBy(
             () ->
-                Permission.create(
+                Permission.createPermission(
                     "ai.chat",
                     "ai.chat",
                     "ai",
@@ -46,7 +46,7 @@ class PermissionTest {
   @DisplayName("should accept openid when module is oidc")
   void shouldAcceptOpenidWhenModuleIsOidc() {
     Permission point =
-        Permission.create(
+        Permission.createPermission(
             "openid",
             "openid",
             "oidc",

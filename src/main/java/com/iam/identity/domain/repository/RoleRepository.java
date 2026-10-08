@@ -16,12 +16,12 @@ public interface RoleRepository {
   Optional<Role> findByName(String name);
 
   /**
-   * Finds a role by ARN value.
+   * Finds a role by resource name.
    *
-   * @param arn role ARN
+   * @param resourceName role resource name
    * @return matching role when present
    */
-  Optional<Role> findByArn(String arn);
+  Optional<Role> findByResourceName(String resourceName);
 
   /**
    * Finds a role by internal identifier.

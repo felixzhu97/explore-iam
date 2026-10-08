@@ -20,7 +20,7 @@ class AdminActivityTest {
     AuditTarget target = new AuditTarget("User", "demo");
 
     assertThatThrownBy(
-            () -> AdminActivity.logManagementAction(actor, "  ", target, AuditOutcome.SUCCESS))
+            () -> AdminActivity.recordAdminActivity(actor, "  ", target, AuditOutcome.SUCCESS))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("action");
   }
@@ -30,7 +30,7 @@ class AdminActivityTest {
   void shouldRecordAuthenticationLoginWithUserTargetWhenLoggingAuthentication() {
     AuditActor actor = new AuditActor("demo");
 
-    AdminActivity event = AdminActivity.logAuthentication(actor, AuditOutcome.SUCCESS);
+    AdminActivity event = AdminActivity.recordSignInActivity(actor, AuditOutcome.SUCCESS);
 
     assertThat(event.getAction()).isEqualTo("auth:login");
     assertThat(event.getTarget().getType()).isEqualTo("User");
@@ -44,7 +44,7 @@ class AdminActivityTest {
   @DisplayName("should report failure when authentication outcome is failure")
   void shouldReportFailureWhenAuthenticationOutcomeIsFailure() {
     AdminActivity event =
-        AdminActivity.logAuthentication(new AuditActor("unknown"), AuditOutcome.FAILURE);
+        AdminActivity.recordSignInActivity(new AuditActor("unknown"), AuditOutcome.FAILURE);
 
     assertThat(event.wasFailure()).isTrue();
     assertThat(event.wasSuccessful()).isFalse();

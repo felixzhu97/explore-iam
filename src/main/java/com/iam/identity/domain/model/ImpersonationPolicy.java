@@ -19,7 +19,7 @@ public record ImpersonationPolicy(String json) {
   }
 
   /** Returns an empty allow-all trust policy for bootstrap roles. */
-  public static ImpersonationPolicy allowAll() {
+  public static ImpersonationPolicy createPermissiveImpersonationPolicy() {
     return new ImpersonationPolicy(
         """
         {

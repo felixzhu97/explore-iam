@@ -79,7 +79,7 @@ public class OAuthClientService {
    * @return created client including one-time secret
    */
   @Transactional
-  public RegisteredOAuthClientResult register(RegisterOAuthClientCommand command) {
+  public RegisteredOAuthClientResult createOAuthClient(RegisterOAuthClientCommand command) {
     Objects.requireNonNull(command, "command");
     Set<RedirectUri> redirectUris = toRedirectUris(command.redirectUris());
     Set<RedirectUri> postLogout =
@@ -101,7 +101,7 @@ public class OAuthClientService {
     }
 
     OAuthClient client =
-        OAuthClient.register(
+        OAuthClient.createOAuthClient(
             command.clientName(),
             secretHash,
             clientUri,

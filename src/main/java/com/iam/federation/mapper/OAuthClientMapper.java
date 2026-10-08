@@ -71,7 +71,7 @@ public final class OAuthClientMapper {
       responseTypes = Set.of("code");
     }
 
-    return OAuthClient.reconstitute(
+    return OAuthClient.restoreOAuthClient(
         registeredClient.getId(),
         new ClientId(registeredClient.getClientId()),
         registeredClient.getClientIdIssuedAt() == null

@@ -20,7 +20,7 @@ class DataAccessLogTest {
   @DisplayName("should report allowed when effect is ALLOW")
   void shouldReportAllowedWhenEffectIsAllow() {
     DataAccessLog log =
-        DataAccessLog.capture(
+        DataAccessLog.recordDataAccessLog(
             PRINCIPAL, ACTION, RESOURCE, Effect.ALLOW, ReasonCode.EXPLICIT_ALLOW);
 
     assertThat(log.isAllowed()).isTrue();
@@ -33,7 +33,7 @@ class DataAccessLogTest {
   @DisplayName("should report explicit deny when reason code is EXPLICIT_DENY")
   void shouldReportExplicitDenyWhenReasonCodeIsExplicitDeny() {
     DataAccessLog log =
-        DataAccessLog.capture(
+        DataAccessLog.recordDataAccessLog(
             PRINCIPAL, ACTION, RESOURCE, Effect.DENY, ReasonCode.EXPLICIT_DENY);
 
     assertThat(log.isDenied()).isTrue();
@@ -46,7 +46,7 @@ class DataAccessLogTest {
   @DisplayName("should report implicit deny when reason code is IMPLICIT_DENY")
   void shouldReportImplicitDenyWhenReasonCodeIsImplicitDeny() {
     DataAccessLog log =
-        DataAccessLog.capture(
+        DataAccessLog.recordDataAccessLog(
             PRINCIPAL, ACTION, RESOURCE, Effect.DENY, ReasonCode.IMPLICIT_DENY);
 
     assertThat(log.isDenied()).isTrue();
