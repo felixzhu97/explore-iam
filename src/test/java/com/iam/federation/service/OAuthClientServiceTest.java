@@ -52,7 +52,7 @@ class OAuthClientServiceTest {
 
     var result =
         oauthClientService.createOAuthClient(
-            new OAuthClientService.RegisterOAuthClientCommand(
+            new OAuthClientService.CreateOAuthClientCommand(
                 "Demo App",
                 List.of("http://localhost:3000/callback"),
                 List.of("http://localhost:3000/"),
@@ -86,7 +86,7 @@ class OAuthClientServiceTest {
 
     var result =
         oauthClientService.createOAuthClient(
-            new OAuthClientService.RegisterOAuthClientCommand(
+            new OAuthClientService.CreateOAuthClientCommand(
                 "SPA",
                 List.of("http://localhost:4200/callback"),
                 null,
@@ -110,7 +110,7 @@ class OAuthClientServiceTest {
     assertThatThrownBy(
             () ->
                 oauthClientService.createOAuthClient(
-                    new OAuthClientService.RegisterOAuthClientCommand(
+                    new OAuthClientService.CreateOAuthClientCommand(
                         "Bad",
                         List.of("http://localhost:3000/callback"),
                         null,
@@ -129,7 +129,7 @@ class OAuthClientServiceTest {
     assertThatThrownBy(
             () ->
                 oauthClientService.createOAuthClient(
-                    new OAuthClientService.RegisterOAuthClientCommand(
+                    new OAuthClientService.CreateOAuthClientCommand(
                         "Bad", List.of("not-a-uri"), null, null, null, null, null, null)))
         .isInstanceOf(IllegalArgumentException.class);
   }

@@ -52,7 +52,7 @@ public class RoleController {
    */
   @PostMapping
   @PreAuthorize("hasRole('IAM_ADMIN')")
-  public ResponseEntity<RoleResponse> create(@RequestBody CreateRoleRequest request) {
+  public ResponseEntity<RoleResponse> createRole(@RequestBody CreateRoleRequest request) {
     String displayName = request.displayName() != null ? request.displayName() : request.name();
     Role role = roleService.createRole(displayName, request.trustPolicyJson());
     return ResponseEntity.status(HttpStatus.CREATED).body(RoleResponse.from(role));

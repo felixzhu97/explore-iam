@@ -31,10 +31,10 @@ class OAuthClientControllerTest {
     RestClient client = authenticatedClient();
     String name = "WhatsFeed-" + UUID.randomUUID().toString().substring(0, 8);
 
-    ResponseEntity<ClientResponse> created =
+    ResponseEntity<OAuthClientResponse> created =
         client
             .post()
-            .uri("/api/v1/clients")
+            .uri("/api/v1/oauthClients")
             .contentType(MediaType.APPLICATION_JSON)
             .body(
                 Map.of(
@@ -47,7 +47,7 @@ class OAuthClientControllerTest {
                     "clientAuthenticationMethods", List.of("client_secret_basic"),
                     "clientUri", "http://localhost:4300"))
             .retrieve()
-            .toEntity(ClientResponse.class);
+            .toEntity(OAuthClientResponse.class);
 
     assertThat(created.getStatusCode().value()).isEqualTo(201);
     assertThat(created.getBody()).isNotNull();
@@ -61,11 +61,11 @@ class OAuthClientControllerTest {
     assertThat(created.getBody().clientAuthenticationMethods())
         .containsExactly("client_secret_basic");
 
-    List<ClientResponse> list =
-        client.get().uri("/api/v1/clients").retrieve().body(new ParameterizedTypeReference<>() {});
+    List<OAuthClientResponse> list =
+        client.get().uri("/api/v1/oauthClients").retrieve().body(new ParameterizedTypeReference<>() {});
 
     assertThat(list).isNotNull();
-    ClientResponse listed =
+    OAuthClientResponse listed =
         list.stream().filter(c -> name.equals(c.clientName())).findFirst().orElseThrow();
     assertThat(listed.clientSecret()).isNull();
     assertThat(listed.clientUri()).isEqualTo("http://localhost:4300");
@@ -81,7 +81,7 @@ class OAuthClientControllerTest {
             () ->
                 client
                     .post()
-                    .uri("/api/v1/clients")
+                    .uri("/api/v1/oauthClients")
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(
                         Map.of("clientName", "Bad", "redirectUris", List.of("javascript:alert(1)")))

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** Query API for management and authorization audit events. */
 @RestController
-@RequestMapping("/api/v1/auditEvents")
+@RequestMapping("/api/v1/adminActivities")
 public class AuditController {
 
   private final AuditService auditService;
@@ -39,14 +39,14 @@ public class AuditController {
       @RequestParam(name = "page_size", defaultValue = "50") int pageSize) {
     AuditQueryResult result = auditService.query(Math.min(pageSize, 200));
     return new AuditEventsResponse(
-        result.managementEvents().stream().map(AdminActivityResponse::from).toList(),
-        result.authorizationDecisions().stream().map(AccessDecisionResponse::from).toList());
+        result.adminActivities().stream().map(AdminActivityResponse::from).toList(),
+        result.dataAccessLogs().stream().map(AccessDecisionResponse::from).toList());
   }
 
   /** Combined management and authorization audit events. */
   public record AuditEventsResponse(
-      List<AdminActivityResponse> managementEvents,
-      List<AccessDecisionResponse> authorizationDecisions) {}
+      List<AdminActivityResponse> adminActivities,
+      List<AccessDecisionResponse> dataAccessLogs) {}
 
   /** Management-plane audit event. */
   public record AdminActivityResponse(

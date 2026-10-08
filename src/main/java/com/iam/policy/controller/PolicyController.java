@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** Policy document CRUD and evaluation API. */
 @RestController
-@RequestMapping("/api/v1/policies")
+@RequestMapping("/api/v1/allowPolicies")
 public class PolicyController {
 
   private final PolicyService policyService;
@@ -43,7 +43,7 @@ public class PolicyController {
    */
   @PostMapping
   @PreAuthorize("hasRole('IAM_ADMIN')")
-  public ResponseEntity<PolicyResponse> create(@RequestBody CreatePolicyRequest request) {
+  public ResponseEntity<AllowPolicyResponse> createAllowPolicy(@RequestBody CreatePolicyRequest request) {
     AllowPolicy policy =
         policyService.createAllowPolicy(
             new CreatePolicyCommand(
@@ -51,7 +51,7 @@ public class PolicyController {
                 request.statements().stream()
                     .map(s -> new StatementInput(s.effect(), s.actions(), s.resources()))
                     .toList()));
-    return ResponseEntity.status(HttpStatus.CREATED).body(PolicyResponse.from(policy));
+    return ResponseEntity.status(HttpStatus.CREATED).body(AllowPolicyResponse.from(policy));
   }
 
   /**
@@ -61,8 +61,8 @@ public class PolicyController {
    */
   @GetMapping
   @PreAuthorize("hasAnyRole('IAM_ADMIN', 'IAM_AUDITOR')")
-  public List<PolicyResponse> list() {
-    return policyService.findAll().stream().map(PolicyResponse::from).toList();
+  public List<AllowPolicyResponse> list() {
+    return policyService.findAll().stream().map(AllowPolicyResponse::from).toList();
   }
 
   /**
@@ -72,10 +72,10 @@ public class PolicyController {
    * @param request attachment payload
    * @return created attachment
    */
-  @PostMapping("/{policy}:attach")
+  @PostMapping("/{allowPolicy}:createPolicyBinding")
   @PreAuthorize("hasRole('IAM_ADMIN')")
-  public PolicyBindingResponse attach(
-      @PathVariable String policy, @RequestBody AttachPolicyRequest request) {
+  public PolicyBindingResponse createPolicyBinding(
+      @PathVariable("allowPolicy") String policy, @RequestBody AttachPolicyRequest request) {
     PolicyBinding attachment =
         policyService.createPolicyBinding(policy, new ResourceName(request.principalArn()));
     return new PolicyBindingResponse(attachment.getId(), attachment.getPrincipalArn().value());
@@ -115,9 +115,9 @@ public class PolicyController {
       String principalId, String principalArn, String action, String resource) {}
 
   /** Policy document summary. */
-  public record PolicyResponse(String id, String name) {
-    static PolicyResponse from(AllowPolicy policy) {
-      return new PolicyResponse(policy.getId(), policy.getName());
+  public record AllowPolicyResponse(String id, String name) {
+    static AllowPolicyResponse from(AllowPolicy policy) {
+      return new AllowPolicyResponse(policy.getId(), policy.getName());
     }
   }
 

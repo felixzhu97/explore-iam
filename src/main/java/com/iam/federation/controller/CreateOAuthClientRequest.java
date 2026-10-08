@@ -3,7 +3,7 @@ package com.iam.federation.controller;
 import java.util.List;
 
 /** Request body for registering a new OIDC client. */
-public record RegisterClientRequest(
+public record CreateOAuthClientRequest(
     String clientName,
     List<String> redirectUris,
     List<String> postLogoutRedirectUris,

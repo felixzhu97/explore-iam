@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** STS AssumeRole API. */
 @RestController
-@RequestMapping("/api/v1/sts")
+@RequestMapping("/api/v1/shortLivedCredentials")
 public class StsController {
 
   private final ShortLivedCredentialService shortLivedCredentialService;
@@ -31,9 +31,9 @@ public class StsController {
    * @param request assume-role payload
    * @return access token and session metadata
    */
-  @PostMapping("/assume-role")
+  @PostMapping
   @PreAuthorize("isAuthenticated()")
-  public AssumeRoleResponse assumeRole(@RequestBody AssumeRoleRequest request) {
+  public AssumeRoleResponse createShortLivedCredential(@RequestBody AssumeRoleRequest request) {
     AssumeRoleResult result =
         shortLivedCredentialService.createShortLivedCredential(
             new AssumeRoleCommand(request.roleArn(), request.sessionName()));
