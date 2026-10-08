@@ -1,6 +1,6 @@
 package com.iam.identity.service;
 
-import com.iam.audit.service.ManagementAuditRecorder;
+import com.iam.audit.service.AdminActivityRecorder;
 import com.iam.identity.domain.model.Group;
 import com.iam.identity.domain.repository.GroupRepository;
 import java.util.List;
@@ -15,18 +15,18 @@ import org.springframework.web.server.ResponseStatusException;
 public class GroupService {
 
   private final GroupRepository groupRepository;
-  private final ManagementAuditRecorder managementAuditRecorder;
+  private final AdminActivityRecorder adminActivityRecorder;
 
   /**
    * Creates the group service.
    *
    * @param groupRepository group repository
-   * @param managementAuditRecorder management audit recorder
+   * @param adminActivityRecorder management audit recorder
    */
   public GroupService(
-      GroupRepository groupRepository, ManagementAuditRecorder managementAuditRecorder) {
+      GroupRepository groupRepository, AdminActivityRecorder adminActivityRecorder) {
     this.groupRepository = groupRepository;
-    this.managementAuditRecorder = managementAuditRecorder;
+    this.adminActivityRecorder = adminActivityRecorder;
   }
 
   /**
@@ -59,7 +59,7 @@ public class GroupService {
   @Transactional
   public Group create(String name) {
     Group group = groupRepository.save(Group.create(name));
-    managementAuditRecorder.recordSuccess("identity:CreateGroup", "Group", group.getId());
+    adminActivityRecorder.recordSuccess("identity:CreateGroup", "Group", group.getId());
     return group;
   }
 
@@ -74,7 +74,7 @@ public class GroupService {
     Group group = get(groupId);
     group.addMember(userId);
     groupRepository.save(group);
-    managementAuditRecorder.recordSuccess("identity:AddGroupMember", "Group", groupId);
+    adminActivityRecorder.recordSuccess("identity:AddGroupMember", "Group", groupId);
   }
 
   /**
@@ -88,7 +88,7 @@ public class GroupService {
     Group group = get(groupId);
     group.removeMember(userId);
     groupRepository.save(group);
-    managementAuditRecorder.recordSuccess("identity:RemoveGroupMember", "Group", groupId);
+    adminActivityRecorder.recordSuccess("identity:RemoveGroupMember", "Group", groupId);
   }
 
   /**
@@ -103,6 +103,6 @@ public class GroupService {
       throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "group still has members");
     }
     groupRepository.delete(group);
-    managementAuditRecorder.recordSuccess("identity:DeleteGroup", "Group", groupId);
+    adminActivityRecorder.recordSuccess("identity:DeleteGroup", "Group", groupId);
   }
 }

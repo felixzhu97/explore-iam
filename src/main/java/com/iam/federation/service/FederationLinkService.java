@@ -1,9 +1,9 @@
 package com.iam.federation.service;
 
-import com.iam.federation.domain.model.FederatedIdentityLink;
-import com.iam.federation.domain.repository.FederatedIdentityLinkRepository;
-import com.iam.identity.domain.model.IamUser;
-import com.iam.identity.domain.repository.IamUserRepository;
+import com.iam.federation.domain.model.FederatedIdentity;
+import com.iam.federation.domain.repository.FederatedIdentityRepository;
+import com.iam.identity.domain.model.User;
+import com.iam.identity.domain.repository.UserRepository;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,19 +13,19 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class FederationLinkService {
 
-  private final FederatedIdentityLinkRepository linkRepository;
-  private final IamUserRepository iamUserRepository;
+  private final FederatedIdentityRepository linkRepository;
+  private final UserRepository userRepository;
 
   /**
    * Creates the federation link service.
    *
    * @param linkRepository federated identity link repository
-   * @param iamUserRepository IAM user repository
+   * @param userRepository IAM user repository
    */
   public FederationLinkService(
-      FederatedIdentityLinkRepository linkRepository, IamUserRepository iamUserRepository) {
+      FederatedIdentityRepository linkRepository, UserRepository userRepository) {
     this.linkRepository = linkRepository;
-    this.iamUserRepository = iamUserRepository;
+    this.userRepository = userRepository;
   }
 
   /**
@@ -37,23 +37,23 @@ public class FederationLinkService {
    * @return local IAM user
    */
   @Transactional
-  public IamUser resolveOrProvision(String provider, String subject, String email) {
-    Optional<FederatedIdentityLink> existing =
+  public User resolveOrProvision(String provider, String subject, String email) {
+    Optional<FederatedIdentity> existing =
         linkRepository.findByProviderAndExternalSubject(provider, subject);
     if (existing.isPresent()) {
-      return iamUserRepository
+      return userRepository
           .findById(existing.get().linkedUserId())
           .orElseThrow(() -> new IllegalStateException("linked user missing"));
     }
     String username = provider + ":" + subject;
-    IamUser user =
-        iamUserRepository
+    User user =
+        userRepository
             .findByUsername(username)
             .orElseGet(
                 () ->
-                    iamUserRepository.save(
-                        IamUser.createForFederatedLogin(provider, subject, email)));
-    linkRepository.save(FederatedIdentityLink.create(user.getId(), provider, subject));
+                    userRepository.save(
+                        User.createForFederatedLogin(provider, subject, email)));
+    linkRepository.save(FederatedIdentity.create(user.getId(), provider, subject));
     return user;
   }
 }

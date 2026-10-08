@@ -1,10 +1,10 @@
 package com.iam.identity.infra.config;
 
-import com.iam.identity.domain.model.IamUser;
+import com.iam.identity.domain.model.ImpersonationPolicy;
 import com.iam.identity.domain.model.Role;
-import com.iam.identity.domain.model.TrustPolicyDocument;
-import com.iam.identity.domain.repository.IamUserRepository;
+import com.iam.identity.domain.model.User;
 import com.iam.identity.domain.repository.RoleRepository;
+import com.iam.identity.domain.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -32,7 +32,7 @@ public class IdentityBootstrapConfig {
 
   @Bean
   ApplicationRunner seedDemoUser(
-      IamUserRepository userRepository,
+      UserRepository userRepository,
       RoleRepository roleRepository,
       PasswordEncoder passwordEncoder,
       DemoUserProperties properties,
@@ -46,7 +46,7 @@ public class IdentityBootstrapConfig {
   }
 
   private static void seedDemoUserInTransaction(
-      IamUserRepository userRepository,
+      UserRepository userRepository,
       RoleRepository roleRepository,
       PasswordEncoder passwordEncoder,
       DemoUserProperties properties) {
@@ -54,17 +54,17 @@ public class IdentityBootstrapConfig {
     if (!properties.isEnabled()) {
       return;
     }
-    IamUser user =
+    User user =
         userRepository
             .findByUsername(properties.getUsername())
             .orElseGet(
                 () -> {
-                  IamUser created =
-                      IamUser.create(
+                  User created =
+                      User.create(
                           properties.getUsername(),
                           properties.getEmail(),
                           passwordEncoder.encode(properties.getPassword()));
-                  IamUser saved = userRepository.save(created);
+                  User saved = userRepository.save(created);
                   log.info("Seeded demo IAM User '{}'", properties.getUsername());
                   return saved;
                 });
@@ -80,7 +80,7 @@ public class IdentityBootstrapConfig {
             () -> {
               Role created =
                   roleRepository.save(
-                      Role.create(IAM_ADMIN_ROLE, TrustPolicyDocument.allowAll()));
+                      Role.create(IAM_ADMIN_ROLE, ImpersonationPolicy.allowAll()));
               log.info("Seeded IAM role '{}'", IAM_ADMIN_ROLE);
               return created;
             });

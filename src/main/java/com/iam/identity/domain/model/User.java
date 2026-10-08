@@ -1,0 +1,196 @@
+package com.iam.identity.domain.model;
+
+import com.iam.common.domain.base.AbstractEntity;
+import com.iam.common.domain.base.DomainStrings;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+/**
+ * Long-lived IAM User identity used for local form login and OIDC subject mapping.
+ *
+ * <p>Table name is explicit because {@code user} is a reserved SQL word.
+ */
+@Entity
+@Table(name = "directory_user")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
+public class User extends AbstractEntity {
+
+  private static final String FEDERATED_NO_PASSWORD = "{noop}federated-no-password";
+
+  @NotBlank
+  @Size(max = 128)
+  @Column(nullable = false, unique = true, length = 128)
+  private String username;
+
+  @Email
+  @Size(max = 320)
+  @Column(length = 320)
+  private String email;
+
+  @Getter(AccessLevel.NONE)
+  @NotBlank
+  @Size(max = 255)
+  @Column(nullable = false, length = 255)
+  private String passwordHash;
+
+  @Getter(AccessLevel.NONE)
+  @Column(nullable = false)
+  private boolean enabled;
+
+  @Getter(AccessLevel.NONE)
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private final List<RoleBinding> roleAssignments = new ArrayList<>();
+
+  private User(
+      String id,
+      String username,
+      String email,
+      String passwordHash,
+      boolean enabled,
+      Instant createdAt,
+      Instant updatedAt) {
+    super(id, createdAt, updatedAt);
+    this.username = DomainStrings.requireNonBlank(username, "username");
+    this.email = email;
+    this.passwordHash = requirePasswordHash(passwordHash);
+    this.enabled = enabled;
+  }
+
+  /**
+   * Creates a new enabled IAM user.
+   *
+   * @param username unique login name
+   * @param email contact email
+   * @param passwordHash encoded password
+   * @return new aggregate
+   */
+  public static User create(String username, String email, String passwordHash) {
+    Instant now = Instant.now();
+    return new User(
+        UUID.randomUUID().toString(), username, email, passwordHash, true, now, now);
+  }
+
+  /**
+   * Creates a federated-login user with a placeholder password hash.
+   *
+   * @param provider external identity provider id
+   * @param subject external subject identifier
+   * @param email optional email from the IdP
+   * @return new aggregate
+   */
+  public static User createForFederatedLogin(
+      String provider, String subject, String email) {
+    String username =
+        DomainStrings.requireNonBlank(provider, "provider")
+            + ":"
+            + DomainStrings.requireNonBlank(subject, "subject");
+    return create(username, email, FEDERATED_NO_PASSWORD);
+  }
+
+  /** Disables the user so form login is rejected. */
+  public void disable() {
+    this.enabled = false;
+    touch();
+  }
+
+  /** Re-enables the user for form login. */
+  public void enable() {
+    this.enabled = true;
+    touch();
+  }
+
+  /**
+   * Replaces the encoded password hash (operator reset).
+   *
+   * @param passwordHash new encoded password
+   */
+  public void resetPassword(String passwordHash) {
+    this.passwordHash = requirePasswordHash(passwordHash);
+    touch();
+  }
+
+  /**
+   * Removes a role assignment when present.
+   *
+   * @param roleId role id
+   */
+  public void unassignRole(String roleId) {
+    String normalized = DomainStrings.requireNonBlank(roleId, "roleId");
+    if (roleAssignments.removeIf(assignment -> assignment.roleId().equals(normalized))) {
+      touch();
+    }
+  }
+
+  /**
+   * Updates the user's email address.
+   *
+   * @param email new email
+   */
+  public void changeEmail(String email) {
+    this.email = email;
+    touch();
+  }
+
+  /**
+   * Assigns a role when not already assigned.
+   *
+   * @param roleId role id
+   */
+  public void assignRole(String roleId) {
+    String normalized = DomainStrings.requireNonBlank(roleId, "roleId");
+    if (hasRole(normalized)) {
+      return;
+    }
+    roleAssignments.add(new RoleBinding(this, normalized));
+    touch();
+  }
+
+  /**
+   * Returns true when the role is assigned.
+   *
+   * @param roleId role id
+   * @return whether the role is assigned
+   */
+  public boolean hasRole(String roleId) {
+    return roleAssignments.stream().anyMatch(assignment -> assignment.roleId().equals(roleId));
+  }
+
+  /** Returns assigned role ids. */
+  public List<String> assignedRoleIds() {
+    return Collections.unmodifiableList(
+        roleAssignments.stream().map(RoleBinding::roleId).toList());
+  }
+
+  /**
+   * Returns the encoded credential for Spring Security authentication only.
+   *
+   * @return password hash suitable for {@code UserDetails#getPassword()}
+   */
+  public String encodedPasswordHash() {
+    return passwordHash;
+  }
+
+  /** Returns true when form login is permitted for this user. */
+  public boolean isLoginEnabled() {
+    return enabled;
+  }
+
+  private static String requirePasswordHash(String passwordHash) {
+    return DomainStrings.requireNonBlank(passwordHash, "passwordHash");
+  }
+}

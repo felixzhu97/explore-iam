@@ -1,7 +1,7 @@
 package com.iam.audit.controller;
 
-import com.iam.audit.domain.model.AuthorizationDecisionLog;
-import com.iam.audit.domain.model.ManagementEvent;
+import com.iam.audit.domain.model.AdminActivity;
+import com.iam.audit.domain.model.DataAccessLog;
 import com.iam.audit.service.AuditService;
 import com.iam.audit.service.AuditService.AuditQueryResult;
 import java.util.List;
@@ -39,17 +39,17 @@ public class AuditController {
       @RequestParam(name = "page_size", defaultValue = "50") int pageSize) {
     AuditQueryResult result = auditService.query(Math.min(pageSize, 200));
     return new AuditEventsResponse(
-        result.managementEvents().stream().map(ManagementEventResponse::from).toList(),
-        result.authorizationDecisions().stream().map(AuthorizationDecisionResponse::from).toList());
+        result.managementEvents().stream().map(AdminActivityResponse::from).toList(),
+        result.authorizationDecisions().stream().map(AccessDecisionResponse::from).toList());
   }
 
   /** Combined management and authorization audit events. */
   public record AuditEventsResponse(
-      List<ManagementEventResponse> managementEvents,
-      List<AuthorizationDecisionResponse> authorizationDecisions) {}
+      List<AdminActivityResponse> managementEvents,
+      List<AccessDecisionResponse> authorizationDecisions) {}
 
   /** Management-plane audit event. */
-  public record ManagementEventResponse(
+  public record AdminActivityResponse(
       String id,
       String actor,
       String action,
@@ -57,8 +57,8 @@ public class AuditController {
       String targetId,
       String outcome,
       String occurredAt) {
-    static ManagementEventResponse from(ManagementEvent event) {
-      return new ManagementEventResponse(
+    static AdminActivityResponse from(AdminActivity event) {
+      return new AdminActivityResponse(
           event.getId(),
           event.getActor().getValue(),
           event.getAction(),
@@ -70,7 +70,7 @@ public class AuditController {
   }
 
   /** Authorization decision audit event. */
-  public record AuthorizationDecisionResponse(
+  public record AccessDecisionResponse(
       String id,
       String principalId,
       String action,
@@ -78,8 +78,8 @@ public class AuditController {
       String effect,
       String reasonCode,
       String occurredAt) {
-    static AuthorizationDecisionResponse from(AuthorizationDecisionLog log) {
-      return new AuthorizationDecisionResponse(
+    static AccessDecisionResponse from(DataAccessLog log) {
+      return new AccessDecisionResponse(
           log.getId(),
           log.getPrincipalId().value(),
           log.getAction().value(),

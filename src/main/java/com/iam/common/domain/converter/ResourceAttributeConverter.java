@@ -1,6 +1,6 @@
 package com.iam.common.domain.converter;
 
-import com.iam.common.domain.vo.Resource;
+import com.iam.common.domain.model.Resource;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 

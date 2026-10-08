@@ -1,8 +1,8 @@
 package com.iam.policy.infra.persistence;
 
-import com.iam.common.domain.vo.Arn;
-import com.iam.policy.domain.model.PolicyAttachment;
-import com.iam.policy.domain.model.PolicyDocument;
+import com.iam.common.domain.model.ResourceName;
+import com.iam.policy.domain.model.AllowPolicy;
+import com.iam.policy.domain.model.PolicyBinding;
 import com.iam.policy.domain.repository.PolicyRepository;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,40 +12,40 @@ import org.springframework.stereotype.Repository;
 @Repository
 class JpaPolicyRepository implements PolicyRepository {
 
-  private final SpringDataPolicyDocumentRepository documentRepository;
-  private final SpringDataPolicyAttachmentRepository attachmentRepository;
+  private final SpringDataAllowPolicyRepository documentRepository;
+  private final SpringDataPolicyBindingRepository attachmentRepository;
 
   JpaPolicyRepository(
-      SpringDataPolicyDocumentRepository documentRepository,
-      SpringDataPolicyAttachmentRepository attachmentRepository) {
+      SpringDataAllowPolicyRepository documentRepository,
+      SpringDataPolicyBindingRepository attachmentRepository) {
     this.documentRepository = documentRepository;
     this.attachmentRepository = attachmentRepository;
   }
 
   @Override
-  public PolicyDocument save(PolicyDocument policy) {
+  public AllowPolicy save(AllowPolicy policy) {
     return documentRepository.save(policy);
   }
 
   @Override
-  public Optional<PolicyDocument> findById(String id) {
+  public Optional<AllowPolicy> findById(String id) {
     return documentRepository.findById(id);
   }
 
   @Override
-  public List<PolicyDocument> findAll() {
+  public List<AllowPolicy> findAll() {
     return documentRepository.findAll();
   }
 
   @Override
-  public PolicyAttachment saveAttachment(PolicyAttachment attachment) {
+  public PolicyBinding saveAttachment(PolicyBinding attachment) {
     return attachmentRepository.save(attachment);
   }
 
   @Override
-  public List<PolicyDocument> findAttachedToPrincipal(Arn principalArn) {
-    List<PolicyDocument> policies = new ArrayList<>();
-    for (PolicyAttachment attachment : attachmentRepository.findByPrincipalArn(principalArn)) {
+  public List<AllowPolicy> findAttachedToPrincipal(ResourceName principalArn) {
+    List<AllowPolicy> policies = new ArrayList<>();
+    for (PolicyBinding attachment : attachmentRepository.findByPrincipalArn(principalArn)) {
       findById(attachment.policyId()).ifPresent(policies::add);
     }
     return policies;

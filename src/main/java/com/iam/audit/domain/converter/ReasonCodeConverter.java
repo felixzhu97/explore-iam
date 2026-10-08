@@ -1,6 +1,6 @@
 package com.iam.audit.domain.converter;
 
-import com.iam.common.domain.vo.ReasonCode;
+import com.iam.common.domain.model.ReasonCode;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 

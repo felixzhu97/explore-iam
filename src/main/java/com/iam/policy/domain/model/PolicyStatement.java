@@ -1,8 +1,8 @@
 package com.iam.policy.domain.model;
 
-import com.iam.common.domain.vo.Action;
-import com.iam.common.domain.vo.Effect;
-import com.iam.common.domain.vo.Resource;
+import com.iam.common.domain.model.Effect;
+import com.iam.common.domain.model.Permission;
+import com.iam.common.domain.model.Resource;
 import java.util.Objects;
 import java.util.Set;
 
@@ -10,10 +10,10 @@ import java.util.Set;
 public class PolicyStatement {
 
   private final Effect effect;
-  private final Set<Action> actions;
+  private final Set<Permission> actions;
   private final Set<Resource> resources;
 
-  private PolicyStatement(Effect effect, Set<Action> actions, Set<Resource> resources) {
+  private PolicyStatement(Effect effect, Set<Permission> actions, Set<Resource> resources) {
     this.effect = Objects.requireNonNull(effect, "effect");
     this.actions = Set.copyOf(Objects.requireNonNull(actions, "actions"));
     this.resources = Set.copyOf(Objects.requireNonNull(resources, "resources"));
@@ -33,7 +33,8 @@ public class PolicyStatement {
    * @param resources target resources
    * @return statement value object
    */
-  public static PolicyStatement of(Effect effect, Set<Action> actions, Set<Resource> resources) {
+  public static PolicyStatement of(
+      Effect effect, Set<Permission> actions, Set<Resource> resources) {
     return new PolicyStatement(effect, actions, resources);
   }
 
@@ -43,7 +44,7 @@ public class PolicyStatement {
   }
 
   /** Returns the actions governed by this statement. */
-  public Set<Action> actions() {
+  public Set<Permission> actions() {
     return actions;
   }
 
@@ -59,11 +60,11 @@ public class PolicyStatement {
    * @param resource requested resource
    * @return true when both action and resource match
    */
-  public boolean matches(Action action, Resource resource) {
+  public boolean matches(Permission action, Resource resource) {
     return matchesAction(action) && matchesResource(resource);
   }
 
-  private boolean matchesAction(Action action) {
+  private boolean matchesAction(Permission action) {
     return actions.stream()
         .anyMatch(a -> a.value().equals(action.value()) || a.value().equals("*"));
   }

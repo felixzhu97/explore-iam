@@ -1,17 +1,17 @@
 package com.iam.policy.service;
 
-import com.iam.audit.domain.model.AuthorizationDecisionLog;
+import com.iam.audit.domain.model.DataAccessLog;
+import com.iam.audit.service.AdminActivityRecorder;
 import com.iam.audit.service.AuditService;
-import com.iam.audit.service.ManagementAuditRecorder;
-import com.iam.common.domain.vo.Action;
-import com.iam.common.domain.vo.Arn;
-import com.iam.common.domain.vo.Effect;
-import com.iam.common.domain.vo.PrincipalId;
-import com.iam.common.domain.vo.Resource;
-import com.iam.policy.domain.model.AuthorizationDecision;
-import com.iam.policy.domain.model.EvaluationContext;
-import com.iam.policy.domain.model.PolicyAttachment;
-import com.iam.policy.domain.model.PolicyDocument;
+import com.iam.common.domain.model.Effect;
+import com.iam.common.domain.model.Permission;
+import com.iam.common.domain.model.PrincipalId;
+import com.iam.common.domain.model.Resource;
+import com.iam.common.domain.model.ResourceName;
+import com.iam.policy.domain.model.AccessDecision;
+import com.iam.policy.domain.model.AccessTuple;
+import com.iam.policy.domain.model.AllowPolicy;
+import com.iam.policy.domain.model.PolicyBinding;
 import com.iam.policy.domain.model.PolicyStatement;
 import com.iam.policy.domain.repository.PolicyRepository;
 import com.iam.policy.domain.service.PolicyEngine;
@@ -29,7 +29,7 @@ public class PolicyService {
   private final PolicyRepository policyRepository;
   private final PolicyEngine policyEngine;
   private final AuditService auditService;
-  private final ManagementAuditRecorder managementAuditRecorder;
+  private final AdminActivityRecorder adminActivityRecorder;
 
   /**
    * Creates the policy service.
@@ -37,17 +37,17 @@ public class PolicyService {
    * @param policyRepository policy repository
    * @param policyEngine policy evaluation engine
    * @param auditService audit application service
-   * @param managementAuditRecorder management audit recorder
+   * @param adminActivityRecorder management audit recorder
    */
   public PolicyService(
       PolicyRepository policyRepository,
       PolicyEngine policyEngine,
       AuditService auditService,
-      ManagementAuditRecorder managementAuditRecorder) {
+      AdminActivityRecorder adminActivityRecorder) {
     this.policyRepository = policyRepository;
     this.policyEngine = policyEngine;
     this.auditService = auditService;
-    this.managementAuditRecorder = managementAuditRecorder;
+    this.adminActivityRecorder = adminActivityRecorder;
   }
 
   /**
@@ -55,7 +55,7 @@ public class PolicyService {
    *
    * @return policy list
    */
-  public List<PolicyDocument> findAll() {
+  public List<AllowPolicy> findAll() {
     return policyRepository.findAll();
   }
 
@@ -66,7 +66,7 @@ public class PolicyService {
    * @return saved policy
    */
   @Transactional
-  public PolicyDocument create(CreatePolicyCommand command) {
+  public AllowPolicy create(CreatePolicyCommand command) {
     Objects.requireNonNull(command, "command");
     List<PolicyStatement> statements =
         command.statements().stream()
@@ -74,12 +74,12 @@ public class PolicyService {
                 s ->
                     PolicyStatement.of(
                         Effect.valueOf(s.effect()),
-                        s.actions().stream().map(Action::new).collect(Collectors.toSet()),
+                        s.actions().stream().map(Permission::new).collect(Collectors.toSet()),
                         s.resources().stream().map(Resource::new).collect(Collectors.toSet())))
             .toList();
-    PolicyDocument policy =
-        policyRepository.save(PolicyDocument.create(command.name(), statements));
-    managementAuditRecorder.recordSuccess("policy:CreatePolicy", "PolicyDocument", policy.getId());
+    AllowPolicy policy =
+        policyRepository.save(AllowPolicy.create(command.name(), statements));
+    adminActivityRecorder.recordSuccess("policy:CreatePolicy", "AllowPolicy", policy.getId());
     return policy;
   }
 
@@ -91,14 +91,14 @@ public class PolicyService {
    * @return attachment
    */
   @Transactional
-  public PolicyAttachment attach(String policyId, Arn principalArn) {
+  public PolicyBinding attach(String policyId, ResourceName principalArn) {
     policyRepository
         .findById(policyId)
         .orElseThrow(() -> new IllegalArgumentException("Policy not found: " + policyId));
-    PolicyAttachment attachment =
-        policyRepository.saveAttachment(PolicyAttachment.attach(policyId, principalArn));
-    managementAuditRecorder.recordSuccess(
-        "policy:AttachPolicy", "PolicyAttachment", attachment.getId());
+    PolicyBinding attachment =
+        policyRepository.saveAttachment(PolicyBinding.attach(policyId, principalArn));
+    adminActivityRecorder.recordSuccess(
+        "policy:AttachPolicy", "PolicyBinding", attachment.getId());
     return attachment;
   }
 
@@ -108,19 +108,19 @@ public class PolicyService {
    * @param command evaluation input
    * @return authorization decision
    */
-  public AuthorizationDecision evaluate(EvaluateCommand command) {
+  public AccessDecision evaluate(EvaluateCommand command) {
     Objects.requireNonNull(command, "command");
-    Arn principalArn = new Arn(command.principalArn());
-    EvaluationContext context =
-        new EvaluationContext(
+    ResourceName principalArn = new ResourceName(command.principalArn());
+    AccessTuple context =
+        new AccessTuple(
             new PrincipalId(command.principalId()),
-            new Action(command.action()),
+            new Permission(command.action()),
             new Resource(command.resource()));
-    AuthorizationDecision decision =
+    AccessDecision decision =
         policyEngine.evaluate(
             context, policyRepository.findAttachedToPrincipal(principalArn));
     auditService.save(
-        AuthorizationDecisionLog.fromEvaluation(
+        DataAccessLog.fromEvaluation(
             context.principalId(),
             context.action(),
             context.resource(),

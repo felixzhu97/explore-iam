@@ -1,6 +1,6 @@
 package com.iam.identity.controller;
 
-import com.iam.identity.domain.model.IamUser;
+import com.iam.identity.domain.model.User;
 import com.iam.identity.service.UserService;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -69,7 +69,7 @@ public class UserController {
   @PostMapping
   @PreAuthorize("hasRole('IAM_ADMIN')")
   public ResponseEntity<UserResponse> create(@RequestBody CreateUserRequest request) {
-    IamUser created =
+    User created =
         userService.create(request.username(), request.email(), request.password());
     return ResponseEntity.status(HttpStatus.CREATED).body(UserResponse.from(created));
   }
@@ -124,7 +124,7 @@ public class UserController {
   /** IAM user resource. */
   public record UserResponse(
       String name, String id, String username, String email, boolean enabled) {
-    static UserResponse from(IamUser user) {
+    static UserResponse from(User user) {
       return new UserResponse(
           "users/" + user.getId(),
           user.getId(),

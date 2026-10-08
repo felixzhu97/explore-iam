@@ -300,7 +300,7 @@
     </module>
     <module name="AbbreviationAsWordInName">
       <property name="ignoreFinal" value="false"/>
-      <property name="allowedAbbreviationLength" value="0"/>
+      <property name="allowedAbbreviationLength" value="1"/>
       <property name="allowedAbbreviations" value="OA,OAUTH,OIDC,IAM,URI,URL,API,JWT,CSRF,JDBC,JPA,SPA,ID"/>
       <property name="tokens"
                value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF, ANNOTATION_DEF, ANNOTATION_FIELD_DEF,

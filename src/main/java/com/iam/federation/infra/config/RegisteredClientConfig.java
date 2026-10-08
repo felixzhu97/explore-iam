@@ -1,6 +1,6 @@
 package com.iam.federation.infra.config;
 
-import com.iam.federation.infra.persistence.JdbcOidcClientRepository;
+import com.iam.federation.infra.persistence.JdbcOAuthClientRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
@@ -11,7 +11,7 @@ public class RegisteredClientConfig {
 
   @Bean
   RegisteredClientRepository registeredClientRepository(
-      JdbcOidcClientRepository oidcClientRepository) {
-    return oidcClientRepository.getRegisteredClientRepository();
+      JdbcOAuthClientRepository oauthClientRepository) {
+    return oauthClientRepository.getRegisteredClientRepository();
   }
 }

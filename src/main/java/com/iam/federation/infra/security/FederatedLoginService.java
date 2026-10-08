@@ -2,7 +2,7 @@ package com.iam.federation.infra.security;
 
 import com.iam.common.security.SecurityRoles;
 import com.iam.federation.service.FederationLinkService;
-import com.iam.identity.domain.model.IamUser;
+import com.iam.identity.domain.model.User;
 import com.iam.identity.domain.repository.RoleRepository;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,11 +44,11 @@ public class FederatedLoginService extends DefaultOAuth2UserService {
     String subject = oauthUser.getName();
     String email =
         Optional.ofNullable(oauthUser.getAttribute("email")).map(Object::toString).orElse(null);
-    IamUser iamUser = federationLinkService.resolveOrProvision(provider, subject, email);
+    User user = federationLinkService.resolveOrProvision(provider, subject, email);
     List<SimpleGrantedAuthority> authorities = new ArrayList<>();
     authorities.add(new SimpleGrantedAuthority(SecurityRoles.USER));
     roleRepository
-        .findByUserId(iamUser.getId())
+        .findByUserId(user.getId())
         .forEach(role -> authorities.add(new SimpleGrantedAuthority(role.authority())));
     return new DefaultOAuth2User(authorities, oauthUser.getAttributes(), "sub");
   }
