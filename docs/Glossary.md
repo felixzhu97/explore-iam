@@ -23,35 +23,9 @@ This document defines the project **Ubiquitous Language**. English terms are the
 | Frontend i18n              | Map English preferred terms to localized UI copy                 |
 | Cross-team communication   | Lead with English; add Chinese when needed                       |
 
-### Naming | 命名
-
-Classes (entities, value objects, aggregates, services, DTOs) are nouns for
-what the thing is. Fields, parameters, and locals are plain nouns for what
-they hold. Methods are a verb plus a noun: `createUser`, `createOAuthClient`,
-`matchesPermission`, `recordAdminActivity`. The same concept uses one word in
-Java, the database (`snake_case`), and the web client. Framework names stay as
-the framework defines them (`save`, `findById`, Lombok `getX()`).
-
-**Preferred vocabulary** follows [Google Cloud IAM](https://cloud.google.com/iam/docs/overview)
-and [OAuth clients](https://support.google.com/cloud/answer/15549257), then
-OAuth 2.0 / OIDC. Value objects live in `domain.model` (no `domain.vo`).
-
-| Concept | Canonical name | Also |
-| --- | --- | --- |
-| User account principal | `User` | was `IamUser`; table `directory_user` |
-| Role binding | `RoleBinding` | was `UserRoleAssignment` |
-| Short-lived credentials | `ShortLivedCredential` | was `AssumedRoleSession` |
-| OAuth client | `OAuthClient` | was `OidcClient` |
-| Federated identity | `FederatedIdentity` | was `FederatedIdentityLink` |
-| Allow policy | `AllowPolicy` | was `PolicyDocument` |
-| Policy binding | `PolicyBinding` | was `PolicyAttachment` |
-| Permission (catalog + statement) | `Permission` | was `PermissionPoint` / `Action` |
-| Full resource name | `ResourceName` | was `Arn` |
-| Access tuple | `AccessTuple` | was `EvaluationContext` |
-| Access decision | `AccessDecision` | was `AuthorizationDecision` |
-| Data access audit | `DataAccessLog` | was `AuthorizationDecisionLog` |
-| Admin activity audit | `AdminActivity` | was `ManagementEvent` |
-| Impersonation trust policy | `ImpersonationPolicy` | was `TrustPolicyDocument` |
+Preferred vocabulary follows [Google Cloud IAM](https://cloud.google.com/iam/docs/overview)
+and [OAuth clients](https://support.google.com/cloud/answer/15549257). Value
+objects live in `domain.model` (no `domain.vo`).
 
 ---
 
