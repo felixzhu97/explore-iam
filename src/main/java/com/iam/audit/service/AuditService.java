@@ -1,7 +1,7 @@
 package com.iam.audit.service;
 
-import com.iam.audit.domain.model.AuthorizationDecisionLog;
-import com.iam.audit.domain.model.ManagementEvent;
+import com.iam.audit.domain.model.AdminActivity;
+import com.iam.audit.domain.model.DataAccessLog;
 import com.iam.audit.domain.repository.AuditRepository;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -29,8 +29,8 @@ public class AuditService {
    * @return stored aggregate
    */
   @Transactional
-  public ManagementEvent save(ManagementEvent event) {
-    return auditRepository.saveManagementEvent(event);
+  public AdminActivity save(AdminActivity event) {
+    return auditRepository.saveAdminActivity(event);
   }
 
   /**
@@ -40,8 +40,8 @@ public class AuditService {
    * @return stored aggregate
    */
   @Transactional
-  public AuthorizationDecisionLog save(AuthorizationDecisionLog log) {
-    return auditRepository.saveAuthorizationDecision(log);
+  public DataAccessLog save(DataAccessLog log) {
+    return auditRepository.saveAccessDecision(log);
   }
 
   /**
@@ -53,12 +53,12 @@ public class AuditService {
   @Transactional(readOnly = true)
   public AuditQueryResult query(int limit) {
     return new AuditQueryResult(
-        auditRepository.findManagementEvents(limit),
-        auditRepository.findAuthorizationDecisions(limit));
+        auditRepository.findAdminActivities(limit),
+        auditRepository.findAccessDecisions(limit));
   }
 
   /** Combined audit query result. */
   public record AuditQueryResult(
-      List<ManagementEvent> managementEvents,
-      List<AuthorizationDecisionLog> authorizationDecisions) {}
+      List<AdminActivity> managementEvents,
+      List<DataAccessLog> authorizationDecisions) {}
 }

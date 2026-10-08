@@ -1,10 +1,10 @@
 package com.iam.identity.service;
 
-import com.iam.audit.service.ManagementAuditRecorder;
-import com.iam.identity.domain.model.IamUser;
+import com.iam.audit.service.AdminActivityRecorder;
 import com.iam.identity.domain.model.Role;
-import com.iam.identity.domain.repository.IamUserRepository;
+import com.iam.identity.domain.model.User;
 import com.iam.identity.domain.repository.RoleRepository;
+import com.iam.identity.domain.repository.UserRepository;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -17,23 +17,23 @@ import org.springframework.web.server.ResponseStatusException;
 public class RoleService {
 
   private final RoleRepository roleRepository;
-  private final IamUserRepository iamUserRepository;
-  private final ManagementAuditRecorder managementAuditRecorder;
+  private final UserRepository userRepository;
+  private final AdminActivityRecorder adminActivityRecorder;
 
   /**
    * Creates the role service.
    *
    * @param roleRepository role repository
-   * @param iamUserRepository IAM user repository
-   * @param managementAuditRecorder management audit recorder
+   * @param userRepository IAM user repository
+   * @param adminActivityRecorder management audit recorder
    */
   public RoleService(
       RoleRepository roleRepository,
-      IamUserRepository iamUserRepository,
-      ManagementAuditRecorder managementAuditRecorder) {
+      UserRepository userRepository,
+      AdminActivityRecorder adminActivityRecorder) {
     this.roleRepository = roleRepository;
-    this.iamUserRepository = iamUserRepository;
-    this.managementAuditRecorder = managementAuditRecorder;
+    this.userRepository = userRepository;
+    this.adminActivityRecorder = adminActivityRecorder;
   }
 
   /**
@@ -55,7 +55,7 @@ public class RoleService {
   @Transactional
   public Role create(String name, String trustPolicyJson) {
     Role role = roleRepository.save(Role.create(name, trustPolicyJson));
-    managementAuditRecorder.recordSuccess("identity:CreateRole", "Role", role.getId());
+    adminActivityRecorder.recordSuccess("identity:CreateRole", "Role", role.getId());
     return role;
   }
 
@@ -70,13 +70,13 @@ public class RoleService {
     roleRepository
         .findById(roleId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "role not found"));
-    IamUser user =
-        iamUserRepository
+    User user =
+        userRepository
             .findById(userId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
     user.assignRole(roleId);
-    iamUserRepository.save(user);
-    managementAuditRecorder.recordSuccess("identity:AssignRole", "User", userId);
+    userRepository.save(user);
+    adminActivityRecorder.recordSuccess("identity:AssignRole", "User", userId);
   }
 
   /**
@@ -90,12 +90,12 @@ public class RoleService {
     roleRepository
         .findById(roleId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "role not found"));
-    IamUser user =
-        iamUserRepository
+    User user =
+        userRepository
             .findById(userId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
     user.unassignRole(roleId);
-    iamUserRepository.save(user);
-    managementAuditRecorder.recordSuccess("identity:UnassignRole", "User", userId);
+    userRepository.save(user);
+    adminActivityRecorder.recordSuccess("identity:UnassignRole", "User", userId);
   }
 }

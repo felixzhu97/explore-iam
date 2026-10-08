@@ -1,10 +1,10 @@
 package com.iam.policy.domain.service;
 
-import com.iam.common.domain.vo.Effect;
-import com.iam.common.domain.vo.ReasonCode;
-import com.iam.policy.domain.model.AuthorizationDecision;
-import com.iam.policy.domain.model.EvaluationContext;
-import com.iam.policy.domain.model.PolicyDocument;
+import com.iam.common.domain.model.Effect;
+import com.iam.common.domain.model.ReasonCode;
+import com.iam.policy.domain.model.AccessDecision;
+import com.iam.policy.domain.model.AccessTuple;
+import com.iam.policy.domain.model.AllowPolicy;
 import com.iam.policy.domain.model.PolicyStatement;
 import java.util.List;
 
@@ -18,15 +18,15 @@ public class PolicyEngine {
    * @param policies policies attached to the principal
    * @return authorization decision
    */
-  public AuthorizationDecision evaluate(EvaluationContext context, List<PolicyDocument> policies) {
+  public AccessDecision evaluate(AccessTuple context, List<AllowPolicy> policies) {
     boolean allowMatched = false;
-    for (PolicyDocument policy : policies) {
+    for (AllowPolicy policy : policies) {
       for (PolicyStatement statement : policy.statements()) {
         if (!statement.matches(context.action(), context.resource())) {
           continue;
         }
         if (statement.effect() == Effect.DENY) {
-          return new AuthorizationDecision(Effect.DENY, ReasonCode.EXPLICIT_DENY);
+          return new AccessDecision(Effect.DENY, ReasonCode.EXPLICIT_DENY);
         }
         if (statement.effect() == Effect.ALLOW) {
           allowMatched = true;
@@ -34,8 +34,8 @@ public class PolicyEngine {
       }
     }
     if (allowMatched) {
-      return new AuthorizationDecision(Effect.ALLOW, ReasonCode.EXPLICIT_ALLOW);
+      return new AccessDecision(Effect.ALLOW, ReasonCode.EXPLICIT_ALLOW);
     }
-    return new AuthorizationDecision(Effect.DENY, ReasonCode.IMPLICIT_DENY);
+    return new AccessDecision(Effect.DENY, ReasonCode.IMPLICIT_DENY);
   }
 }

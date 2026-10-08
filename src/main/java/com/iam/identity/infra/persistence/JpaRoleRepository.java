@@ -1,6 +1,6 @@
 package com.iam.identity.infra.persistence;
 
-import com.iam.common.domain.vo.Arn;
+import com.iam.common.domain.model.ResourceName;
 import com.iam.identity.domain.model.Role;
 import com.iam.identity.domain.repository.RoleRepository;
 import java.util.List;
@@ -23,7 +23,7 @@ class JpaRoleRepository implements RoleRepository {
 
   @Override
   public Optional<Role> findByArn(String arn) {
-    return roleRepository.findByArn(new Arn(arn));
+    return roleRepository.findByArn(new ResourceName(arn));
   }
 
   @Override

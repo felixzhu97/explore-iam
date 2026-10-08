@@ -1,6 +1,6 @@
 package com.iam.audit.infra;
 
-import com.iam.audit.domain.vo.AuditActor;
+import com.iam.audit.domain.model.AuditActor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 

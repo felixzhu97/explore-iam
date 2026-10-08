@@ -1,8 +1,8 @@
 package com.iam.identity.domain.model;
 
 import com.iam.common.domain.base.AbstractNamedEntity;
-import com.iam.common.domain.vo.Arn;
-import com.iam.identity.domain.converter.TrustPolicyDocumentConverter;
+import com.iam.common.domain.model.ResourceName;
+import com.iam.identity.domain.converter.ImpersonationPolicyConverter;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
@@ -27,18 +27,18 @@ public class Role extends AbstractNamedEntity {
       name = "value",
       column = @Column(name = "arn", nullable = false, unique = true, length = 512))
   @Valid
-  private Arn arn;
+  private ResourceName arn;
 
   @Getter(AccessLevel.NONE)
   @Column(columnDefinition = "clob")
-  @Convert(converter = TrustPolicyDocumentConverter.class)
-  private TrustPolicyDocument trustPolicyJson;
+  @Convert(converter = ImpersonationPolicyConverter.class)
+  private ImpersonationPolicy trustPolicyJson;
 
   private Role(
       String id,
       String name,
-      Arn arn,
-      TrustPolicyDocument trustPolicyJson,
+      ResourceName arn,
+      ImpersonationPolicy trustPolicyJson,
       Instant createdAt,
       Instant updatedAt) {
     super(id, name, createdAt, updatedAt);
@@ -53,11 +53,11 @@ public class Role extends AbstractNamedEntity {
    * @param trustPolicy optional trust policy JSON
    * @return new aggregate
    */
-  public static Role create(String name, TrustPolicyDocument trustPolicy) {
+  public static Role create(String name, ImpersonationPolicy trustPolicy) {
     Instant now = Instant.now();
     String slug = name.trim().toLowerCase().replace(' ', '-');
     return new Role(
-        UUID.randomUUID().toString(), name, Arn.role(slug), trustPolicy, now, now);
+        UUID.randomUUID().toString(), name, ResourceName.role(slug), trustPolicy, now, now);
   }
 
   /**
@@ -68,20 +68,20 @@ public class Role extends AbstractNamedEntity {
    * @return new aggregate
    */
   public static Role create(String name, String trustPolicyJson) {
-    TrustPolicyDocument trust =
+    ImpersonationPolicy trust =
         trustPolicyJson == null || trustPolicyJson.isBlank()
-            ? TrustPolicyDocument.allowAll()
-            : new TrustPolicyDocument(trustPolicyJson);
+            ? ImpersonationPolicy.allowAll()
+            : new ImpersonationPolicy(trustPolicyJson);
     return create(name, trust);
   }
 
   /** Returns this role's ARN. */
-  public Arn arn() {
+  public ResourceName arn() {
     return arn;
   }
 
   /** Returns the trust policy governing who may assume this role. */
-  public TrustPolicyDocument trustPolicy() {
+  public ImpersonationPolicy trustPolicy() {
     return trustPolicyJson;
   }
 

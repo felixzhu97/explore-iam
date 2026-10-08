@@ -1,8 +1,8 @@
 package com.iam.identity.service;
 
-import com.iam.audit.service.ManagementAuditRecorder;
-import com.iam.identity.domain.model.IamUser;
-import com.iam.identity.domain.repository.IamUserRepository;
+import com.iam.audit.service.AdminActivityRecorder;
+import com.iam.identity.domain.model.User;
+import com.iam.identity.domain.repository.UserRepository;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,23 +15,23 @@ import org.springframework.web.server.ResponseStatusException;
 @Transactional(readOnly = true)
 public class UserService {
 
-  private final IamUserRepository iamUserRepository;
-  private final ManagementAuditRecorder managementAuditRecorder;
+  private final UserRepository userRepository;
+  private final AdminActivityRecorder adminActivityRecorder;
   private final PasswordEncoder passwordEncoder;
 
   /**
    * Creates the user service.
    *
-   * @param iamUserRepository IAM user repository
-   * @param managementAuditRecorder management audit recorder
+   * @param userRepository IAM user repository
+   * @param adminActivityRecorder management audit recorder
    * @param passwordEncoder password encoder
    */
   public UserService(
-      IamUserRepository iamUserRepository,
-      ManagementAuditRecorder managementAuditRecorder,
+      UserRepository userRepository,
+      AdminActivityRecorder adminActivityRecorder,
       PasswordEncoder passwordEncoder) {
-    this.iamUserRepository = iamUserRepository;
-    this.managementAuditRecorder = managementAuditRecorder;
+    this.userRepository = userRepository;
+    this.adminActivityRecorder = adminActivityRecorder;
     this.passwordEncoder = passwordEncoder;
   }
 
@@ -40,8 +40,8 @@ public class UserService {
    *
    * @return user list
    */
-  public List<IamUser> findAll() {
-    return iamUserRepository.findAll();
+  public List<User> findAll() {
+    return userRepository.findAll();
   }
 
   /**
@@ -50,8 +50,8 @@ public class UserService {
    * @param userId internal user id
    * @return user
    */
-  public IamUser get(String userId) {
-    return iamUserRepository
+  public User get(String userId) {
+    return userRepository
         .findById(userId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
   }
@@ -65,14 +65,14 @@ public class UserService {
    * @return created user
    */
   @Transactional
-  public IamUser create(String username, String email, String password) {
-    if (iamUserRepository.findByUsername(username).isPresent()) {
+  public User create(String username, String email, String password) {
+    if (userRepository.findByUsername(username).isPresent()) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "username exists");
     }
-    IamUser user =
-        iamUserRepository.save(
-            IamUser.create(username, email, passwordEncoder.encode(password)));
-    managementAuditRecorder.recordSuccess("identity:CreateUser", "User", user.getId());
+    User user =
+        userRepository.save(
+            User.create(username, email, passwordEncoder.encode(password)));
+    adminActivityRecorder.recordSuccess("identity:CreateUser", "User", user.getId());
     return user;
   }
 
@@ -83,11 +83,11 @@ public class UserService {
    * @return updated user
    */
   @Transactional
-  public IamUser disable(String userId) {
-    IamUser user = get(userId);
+  public User disable(String userId) {
+    User user = get(userId);
     user.disable();
-    IamUser saved = iamUserRepository.save(user);
-    managementAuditRecorder.recordSuccess("identity:DisableUser", "User", userId);
+    User saved = userRepository.save(user);
+    adminActivityRecorder.recordSuccess("identity:DisableUser", "User", userId);
     return saved;
   }
 
@@ -98,11 +98,11 @@ public class UserService {
    * @return updated user
    */
   @Transactional
-  public IamUser enable(String userId) {
-    IamUser user = get(userId);
+  public User enable(String userId) {
+    User user = get(userId);
     user.enable();
-    IamUser saved = iamUserRepository.save(user);
-    managementAuditRecorder.recordSuccess("identity:EnableUser", "User", userId);
+    User saved = userRepository.save(user);
+    adminActivityRecorder.recordSuccess("identity:EnableUser", "User", userId);
     return saved;
   }
 
@@ -114,11 +114,11 @@ public class UserService {
    * @return updated user
    */
   @Transactional
-  public IamUser resetPassword(String userId, String password) {
-    IamUser user = get(userId);
+  public User resetPassword(String userId, String password) {
+    User user = get(userId);
     user.resetPassword(passwordEncoder.encode(password));
-    IamUser saved = iamUserRepository.save(user);
-    managementAuditRecorder.recordSuccess("identity:ResetPassword", "User", userId);
+    User saved = userRepository.save(user);
+    adminActivityRecorder.recordSuccess("identity:ResetPassword", "User", userId);
     return saved;
   }
 }

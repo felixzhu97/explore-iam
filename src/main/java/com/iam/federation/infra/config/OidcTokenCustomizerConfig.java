@@ -1,7 +1,7 @@
 package com.iam.federation.infra.config;
 
-import com.iam.identity.domain.model.IamUser;
-import com.iam.identity.domain.repository.IamUserRepository;
+import com.iam.identity.domain.model.User;
+import com.iam.identity.domain.repository.UserRepository;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -18,7 +18,7 @@ public class OidcTokenCustomizerConfig {
 
   @Bean
   OAuth2TokenCustomizer<JwtEncodingContext> oidcClaimsCustomizer(
-      IamUserRepository iamUserRepository) {
+      UserRepository userRepository) {
     return context -> {
       String tokenType = context.getTokenType().getValue();
       boolean idToken = OidcParameterNames.ID_TOKEN.equals(tokenType);
@@ -27,11 +27,11 @@ public class OidcTokenCustomizerConfig {
         return;
       }
       String username = context.getPrincipal().getName();
-      iamUserRepository.findByUsername(username).ifPresent(user -> applyClaims(context, user));
+      userRepository.findByUsername(username).ifPresent(user -> applyClaims(context, user));
     };
   }
 
-  private static void applyClaims(JwtEncodingContext context, IamUser user) {
+  private static void applyClaims(JwtEncodingContext context, User user) {
     Set<String> scopes = context.getAuthorizedScopes();
     // Resource servers (AI / Chat) validate the access token and need email/profile
     // on that JWT — not only on the ID token.

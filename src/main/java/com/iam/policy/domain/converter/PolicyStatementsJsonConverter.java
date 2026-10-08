@@ -1,8 +1,8 @@
 package com.iam.policy.domain.converter;
 
-import com.iam.common.domain.vo.Action;
-import com.iam.common.domain.vo.Effect;
-import com.iam.common.domain.vo.Resource;
+import com.iam.common.domain.model.Effect;
+import com.iam.common.domain.model.Permission;
+import com.iam.common.domain.model.Resource;
 import com.iam.policy.domain.model.PolicyStatement;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
@@ -32,7 +32,7 @@ public class PolicyStatementsJsonConverter
         payload.add(
             Map.of(
                 "effect", statement.effect().name(),
-                "actions", statement.actions().stream().map(Action::value).toList(),
+                "actions", statement.actions().stream().map(Permission::value).toList(),
                 "resources", statement.resources().stream().map(Resource::value).toList()));
       }
       return OBJECT_MAPPER.writeValueAsString(payload);
@@ -59,7 +59,7 @@ public class PolicyStatementsJsonConverter
         statements.add(
             PolicyStatement.of(
                 effect,
-                actions.stream().map(Action::new).collect(Collectors.toSet()),
+                actions.stream().map(Permission::new).collect(Collectors.toSet()),
                 resources.stream().map(Resource::new).collect(Collectors.toSet())));
       }
       return List.copyOf(statements);

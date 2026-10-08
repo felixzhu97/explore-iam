@@ -1,9 +1,9 @@
 package com.iam.policy.controller;
 
-import com.iam.common.domain.vo.Arn;
-import com.iam.policy.domain.model.AuthorizationDecision;
-import com.iam.policy.domain.model.PolicyAttachment;
-import com.iam.policy.domain.model.PolicyDocument;
+import com.iam.common.domain.model.ResourceName;
+import com.iam.policy.domain.model.AccessDecision;
+import com.iam.policy.domain.model.AllowPolicy;
+import com.iam.policy.domain.model.PolicyBinding;
 import com.iam.policy.service.PolicyService;
 import com.iam.policy.service.PolicyService.CreatePolicyCommand;
 import com.iam.policy.service.PolicyService.EvaluateCommand;
@@ -44,7 +44,7 @@ public class PolicyController {
   @PostMapping
   @PreAuthorize("hasRole('IAM_ADMIN')")
   public ResponseEntity<PolicyResponse> create(@RequestBody CreatePolicyRequest request) {
-    PolicyDocument policy =
+    AllowPolicy policy =
         policyService.create(
             new CreatePolicyCommand(
                 request.name(),
@@ -74,11 +74,11 @@ public class PolicyController {
    */
   @PostMapping("/{policy}:attach")
   @PreAuthorize("hasRole('IAM_ADMIN')")
-  public PolicyAttachmentResponse attach(
+  public PolicyBindingResponse attach(
       @PathVariable String policy, @RequestBody AttachPolicyRequest request) {
-    PolicyAttachment attachment =
-        policyService.attach(policy, new Arn(request.principalArn()));
-    return new PolicyAttachmentResponse(attachment.getId(), attachment.principalArn().value());
+    PolicyBinding attachment =
+        policyService.attach(policy, new ResourceName(request.principalArn()));
+    return new PolicyBindingResponse(attachment.getId(), attachment.principalArn().value());
   }
 
   /**
@@ -89,15 +89,15 @@ public class PolicyController {
    */
   @PostMapping(":evaluate")
   @PreAuthorize("hasAnyRole('IAM_ADMIN', 'IAM_AUDITOR')")
-  public AuthorizationDecisionResponse evaluate(@RequestBody EvaluatePolicyRequest request) {
-    AuthorizationDecision decision =
+  public AccessDecisionResponse evaluate(@RequestBody EvaluatePolicyRequest request) {
+    AccessDecision decision =
         policyService.evaluate(
             new EvaluateCommand(
                 request.principalId(),
                 request.principalArn(),
                 request.action(),
                 request.resource()));
-    return new AuthorizationDecisionResponse(
+    return new AccessDecisionResponse(
         decision.effect().name(), decision.reasonCode().value());
   }
 
@@ -116,14 +116,14 @@ public class PolicyController {
 
   /** Policy document summary. */
   public record PolicyResponse(String id, String name) {
-    static PolicyResponse from(PolicyDocument policy) {
+    static PolicyResponse from(AllowPolicy policy) {
       return new PolicyResponse(policy.getId(), policy.getName());
     }
   }
 
   /** Policy attachment summary. */
-  public record PolicyAttachmentResponse(String id, String principalArn) {}
+  public record PolicyBindingResponse(String id, String principalArn) {}
 
   /** Authorization decision response. */
-  public record AuthorizationDecisionResponse(String effect, String reasonCode) {}
+  public record AccessDecisionResponse(String effect, String reasonCode) {}
 }

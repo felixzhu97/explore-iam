@@ -1,8 +1,8 @@
 package com.iam.sts.controller;
 
-import com.iam.sts.service.AssumeRoleService;
-import com.iam.sts.service.AssumeRoleService.AssumeRoleCommand;
-import com.iam.sts.service.AssumeRoleService.AssumeRoleResult;
+import com.iam.sts.service.ShortLivedCredentialService;
+import com.iam.sts.service.ShortLivedCredentialService.AssumeRoleCommand;
+import com.iam.sts.service.ShortLivedCredentialService.AssumeRoleResult;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,15 +14,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/sts")
 public class StsController {
 
-  private final AssumeRoleService assumeRoleService;
+  private final ShortLivedCredentialService shortLivedCredentialService;
 
   /**
    * Creates the STS API controller.
    *
-   * @param assumeRoleService assume-role service
+   * @param shortLivedCredentialService assume-role service
    */
-  public StsController(AssumeRoleService assumeRoleService) {
-    this.assumeRoleService = assumeRoleService;
+  public StsController(ShortLivedCredentialService shortLivedCredentialService) {
+    this.shortLivedCredentialService = shortLivedCredentialService;
   }
 
   /**
@@ -35,7 +35,7 @@ public class StsController {
   @PreAuthorize("isAuthenticated()")
   public AssumeRoleResponse assumeRole(@RequestBody AssumeRoleRequest request) {
     AssumeRoleResult result =
-        assumeRoleService.assumeRole(
+        shortLivedCredentialService.assumeRole(
             new AssumeRoleCommand(request.roleArn(), request.sessionName()));
     return new AssumeRoleResponse(
         result.accessToken(), result.expiration().toString(), result.sessionId());

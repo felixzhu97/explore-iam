@@ -2,7 +2,7 @@ package com.iam.identity.domain.model;
 
 import com.iam.common.domain.base.AbstractNamedEntity;
 import com.iam.common.domain.base.DomainStrings;
-import com.iam.common.domain.vo.Arn;
+import com.iam.common.domain.model.ResourceName;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
@@ -41,8 +41,8 @@ public class Group extends AbstractNamedEntity {
   }
 
   /** Returns the ARN for this group. */
-  public Arn arn() {
-    return new Arn("arn:iam::explore-iam:group/" + getName());
+  public ResourceName arn() {
+    return new ResourceName("arn:iam::explore-iam:group/" + getName());
   }
 
   /**
