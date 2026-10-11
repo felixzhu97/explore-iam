@@ -5,7 +5,7 @@
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <changeSet id="0.1-directory-user" author="explore-iam">
+    <changeSet id="34d27915-8b7d-5ce3-9c53-ab85f88bc65c" author="felix.zhu">
         <createTable tableName="directory_user">
             <column name="id" type="varchar(36)">
                 <constraints primaryKey="true" nullable="false"/>
@@ -32,7 +32,7 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="0.1-oauth2-registered-client" author="explore-iam">
+    <changeSet id="a459a52f-ea12-5c22-a2d7-d264bbc2b622" author="felix.zhu">
         <createTable tableName="oauth2_registered_client">
             <column name="id" type="varchar(100)">
                 <constraints primaryKey="true" nullable="false"/>
@@ -71,7 +71,7 @@
         </createIndex>
     </changeSet>
 
-    <changeSet id="0.1-signing-key-entity" author="explore-iam">
+    <changeSet id="37a40c9d-b49b-562f-8cc9-64595f3c8c71" author="felix.zhu">
         <createTable tableName="signing_key_entity">
             <column name="id" type="varchar(36)">
                 <constraints primaryKey="true" nullable="false"/>
@@ -88,7 +88,7 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="0.1-group" author="explore-iam">
+    <changeSet id="edb07535-193c-5c94-9252-a566c9594837" author="felix.zhu">
         <createTable tableName="group">
             <column name="id" type="varchar(36)">
                 <constraints primaryKey="true" nullable="false"/>
@@ -108,7 +108,7 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="0.1-group-member" author="explore-iam">
+    <changeSet id="a5bb54e6-ea25-5524-b79a-d3bf78f06ee8" author="felix.zhu">
         <createTable tableName="group_member">
             <column name="group_id" type="varchar(36)">
                 <constraints nullable="false"/>
@@ -132,7 +132,7 @@
             constraintName="fk_group_member_user"/>
     </changeSet>
 
-    <changeSet id="0.1-role" author="explore-iam">
+    <changeSet id="5da391d8-be21-5448-ac62-7860afc9676b" author="felix.zhu">
         <createTable tableName="role">
             <column name="id" type="varchar(36)">
                 <constraints primaryKey="true" nullable="false"/>
@@ -156,7 +156,7 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="0.1-role-binding" author="explore-iam">
+    <changeSet id="7e5a7031-8757-5f63-909f-d6b22f4e399c" author="felix.zhu">
         <createTable tableName="role_binding">
             <column name="user_id" type="varchar(36)">
                 <constraints nullable="false"/>
@@ -180,7 +180,7 @@
             constraintName="fk_role_binding_role"/>
     </changeSet>
 
-    <changeSet id="0.1-allow-policy" author="explore-iam">
+    <changeSet id="ee5e8111-4ed2-5fbf-81b0-b080167db3b5" author="felix.zhu">
         <createTable tableName="allow_policy">
             <column name="id" type="varchar(36)">
                 <constraints primaryKey="true" nullable="false"/>
@@ -203,7 +203,7 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="0.1-policy-binding" author="explore-iam">
+    <changeSet id="d288674c-dd2e-5a59-8104-377368c348aa" author="felix.zhu">
         <createTable tableName="policy_binding">
             <column name="id" type="varchar(36)">
                 <constraints primaryKey="true" nullable="false"/>
@@ -225,7 +225,7 @@
             constraintName="fk_policy_binding_policy"/>
     </changeSet>
 
-    <changeSet id="0.1-short-lived-credential" author="explore-iam">
+    <changeSet id="910d379c-b085-5e46-817e-8c62c7517d35" author="felix.zhu">
         <createTable tableName="short_lived_credential">
             <column name="id" type="varchar(36)">
                 <constraints primaryKey="true" nullable="false"/>
@@ -248,7 +248,7 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="0.1-federated-identity" author="explore-iam">
+    <changeSet id="57c3ce77-5ee3-55ae-aa49-fb7798af594d" author="felix.zhu">
         <createTable tableName="federated_identity">
             <column name="id" type="varchar(36)">
                 <constraints primaryKey="true" nullable="false"/>
@@ -276,7 +276,7 @@
             constraintName="fk_federated_identity_user"/>
     </changeSet>
 
-    <changeSet id="0.1-admin-activity" author="explore-iam">
+    <changeSet id="cec82f59-28cb-519d-a1b6-d2c28566fa35" author="felix.zhu">
         <createTable tableName="admin_activity">
             <column name="id" type="varchar(36)">
                 <constraints primaryKey="true" nullable="false"/>
@@ -302,7 +302,7 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="0.1-data-access-log" author="explore-iam">
+    <changeSet id="7bdb9110-086e-5f02-9b49-f3c68172da0d" author="felix.zhu">
         <createTable tableName="data_access_log">
             <column name="id" type="varchar(36)">
                 <constraints primaryKey="true" nullable="false"/>
@@ -328,7 +328,7 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="0.1-permission" author="explore-iam">
+    <changeSet id="97b655eb-ad6f-50bc-9c31-d3651b0a861a" author="felix.zhu">
         <createTable tableName="permission">
             <column name="id" type="varchar(36)">
                 <constraints primaryKey="true" nullable="false"/>
@@ -359,7 +359,7 @@
     </changeSet>
 
     <!-- Spring Security JdbcOneTimeTokenService -->
-    <changeSet id="0.1-one-time-tokens" author="explore-iam">
+    <changeSet id="536052f9-1674-5baf-9d9b-88ac25ea8bc6" author="felix.zhu">
         <createTable tableName="one_time_tokens">
             <column name="token_value" type="varchar(36)">
                 <constraints primaryKey="true" nullable="false"/>
@@ -377,7 +377,7 @@
     </changeSet>
 
     <!-- Spring Security WebAuthn JDBC persistence -->
-    <changeSet id="0.1-user-entities" author="explore-iam">
+    <changeSet id="489517f1-784d-5447-bb6a-bb2b3ebec1e6" author="felix.zhu">
         <createTable tableName="user_entities">
             <column name="id" type="varchar(1000)">
                 <constraints primaryKey="true" nullable="false"/>
@@ -389,7 +389,7 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="0.1-user-credentials" author="explore-iam">
+    <changeSet id="91a7f4ba-f2ac-53b1-8143-05daf87c9652" author="felix.zhu">
         <createTable tableName="user_credentials">
             <column name="credential_id" type="varchar(1000)">
                 <constraints primaryKey="true" nullable="false"/>
@@ -420,7 +420,7 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="0.1-totp-credential" author="explore-iam">
+    <changeSet id="5ae881c8-9915-596e-9905-f686a8b34592" author="felix.zhu">
         <createTable tableName="totp_credential">
             <column name="id" type="varchar(36)">
                 <constraints primaryKey="true" nullable="false"/>
