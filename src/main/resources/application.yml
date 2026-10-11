@@ -45,6 +45,10 @@ app:
     token:
       access-token-ttl: ${APP_ACCESS_TOKEN_TTL:PT15M}
       assume-role-ttl: ${APP_ASSUME_ROLE_TTL:PT1H}
+    webauthn:
+      rp-id: ${APP_WEBAUTHN_RP_ID:localhost}
+      rp-name: ${APP_WEBAUTHN_RP_NAME:Explore IAM}
+      allowed-origins: ${APP_WEBAUTHN_ALLOWED_ORIGINS:http://localhost:9100,http://127.0.0.1:9100,http://localhost:4201}
   oidc:
     defaults:
       scopes: [openid, profile, email]

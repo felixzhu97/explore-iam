@@ -375,4 +375,48 @@
             <column name="username"/>
         </createIndex>
     </changeSet>
+
+    <!-- Spring Security WebAuthn JDBC persistence -->
+    <changeSet id="0.1-user-entities" author="explore-iam">
+        <createTable tableName="user_entities">
+            <column name="id" type="varchar(1000)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="display_name" type="varchar(200)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="0.1-user-credentials" author="explore-iam">
+        <createTable tableName="user_credentials">
+            <column name="credential_id" type="varchar(1000)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_entity_user_id" type="varchar(1000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="public_key" type="bytea">
+                <constraints nullable="false"/>
+            </column>
+            <column name="signature_count" type="bigint"/>
+            <column name="uv_initialized" type="boolean"/>
+            <column name="backup_eligible" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="authenticator_transports" type="varchar(1000)"/>
+            <column name="public_key_credential_type" type="varchar(100)"/>
+            <column name="backup_state" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="attestation_object" type="bytea"/>
+            <column name="attestation_client_data_json" type="bytea"/>
+            <column name="created" type="timestamp"/>
+            <column name="last_used" type="timestamp"/>
+            <column name="label" type="varchar(1000)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
 </databaseChangeLog>

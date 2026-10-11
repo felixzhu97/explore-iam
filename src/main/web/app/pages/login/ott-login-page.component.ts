@@ -67,6 +67,11 @@ const REMEMBER_USERNAME_KEY = 'explore-iam.remember-username';
           </form>
 
           <p class="mt-6 text-sm text-muted-foreground">
+            已注册 Passkey 时，可在完成密码登录后使用系统 Passkey 提示，或前往
+            <a href="/webauthn/register" class="text-primary underline-offset-4 hover:underline">通行密钥注册</a>
+            （需完整 MFA 会话）。
+          </p>
+          <p class="mt-3 text-sm text-muted-foreground">
             <a routerLink="/login" class="text-primary underline-offset-4 hover:underline">返回密码登录</a>
           </p>
         </div>

@@ -80,6 +80,7 @@ public class WebSecurityConfig {
   SecurityFilterChain defaultSecurityFilterChain(
       HttpSecurity http,
       MfaAuthorizationManagers mfa,
+      WebAuthnConfig.WebAuthnProperties webAuthnProperties,
       ObjectProvider<ClientRegistrationRepository> clientRegistrations,
       ObjectProvider<FederatedLoginService> federatedLoginService)
       throws Exception {
@@ -95,8 +96,10 @@ public class WebSecurityConfig {
                     .requestMatchers(
                         "/login",
                         "/login/ott",
+                        "/login/webauthn",
                         "/ott/sent",
                         "/ott/generate",
+                        "/webauthn/authenticate/**",
                         "/api/login/**",
                         "/oauth2/**",
                         "/index.html",
@@ -126,6 +129,13 @@ public class WebSecurityConfig {
                     .tokenGeneratingUrl("/ott/generate")
                     .showDefaultSubmitPage(false)
                     .successHandler(successHandler))
+        .webAuthn(
+            (webAuthn) ->
+                webAuthn
+                    .rpId(webAuthnProperties.rpId())
+                    .rpName(webAuthnProperties.rpName())
+                    .allowedOrigins(webAuthnProperties.allowedOrigins())
+                    .disableDefaultRegistrationPage(false))
         .logout((logout) -> logout.logoutUrl("/logout").logoutSuccessUrl("/login").permitAll())
         .csrf(
             (csrf) ->
