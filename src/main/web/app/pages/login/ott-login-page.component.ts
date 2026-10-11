@@ -72,6 +72,8 @@ const REMEMBER_USERNAME_KEY = 'explore-iam.remember-username';
             （需完整 MFA 会话）。
           </p>
           <p class="mt-3 text-sm text-muted-foreground">
+            <a routerLink="/login/totp" class="text-primary underline-offset-4 hover:underline">改用 TOTP</a>
+            ·
             <a routerLink="/login" class="text-primary underline-offset-4 hover:underline">返回密码登录</a>
           </p>
         </div>

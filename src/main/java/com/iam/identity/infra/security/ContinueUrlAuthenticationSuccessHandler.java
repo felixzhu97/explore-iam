@@ -12,10 +12,11 @@ import org.springframework.util.StringUtils;
  * Prefers an explicit safe relative {@code continue} form field (SPA deep link), otherwise the
  * saved request (e.g. OAuth authorize or {@code /clients}).
  */
-final class ContinueUrlAuthenticationSuccessHandler
+public final class ContinueUrlAuthenticationSuccessHandler
     extends SavedRequestAwareAuthenticationSuccessHandler {
 
-  ContinueUrlAuthenticationSuccessHandler() {
+  /** Creates the default continue-aware success handler. */
+  public ContinueUrlAuthenticationSuccessHandler() {
     setDefaultTargetUrl("/");
   }
 

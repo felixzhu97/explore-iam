@@ -419,4 +419,34 @@
             </column>
         </createTable>
     </changeSet>
+
+    <changeSet id="0.1-totp-credential" author="explore-iam">
+        <createTable tableName="totp_credential">
+            <column name="id" type="varchar(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="varchar(36)">
+                <constraints nullable="false" unique="true"
+                    uniqueConstraintName="uk_totp_credential_user_id"/>
+            </column>
+            <column name="secret_ciphertext" type="varchar(512)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="enabled" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="backup_code_hashes" type="varchar(2048)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="bigint" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
 </databaseChangeLog>
