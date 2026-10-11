@@ -74,6 +74,8 @@ Optional seed clients can be declared under `app.oidc.seed-clients` / matching e
 | `SERVER_PORT` | HTTP port (default `9100`) |
 | `OIDC_ISSUER` | Issuer URL (default `http://localhost:9100`) |
 | `APP_DEMO_USER_*` | Local demo IAM User for form login |
+| `APP_TOTP_ENCRYPT_PASSWORD` | Password for encrypting TOTP secrets at rest (required) |
+| `APP_TOTP_ENCRYPT_SALT` | Hex salt for TOTP secret encryption (required) |
 | Seed client env vars | Optional bootstrap OIDC client entries |
 
 Do not commit real secrets.

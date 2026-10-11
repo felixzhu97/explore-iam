@@ -19,6 +19,10 @@ spring:
 app:
   demo-user:
     enabled: true
+  security:
+    totp:
+      encrypt-password: ${APP_TOTP_ENCRYPT_PASSWORD}
+      encrypt-salt: ${APP_TOTP_ENCRYPT_SALT}
   oidc:
     seed-clients:
       - client-id: explore-ai

@@ -59,6 +59,9 @@ tasks.withType<Checkstyle>().configureEach {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    // Local/CI tests must not rely on committed encrypt defaults (secret scanners).
+    environment("APP_TOTP_ENCRYPT_PASSWORD", "ci-test-totp-encrypt-material")
+    environment("APP_TOTP_ENCRYPT_SALT", "0123456789abcdef")
 }
 
 jacoco {

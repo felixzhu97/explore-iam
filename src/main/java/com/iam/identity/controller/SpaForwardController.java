@@ -22,7 +22,8 @@ public class SpaForwardController {
     "/clients",
     "/clients/**",
     "/security/passkeys",
-    "/security/totp"
+    "/security/totp",
+    "/login/totp"
   })
   public String forwardSpaRoutes() {
     return "forward:/index.html";

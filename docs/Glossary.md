@@ -119,7 +119,7 @@ Terms mapping Explore IAM security behavior to [Spring Security](https://docs.sp
 | One-Time Token | 一次性令牌 | Server-generated login token delivered out-of-band (magic link); **not** TOTP | `HttpSecurity.oneTimeTokenLogin()` / `OneTimeTokenService` | implemented |
 | Passkey | 通行密钥 | WebAuthn public-key credential for phishing-resistant sign-in | `HttpSecurity.webAuthn()` + JDBC WebAuthn repositories | implemented |
 | WebAuthn Credential | WebAuthn 凭证 | Stored public key / credential id for a Passkey | Spring Security WebAuthn JDBC tables | implemented |
-| TOTP Credential | TOTP 凭证 | Shared secret for authenticator-app codes (RFC 6238) | Domain `TotpCredential` + custom `FACTOR_TOTP` | planned |
+| TOTP Credential | TOTP 凭证 | Shared secret for authenticator-app codes (RFC 6238) | Domain `TotpCredential` + custom `FACTOR_TOTP` | implemented |
 
 ### 4.3 OAuth 2.0 / OIDC (Authorization Server)
 
@@ -259,7 +259,7 @@ Cross-bounded-context value objects in `com.iam.common.domain.model`
 | Assign Role | 分配角色 | Bind a role to a user | Behavior | `User.assignRole` | implemented |
 | Impersonation Policy | 模拟策略 | Who may obtain short-lived credentials for a Role | Value Object | `ImpersonationPolicy` | implemented |
 | Federated Identity | 联邦身份 | Maps external provider + subject to local user | Aggregate | `FederatedIdentity` | implemented |
-| TOTP Credential | TOTP 凭证 | Authenticator-app second factor (RFC 6238); secret encrypted at rest | Aggregate | `TotpCredential` | planned |
+| TOTP Credential | TOTP 凭证 | Authenticator-app second factor (RFC 6238); secret encrypted at rest | Aggregate | `TotpCredential` | implemented |
 | OAuth Client | OAuth 客户端 | Relying product registered as an OAuth / OIDC client | Aggregate | `OAuthClient` | implemented |
 
 ---

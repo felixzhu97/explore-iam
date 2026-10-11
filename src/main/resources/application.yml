@@ -49,6 +49,10 @@ app:
       rp-id: ${APP_WEBAUTHN_RP_ID:localhost}
       rp-name: ${APP_WEBAUTHN_RP_NAME:Explore IAM}
       allowed-origins: ${APP_WEBAUTHN_ALLOWED_ORIGINS:http://localhost:9100,http://127.0.0.1:9100,http://localhost:4201}
+    totp:
+      # Required at runtime — do not commit defaults (secret scanners).
+      encrypt-password: ${APP_TOTP_ENCRYPT_PASSWORD}
+      encrypt-salt: ${APP_TOTP_ENCRYPT_SALT}
   oidc:
     defaults:
       scopes: [openid, profile, email]

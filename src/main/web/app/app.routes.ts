@@ -17,6 +17,16 @@ export const routes: Routes = [
       import('./pages/login/ott-sent-page.component').then((m) => m.OttSentPageComponent),
   },
   {
+    path: 'login/totp',
+    loadComponent: () =>
+      import('./pages/login/totp-challenge-page.component').then((m) => m.TotpChallengePageComponent),
+  },
+  {
+    path: 'security/totp',
+    loadComponent: () =>
+      import('./pages/security/totp-enroll-page.component').then((m) => m.TotpEnrollPageComponent),
+  },
+  {
     path: 'oauth-clients/new',
     loadComponent: () =>
       import('./pages/oauth-clients/oauth-clients-create-page.component').then(

@@ -96,6 +96,7 @@ public class WebSecurityConfig {
                     .requestMatchers(
                         "/login",
                         "/login/ott",
+                        "/login/totp",
                         "/login/webauthn",
                         "/ott/sent",
                         "/ott/generate",

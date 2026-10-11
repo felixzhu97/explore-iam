@@ -26,6 +26,10 @@ services:
         sync: false
       - key: APP_DEMO_USER_EMAIL
         value: demo@explore-iam.local
+      - key: APP_TOTP_ENCRYPT_PASSWORD
+        generateValue: true
+      - key: APP_TOTP_ENCRYPT_SALT
+        value: "0123456789abcdef"
       - key: IAM_CLIENT_EXPLORE_AI_ID
         value: explore-ai
       - key: IAM_CLIENT_EXPLORE_AI_SECRET
