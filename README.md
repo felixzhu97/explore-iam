@@ -109,7 +109,11 @@ Plan is Render Starter (Oregon). Disk for H2 under `/app/data` is ephemeral on S
 
 ## Contributing
 
-Contributions are welcome. Keep changes small and let CI stay green: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs Checkstyle and tests. Weekly GitHub Actions updates come from [Dependabot](.github/dependabot.yml).
+See [CONTRIBUTING.md](CONTRIBUTING.md). Keep changes small and let CI stay green: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs Checkstyle and tests. Weekly GitHub Actions updates come from [Dependabot](.github/dependabot.yml). Participation is governed by the [Code of Conduct](CODE_OF_CONDUCT.md).
+
+## Security
+
+Report vulnerabilities as described in [SECURITY.md](SECURITY.md).
 
 ## Project Status
 
