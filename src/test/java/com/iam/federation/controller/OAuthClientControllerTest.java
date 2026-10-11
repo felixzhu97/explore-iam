@@ -2,21 +2,19 @@ package com.iam.federation.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.net.CookieManager;
-import java.net.HttpCookie;
+import com.iam.identity.infra.security.MfaTestSessions;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import javax.sql.DataSource;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.JdkClientHttpRequestFactory;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -25,10 +23,12 @@ class OAuthClientControllerTest {
 
   @LocalServerPort private int port;
 
+  @Autowired private DataSource dataSource;
+
   @Test
   @DisplayName("should register and list client when authenticated")
   void shouldRegisterAndListClientWhenAuthenticated() {
-    RestClient client = authenticatedClient();
+    RestClient client = MfaTestSessions.demoUserWithMfa(this.port, this.dataSource);
     String name = "WhatsFeed-" + UUID.randomUUID().toString().substring(0, 8);
 
     ResponseEntity<OAuthClientResponse> created =
@@ -80,7 +80,7 @@ class OAuthClientControllerTest {
   @Test
   @DisplayName("should reject invalid redirect uri")
   void shouldRejectInvalidRedirectUri() {
-    RestClient client = authenticatedClient();
+    RestClient client = MfaTestSessions.demoUserWithMfa(this.port, this.dataSource);
     org.assertj.core.api.Assertions.assertThatThrownBy(
             () ->
                 client
@@ -92,52 +92,5 @@ class OAuthClientControllerTest {
                     .retrieve()
                     .toBodilessEntity())
         .hasMessageContaining("400");
-  }
-
-  private RestClient authenticatedClient() {
-    var cookieStore = new CookieManager();
-    var httpClient =
-        java.net.http.HttpClient.newBuilder()
-            .cookieHandler(cookieStore)
-            .followRedirects(java.net.http.HttpClient.Redirect.NEVER)
-            .build();
-    RestClient rest =
-        RestClient.builder()
-            .baseUrl("http://localhost:" + this.port)
-            .requestFactory(new JdkClientHttpRequestFactory(httpClient))
-            .build();
-
-    rest.get().uri("/login").retrieve().toBodilessEntity();
-    String csrf =
-        cookieStore.getCookieStore().getCookies().stream()
-            .filter(c -> "XSRF-TOKEN".equals(c.getName()))
-            .map(HttpCookie::getValue)
-            .findFirst()
-            .orElseThrow();
-
-    MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-    form.add("username", "demo");
-    form.add("password", "demo-password");
-    form.add("_csrf", csrf);
-
-    rest.post()
-        .uri("/login")
-        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-        .body(form)
-        .retrieve()
-        .toBodilessEntity();
-
-    String csrfAfterLogin =
-        cookieStore.getCookieStore().getCookies().stream()
-            .filter(c -> "XSRF-TOKEN".equals(c.getName()))
-            .map(HttpCookie::getValue)
-            .findFirst()
-            .orElse(csrf);
-
-    return RestClient.builder()
-        .baseUrl("http://localhost:" + this.port)
-        .requestFactory(new JdkClientHttpRequestFactory(httpClient))
-        .defaultHeader("X-XSRF-TOKEN", csrfAfterLogin)
-        .build();
   }
 }

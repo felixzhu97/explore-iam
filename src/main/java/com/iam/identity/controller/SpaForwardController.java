@@ -12,7 +12,18 @@ public class SpaForwardController {
    *
    * @return forward view name
    */
-  @GetMapping({"/", "/login", "/oauth-clients", "/oauth-clients/**", "/clients", "/clients/**"})
+  @GetMapping({
+    "/",
+    "/login",
+    "/login/ott",
+    "/ott/sent",
+    "/oauth-clients",
+    "/oauth-clients/**",
+    "/clients",
+    "/clients/**",
+    "/security/passkeys",
+    "/security/totp"
+  })
   public String forwardSpaRoutes() {
     return "forward:/index.html";
   }
