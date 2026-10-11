@@ -95,6 +95,7 @@ public class WebSecurityConfig {
                 authorize
                     .requestMatchers(
                         "/login",
+                        "/login/verify",
                         "/login/ott",
                         "/login/totp",
                         "/login/webauthn",

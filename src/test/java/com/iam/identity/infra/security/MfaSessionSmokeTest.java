@@ -70,8 +70,46 @@ class MfaSessionSmokeTest {
     assertThat(users.statusCode()).isIn(302, 401, 403);
     if (users.statusCode() == 302) {
       String location = users.headers().firstValue(HttpHeaders.LOCATION).orElse("");
-      assertThat(location).containsAnyOf("/login/ott", "/login");
+      assertThat(location).containsAnyOf("/login/verify", "/login/ott", "/login");
     }
+  }
+
+  @Test
+  @DisplayName("should redirect to verify page after password-only login")
+  void shouldRedirectToVerifyPageAfterPasswordOnlyLogin() throws Exception {
+    HttpClient client =
+        HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(5))
+            .followRedirects(HttpClient.Redirect.NEVER)
+            .build();
+
+    HttpResponse<String> loginPage =
+        client.send(
+            HttpRequest.newBuilder(URI.create("http://localhost:" + this.port + "/login"))
+                .GET()
+                .header(HttpHeaders.ACCEPT, MediaType.TEXT_HTML_VALUE)
+                .build(),
+            HttpResponse.BodyHandlers.ofString());
+    Optional<String> csrf = csrfFrom(loginPage);
+    String cookie = cookieHeader(loginPage);
+
+    String body =
+        "username=demo&password=demo-password"
+            + csrf.map((token) -> "&_csrf=" + token).orElse("");
+    HttpRequest.Builder loginReq =
+        HttpRequest.newBuilder(URI.create("http://localhost:" + this.port + "/login"))
+            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+            .header(HttpHeaders.ACCEPT, MediaType.TEXT_HTML_VALUE)
+            .POST(HttpRequest.BodyPublishers.ofString(body));
+    if (!cookie.isBlank()) {
+      loginReq.header(HttpHeaders.COOKIE, cookie);
+    }
+    HttpResponse<String> login =
+        client.send(loginReq.build(), HttpResponse.BodyHandlers.ofString());
+
+    assertThat(login.statusCode()).isEqualTo(302);
+    assertThat(login.headers().firstValue(HttpHeaders.LOCATION).orElse(""))
+        .contains("/login/verify");
   }
 
   private static Optional<String> csrfFrom(HttpResponse<?> response) {
