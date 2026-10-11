@@ -110,6 +110,17 @@ Terms mapping Explore IAM security behavior to [Spring Security](https://docs.sp
 | Logout | 登出 | Invalidates session and clears security context | `HttpSecurity.logout()` → `/logout` | implemented |
 | Session | 会话 | Server-side HTTP session binding authenticated principal | `HttpSession` + Spring Security context | implemented |
 
+### 4.2.1 Multi-Factor Authentication
+
+| Preferred Term (English) | 中文 | Definition | Framework Mapping | Status |
+| ------------------------ | ---- | ---------- | ----------------- | ------ |
+| MFA | 多因素认证 | Require more than one authentication factor before a full session | Spring Security `FactorGrantedAuthority` + factor authorization rules | planned |
+| Factor Authority | 因素权限 | Authority issued when a factor succeeds (e.g. password, OTT) | `FactorGrantedAuthority` (`FACTOR_PASSWORD`, `FACTOR_OTT`, …) | planned |
+| One-Time Token | 一次性令牌 | Server-generated login token delivered out-of-band (magic link); **not** TOTP | `HttpSecurity.oneTimeTokenLogin()` / `OneTimeTokenService` | planned |
+| Passkey | 通行密钥 | WebAuthn public-key credential for phishing-resistant sign-in | `HttpSecurity.webAuthn()` + JDBC WebAuthn repositories | planned |
+| WebAuthn Credential | WebAuthn 凭证 | Stored public key / credential id for a Passkey | Spring Security WebAuthn JDBC tables | planned |
+| TOTP Credential | TOTP 凭证 | Shared secret for authenticator-app codes (RFC 6238) | Domain `TotpCredential` + custom `FACTOR_TOTP` | planned |
+
 ### 4.3 OAuth 2.0 / OIDC (Authorization Server)
 
 | Preferred Term (English) | 中文 | Definition | Framework Mapping | Status |
@@ -248,7 +259,7 @@ Cross-bounded-context value objects in `com.iam.common.domain.model`
 | Assign Role | 分配角色 | Bind a role to a user | Behavior | `User.assignRole` | implemented |
 | Impersonation Policy | 模拟策略 | Who may obtain short-lived credentials for a Role | Value Object | `ImpersonationPolicy` | implemented |
 | Federated Identity | 联邦身份 | Maps external provider + subject to local user | Aggregate | `FederatedIdentity` | implemented |
-| MFA | 多因素认证 | Extra factor beyond password | Capability | planned | planned |
+| TOTP Credential | TOTP 凭证 | Authenticator-app second factor (RFC 6238); secret encrypted at rest | Aggregate | `TotpCredential` | planned |
 | OAuth Client | OAuth 客户端 | Relying product registered as an OAuth / OIDC client | Aggregate | `OAuthClient` | implemented |
 
 ---

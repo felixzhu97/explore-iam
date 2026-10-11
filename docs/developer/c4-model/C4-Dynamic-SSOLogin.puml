@@ -16,28 +16,36 @@ app --> user: 2. Start /oauth2/authorize\n(web redirect or ASWebAuthenticationSe
 user -> iam: 3. GET /oauth2/authorize\n(client_id, redirect_uri, scope, state, PKCE)
 iam -> db: 4. Load RegisteredClient
 db --> iam: 5. Client settings
-alt No local session
+alt No full MFA session
   iam --> user: 6. Redirect /login?client_id=…
-  user -> iam: 7. Form login or OAuth2 Login
-  opt External IdP
-    iam --> user: 8. Redirect to IdP
-    user -> idp: 9. Authenticate
-    idp --> iam: 10. OAuth2 callback
-    iam -> db: 11. Upsert FederatedIdentity + User
+  user -> iam: 7. Form login → FACTOR_PASSWORD
+  alt Second factor (anyOf)
+    user -> iam: 8a. OTT generate + submit → FACTOR_OTT
+  else Passkey enrolled
+    user -> iam: 8b. WebAuthn assertion → FACTOR_WEBAUTHN
+  else TOTP enrolled
+    user -> iam: 8c. TOTP code → FACTOR_TOTP
+  end
+  opt External IdP (federation)
+    iam --> user: 9. Redirect to IdP
+    user -> idp: 10. Authenticate
+    idp --> iam: 11. OAuth2 callback
+    iam -> db: 12. Upsert FederatedIdentity + User
   end
 end
-iam --> user: 12. Consent (if required) + redirect with code
-user -> app: 13. redirect_uri?code=…&state=…
+iam --> user: 13. Consent (if required) + redirect with code
+user -> app: 14. redirect_uri?code=…&state=…
 alt Confidential client
-  app -> iam: 14a. POST /oauth2/token\n(client_id, client_secret, code)
+  app -> iam: 15a. POST /oauth2/token\n(client_id, client_secret, code)
 else Public native client (PKCE)
-  app -> iam: 14b. POST /oauth2/token\n(client_id, code, code_verifier)\nno client_secret
+  app -> iam: 15b. POST /oauth2/token\n(client_id, code, code_verifier)\nno client_secret
 end
-iam --> app: 15. Access Token (+ ID / Refresh)\nemail/profile claims on access token when scoped
-app -> iam: 16. JWKS verify / userinfo (optional)
-app --> user: 17. Application session / Bearer API calls
+iam --> app: 16. Access Token (+ ID / Refresh)\nemail/profile claims on access token when scoped
+app -> iam: 17. JWKS verify / userinfo (optional)
+app --> user: 18. Application session / Bearer API calls
 
 note right of iam
+  MFA: PASSWORD + anyOf(OTT, WEBAUTHN, TOTP)
   Demo: demo / demo-password
   Discovery: /.well-known/openid-configuration
   Native seeds: explore-ai-ios, explore-chat-ios

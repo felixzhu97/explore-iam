@@ -1,8 +1,8 @@
 package com.iam.federation.controller;
 
 import com.iam.federation.service.OAuthClientService;
-import com.iam.federation.service.OAuthClientService.OAuthClientView;
 import com.iam.federation.service.OAuthClientService.CreateOAuthClientCommand;
+import com.iam.federation.service.OAuthClientService.OAuthClientView;
 import com.iam.federation.service.OAuthClientService.RegisteredOAuthClientResult;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -39,7 +39,8 @@ public class OAuthClientController {
    */
   @PostMapping
   @PreAuthorize("hasRole('IAM_ADMIN')")
-  public ResponseEntity<OAuthClientResponse> createOAuthClient(@RequestBody CreateOAuthClientRequest request) {
+  public ResponseEntity<OAuthClientResponse> createOAuthClient(
+      @RequestBody CreateOAuthClientRequest request) {
     RegisteredOAuthClientResult result =
         oauthClientService.createOAuthClient(
             new CreateOAuthClientCommand(

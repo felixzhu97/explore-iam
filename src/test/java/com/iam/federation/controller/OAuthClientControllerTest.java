@@ -62,7 +62,11 @@ class OAuthClientControllerTest {
         .containsExactly("client_secret_basic");
 
     List<OAuthClientResponse> list =
-        client.get().uri("/api/v1/oauthClients").retrieve().body(new ParameterizedTypeReference<>() {});
+        client
+            .get()
+            .uri("/api/v1/oauthClients")
+            .retrieve()
+            .body(new ParameterizedTypeReference<>() {});
 
     assertThat(list).isNotNull();
     OAuthClientResponse listed =
