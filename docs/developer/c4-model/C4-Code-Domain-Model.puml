@@ -151,13 +151,35 @@ package "Identity" as pkg_identity {
     --
     +{static} createPermissiveImpersonationPolicy()
   }
+  class TotpCredential <<AggregateRoot>> {
+    +userId: String
+    +secretCiphertext: String
+    +enabled: boolean
+    --
+    +{static} createTotpCredential(userId, secretCiphertext)
+    +enableTotp()
+    +disableTotp()
+    +rotateSecret(secretCiphertext)
+  }
+  class WebAuthnCredential <<ValueObject>> {
+    +credentialId: byte[]
+    +userHandle: byte[]
+  }
 }
+
+note right of WebAuthnCredential
+  Persisted by Spring Security JDBC
+  PublicKeyCredential / UserCredential repos
+end note
 
 User --|> AbstractEntity
 Group --|> AbstractNamedEntity
 Role --|> AbstractNamedEntity
+TotpCredential --|> AbstractEntity
 Group "1" *-- "0..*" GroupMember : members
 User "1" *-- "0..*" RoleBinding : roleBindings
+User "1" o-- "0..1" TotpCredential : optional
+User "1" o-- "0..*" WebAuthnCredential : passkeys
 Role --> ResourceName
 Role --> ImpersonationPolicy
 

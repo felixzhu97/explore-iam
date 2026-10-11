@@ -43,7 +43,8 @@ public class PolicyController {
    */
   @PostMapping
   @PreAuthorize("hasRole('IAM_ADMIN')")
-  public ResponseEntity<AllowPolicyResponse> createAllowPolicy(@RequestBody CreatePolicyRequest request) {
+  public ResponseEntity<AllowPolicyResponse> createAllowPolicy(
+      @RequestBody CreatePolicyRequest request) {
     AllowPolicy policy =
         policyService.createAllowPolicy(
             new CreatePolicyCommand(
