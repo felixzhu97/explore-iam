@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.MediaType;
+import org.springframework.security.config.annotation.authorization.EnableMultiFactorAuthentication;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
@@ -36,22 +37,36 @@ import org.springframework.web.filter.OncePerRequestFilter;
  *     href="https://docs.spring.io/spring-boot/reference/web/spring-security.html#web.security.oauth2.authorization-server">Authorization
  *     Server</a>
  * @see <a
+ *     href="https://docs.spring.io/spring-security/reference/servlet/authentication/mfa.html">Multi-Factor
+ *     Authentication</a>
+ * @see <a
  *     href="https://docs.spring.io/spring-security/reference/servlet/exploits/csrf.html#csrf-integration-javascript-spa">CSRF
  *     SPA</a>
  */
 @Configuration
 @EnableWebSecurity
+// Empty authorities: enable MFA factor merging on auth filters only; HTTP rules use
+// MfaAuthorizationManagers.anyOf(...) so the SAS token endpoint is not forced to MFA.
+@EnableMultiFactorAuthentication(authorities = {})
 public class WebSecurityConfig {
 
   @Bean
   @Order(1)
-  SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+  SecurityFilterChain authorizationServerSecurityFilterChain(
+      HttpSecurity http, MfaAuthorizationManagers mfa) throws Exception {
     http.oauth2AuthorizationServer(
         (authorizationServer) -> {
           http.securityMatcher(authorizationServer.getEndpointsMatcher());
           authorizationServer.oidc(withDefaults());
         });
-    http.authorizeHttpRequests((authorize) -> authorize.anyRequest().authenticated());
+    // Authorize needs a full MFA session; token/client auth stays plain authenticated.
+    http.authorizeHttpRequests(
+        (authorize) ->
+            authorize
+                .requestMatchers("/oauth2/authorize")
+                .access(mfa.authenticated())
+                .anyRequest()
+                .authenticated());
     http.oauth2ResourceServer((resourceServer) -> resourceServer.jwt(withDefaults()));
     http.exceptionHandling(
         (exceptions) ->
@@ -64,17 +79,24 @@ public class WebSecurityConfig {
   @Order(2)
   SecurityFilterChain defaultSecurityFilterChain(
       HttpSecurity http,
+      MfaAuthorizationManagers mfa,
       ObjectProvider<ClientRegistrationRepository> clientRegistrations,
       ObjectProvider<FederatedLoginService> federatedLoginService)
       throws Exception {
     CookieCsrfTokenRepository csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
     csrfTokenRepository.setCookiePath("/");
 
+    ContinueUrlAuthenticationSuccessHandler successHandler =
+        new ContinueUrlAuthenticationSuccessHandler();
+
     http.authorizeHttpRequests(
             (authorize) ->
                 authorize
                     .requestMatchers(
                         "/login",
+                        "/login/ott",
+                        "/ott/sent",
+                        "/ott/generate",
                         "/api/login/**",
                         "/oauth2/**",
                         "/index.html",
@@ -88,15 +110,22 @@ public class WebSecurityConfig {
                         "/actuator/health/**")
                     .permitAll()
                     .anyRequest()
-                    .authenticated())
+                    .access(mfa.authenticated()))
         .headers(withDefaults())
         .formLogin(
             (form) ->
                 form.loginPage("/login")
                     .loginProcessingUrl("/login")
-                    .successHandler(new ContinueUrlAuthenticationSuccessHandler())
+                    .successHandler(successHandler)
                     .failureHandler(new LoginAuthenticationFailureHandler())
                     .permitAll())
+        .oneTimeTokenLogin(
+            (ott) ->
+                ott.loginPage("/login/ott")
+                    .loginProcessingUrl("/login/ott")
+                    .tokenGeneratingUrl("/ott/generate")
+                    .showDefaultSubmitPage(false)
+                    .successHandler(successHandler))
         .logout((logout) -> logout.logoutUrl("/logout").logoutSuccessUrl("/login").permitAll())
         .csrf(
             (csrf) ->

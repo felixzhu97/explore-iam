@@ -357,4 +357,22 @@
             </column>
         </createTable>
     </changeSet>
+
+    <!-- Spring Security JdbcOneTimeTokenService -->
+    <changeSet id="0.1-one-time-tokens" author="explore-iam">
+        <createTable tableName="one_time_tokens">
+            <column name="token_value" type="varchar(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="username" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expires_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex tableName="one_time_tokens" indexName="idx_one_time_tokens_username">
+            <column name="username"/>
+        </createIndex>
+    </changeSet>
 </databaseChangeLog>

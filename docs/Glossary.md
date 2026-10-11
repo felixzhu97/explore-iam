@@ -114,9 +114,9 @@ Terms mapping Explore IAM security behavior to [Spring Security](https://docs.sp
 
 | Preferred Term (English) | 中文 | Definition | Framework Mapping | Status |
 | ------------------------ | ---- | ---------- | ----------------- | ------ |
-| MFA | 多因素认证 | Require more than one authentication factor before a full session | Spring Security `FactorGrantedAuthority` + factor authorization rules | planned |
-| Factor Authority | 因素权限 | Authority issued when a factor succeeds (e.g. password, OTT) | `FactorGrantedAuthority` (`FACTOR_PASSWORD`, `FACTOR_OTT`, …) | planned |
-| One-Time Token | 一次性令牌 | Server-generated login token delivered out-of-band (magic link); **not** TOTP | `HttpSecurity.oneTimeTokenLogin()` / `OneTimeTokenService` | planned |
+| MFA | 多因素认证 | Require more than one authentication factor before a full session | Spring Security `FactorGrantedAuthority` + factor authorization rules | implemented |
+| Factor Authority | 因素权限 | Authority issued when a factor succeeds (e.g. password, OTT) | `FactorGrantedAuthority` (`FACTOR_PASSWORD`, `FACTOR_OTT`, …) | implemented |
+| One-Time Token | 一次性令牌 | Server-generated login token delivered out-of-band (magic link); **not** TOTP | `HttpSecurity.oneTimeTokenLogin()` / `OneTimeTokenService` | implemented |
 | Passkey | 通行密钥 | WebAuthn public-key credential for phishing-resistant sign-in | `HttpSecurity.webAuthn()` + JDBC WebAuthn repositories | planned |
 | WebAuthn Credential | WebAuthn 凭证 | Stored public key / credential id for a Passkey | Spring Security WebAuthn JDBC tables | planned |
 | TOTP Credential | TOTP 凭证 | Shared secret for authenticator-app codes (RFC 6238) | Domain `TotpCredential` + custom `FACTOR_TOTP` | planned |
