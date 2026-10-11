@@ -1,10 +1,11 @@
 import { Routes } from '@angular/router';
 
 export const routes: Routes = [
+  // More specific login/* paths before `login` (prefix match).
   {
-    path: 'login',
+    path: 'login/verify',
     loadComponent: () =>
-      import('./pages/login/login-page.component').then((m) => m.LoginPageComponent),
+      import('./pages/login/login-verify-page.component').then((m) => m.LoginVerifyPageComponent),
   },
   {
     path: 'login/ott',
@@ -12,14 +13,20 @@ export const routes: Routes = [
       import('./pages/login/ott-login-page.component').then((m) => m.OttLoginPageComponent),
   },
   {
-    path: 'ott/sent',
-    loadComponent: () =>
-      import('./pages/login/ott-sent-page.component').then((m) => m.OttSentPageComponent),
-  },
-  {
     path: 'login/totp',
     loadComponent: () =>
       import('./pages/login/totp-challenge-page.component').then((m) => m.TotpChallengePageComponent),
+  },
+  {
+    path: 'login',
+    pathMatch: 'full',
+    loadComponent: () =>
+      import('./pages/login/login-page.component').then((m) => m.LoginPageComponent),
+  },
+  {
+    path: 'ott/sent',
+    loadComponent: () =>
+      import('./pages/login/ott-sent-page.component').then((m) => m.OttSentPageComponent),
   },
   {
     path: 'security/totp',

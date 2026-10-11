@@ -15,15 +15,16 @@ public class SpaForwardController {
   @GetMapping({
     "/",
     "/login",
+    "/login/verify",
     "/login/ott",
+    "/login/totp",
     "/ott/sent",
     "/oauth-clients",
     "/oauth-clients/**",
     "/clients",
     "/clients/**",
     "/security/passkeys",
-    "/security/totp",
-    "/login/totp"
+    "/security/totp"
   })
   public String forwardSpaRoutes() {
     return "forward:/index.html";
