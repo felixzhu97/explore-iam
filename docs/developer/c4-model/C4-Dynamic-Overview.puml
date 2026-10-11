@@ -28,12 +28,20 @@ iam -> db: Save OidcClient → RegisteredClient\n+ ManagementEvent
 iam --> dev: client_id (+ client_secret if confidential)
 dev -> rp: Configure issuer, client_id, redirect URI
 
-== Sign in (SSO) ==
+== Sign in (SSO + MFA) ==
 user -> rp: Open app
 rp -> iam: /oauth2/authorize (Authorization Code + PKCE)
-alt No IAM session
+alt No full MFA session
   iam --> user: Login Page (/login)
-  user -> iam: Form Login
+  user -> iam: Form Login → FACTOR_PASSWORD
+  iam --> user: /login/verify (mfa-options)
+  alt Second factor (anyOf)
+    user -> iam: OTT generate + submit → FACTOR_OTT
+  else Passkey enrolled
+    user -> iam: WebAuthn assertion → FACTOR_WEBAUTHN
+  else TOTP enrolled
+    user -> iam: TOTP code → FACTOR_TOTP
+  end
   opt Federated login
     iam <-> idp: OAuth2 Login → FederatedIdentityLink
   end
@@ -43,6 +51,9 @@ iam --> rp: Redirect with code
 rp -> iam: POST /oauth2/token
 iam --> rp: Access Token (sub, email, permissions)\n+ ID / Refresh Token
 ref over rp, iam : C4-Dynamic-SSOLogin · C4-Dynamic-NativePkceLogin
+note over user, iam
+  MFA: PASSWORD + anyOf(OTT, WEBAUTHN, TOTP)
+end note
 
 == Call protected APIs ==
 rp -> rs: Authorization: Bearer access_token

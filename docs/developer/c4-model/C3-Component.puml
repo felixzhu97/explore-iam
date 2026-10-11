@@ -7,9 +7,10 @@ title Component Diagram (C3) — Explore IAM (backend + frontends)
 Container_Boundary(iam_app, "IAM Application (Spring Boot :9100)") {
 
     Container_Boundary(console, "IAM Console") {
-        Component(console_shell, "App Shell", "Angular 22", "Routes: home, clients, login")
+        Component(console_shell, "App Shell", "Angular 22", "Routes: home, clients, login, verify, security/totp")
         Component(clients_ui, "OAuth Clients UI", "Angular", "/oauth-clients list + create wizard")
-        Component(login_ui, "Login UI", "Angular", "Form login + OAuth client context")
+        Component(login_ui, "Login / MFA UI", "Angular", "/login · /login/verify · OTT · TOTP · Passkey")
+        Component(totp_enroll_ui, "TOTP Enroll UI", "Angular", "/security/totp QR + confirm")
         Component(http_client, "HTTP Client", "Angular HttpClient", "REST + CSRF (X-XSRF-TOKEN)")
     }
 
@@ -17,9 +18,12 @@ Container_Boundary(iam_app, "IAM Application (Spring Boot :9100)") {
         Component(user_ctrl, "UserController", "controller", "/api/v1/users")
         Component(group_ctrl, "GroupController", "controller", "/api/v1/groups")
         Component(role_ctrl, "RoleController", "controller", "/api/v1/roles")
-        Component(identity_svc, "Identity Services", "service", "UserService / GroupService / RoleService")
-        Component(identity_dom, "Identity Domain", "domain", "User, Group, Role, RoleBinding")
-        Component(identity_infra, "Identity Infra", "infra", "JPA repos, WebSecurityConfig, bootstrap")
+        Component(login_ctx, "LoginContextController", "controller", "/api/login · /mfa-options")
+        Component(totp_ctrl, "TotpController", "controller", "/api/v1/totp enroll/status")
+        Component(totp_challenge, "TotpChallengeController", "controller", "POST /login/totp → FACTOR_TOTP")
+        Component(identity_svc, "Identity Services", "service", "UserService / GroupService / RoleService / TotpService")
+        Component(identity_dom, "Identity Domain", "domain", "User, Group, Role, RoleBinding, TotpCredential")
+        Component(identity_infra, "Identity Infra", "infra", "JPA, WebSecurityConfig MFA factors, WebAuthn JDBC")
     }
 
     Container_Boundary(policy, "Policy Module") {
@@ -62,12 +66,16 @@ System_Ext(external_idp, "External IdP", "Google / GitHub", "Optional OAuth2 Log
 
 Rel(console_shell, clients_ui, "Routes")
 Rel(console_shell, login_ui, "Routes")
+Rel(console_shell, totp_enroll_ui, "Routes")
 Rel(clients_ui, http_client, "REST")
-Rel(login_ui, http_client, "Form POST /login")
+Rel(login_ui, http_client, "Form POST /login · OTT · WebAuthn · /login/totp")
+Rel(totp_enroll_ui, http_client, "REST /api/v1/totp")
 
 Rel(http_client, user_ctrl, "HTTPS /api/v1/users")
 Rel(http_client, group_ctrl, "HTTPS /api/v1/groups")
 Rel(http_client, role_ctrl, "HTTPS /api/v1/roles")
+Rel(http_client, login_ctx, "HTTPS /api/login")
+Rel(http_client, totp_ctrl, "HTTPS /api/v1/totp")
 Rel(http_client, policy_ctrl, "HTTPS /api/v1/allowPolicies")
 Rel(http_client, perm_ctrl, "HTTPS /api/v1/permissions")
 Rel(http_client, fed_ctrl, "HTTPS /api/v1/oauthClients")
@@ -77,6 +85,10 @@ Rel(http_client, sts_ctrl, "HTTPS /api/v1/shortLivedCredentials")
 Rel(user_ctrl, identity_svc, "Delegates")
 Rel(group_ctrl, identity_svc, "Delegates")
 Rel(role_ctrl, identity_svc, "Delegates")
+Rel(totp_ctrl, identity_svc, "Delegates")
+Rel(totp_challenge, identity_svc, "Verifies TOTP")
+Rel(login_ctx, identity_svc, "TOTP status")
+Rel(login_ctx, identity_infra, "Passkey lookup")
 Rel(identity_svc, identity_dom, "Rich model")
 Rel(identity_svc, identity_infra, "Persists")
 Rel(policy_ctrl, policy_svc, "Delegates")

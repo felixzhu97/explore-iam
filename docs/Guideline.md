@@ -230,21 +230,28 @@ sequenceDiagram
 
 ### MFA
 
-**Add MFA or WebAuthn on the Security filter chain before high-value sessions.**
-Keep passwords on `PasswordEncoder`; prefer passkeys where feasible. Same
-assurance bar as Apple Account two-factor and GitHub org-required 2FA. See
-[Spring Security Authentication](https://docs.spring.io/spring-security/reference/servlet/authentication/index.html),
+**Require `FACTOR_PASSWORD` plus anyOf `FACTOR_OTT`, `FACTOR_WEBAUTHN`, or
+`FACTOR_TOTP` before a full session (authorize and console).** After password
+sign-in, send the user to `/login/verify` and expose factor availability via
+`/api/login/mfa-options`. Prefer Passkeys when enrolled; keep OTT and TOTP as
+alternate second factors. Same assurance bar as Apple Account two-factor and
+GitHub org-required 2FA. Preferred Terms: [Glossary](./Glossary.md). Sequence:
+[C4-Dynamic-SSOLogin](./developer/c4-model/C4-Dynamic-SSOLogin.puml). See
+[Spring Security MFA](https://docs.spring.io/spring-security/reference/servlet/authentication/mfa.html),
+[One-Time Token Login](https://docs.spring.io/spring-security/reference/servlet/authentication/onetimetoken.html),
+[Passkeys](https://docs.spring.io/spring-security/reference/servlet/authentication/passkeys.html),
 [WebAuthn](https://www.w3.org/TR/webauthn-3/),
+[RFC 6238](https://www.rfc-editor.org/rfc/rfc6238),
 [NIST SP 800-63B](https://pages.nist.gov/800-63-4/sp800-63b.html),
-[Passkeys](https://developer.apple.com/passkeys), and
+[Passkeys (Apple)](https://developer.apple.com/passkeys), and
 [About two-factor authentication](https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/about-two-factor-authentication).
 
 ```mermaid
 flowchart LR
-  Password[Password]
-  Second[MFA_or_passkey]
-  Session[Authenticated_session]
-  Sensitive[Sensitive_actions]
+  Password[FACTOR_PASSWORD]
+  Second[anyOf_OTT_WEBAUTHN_TOTP]
+  Session[Full_session]
+  Sensitive[Authorize_and_console]
   Password --> Second
   Second -->|"success"| Session
   Session --> Sensitive
@@ -380,9 +387,10 @@ and
 
 ### MFA
 
-**Add MFA or WebAuthn factors on the Security filter chain before granting
-console or high-assurance sessions.** Prefer passkeys for phishing-resistant
-sign-in. See
+**Grant console and high-assurance sessions only after password plus anyOf
+OTT, Passkey (WebAuthn), or TOTP.** Prefer Passkeys for phishing-resistant
+sign-in; enroll TOTP under `/security/totp` when users need an authenticator
+app. See [Glossary](./Glossary.md),
 [Passkeys](https://developer.apple.com/passkeys),
 [Requiring two-factor authentication in your organization](https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-two-factor-authentication-for-your-organization/requiring-two-factor-authentication-in-your-organization),
 and [NIST SP 800-63B](https://pages.nist.gov/800-63-4/sp800-63b.html).
