@@ -10,6 +10,7 @@ autonumber
 participant "Enterprise IdP\nOkta / Entra ID" as idp <<external>>
 participant "IAM SCIM Server\n/scim/v2" as scim <<java>>
 participant "Identity Services\nUser · Group" as identity <<java>>
+participant "Synchronous handlers\nAdminActivityRecorder ·\nFederationLinkService" as handlers <<java>>
 database "Metadata DB\nusers · groups · event_publication" as db <<db>>
 participant "ScimPushListener\n@ApplicationModuleListener" as listener <<java>>
 participant "ScimTargetClient\nRestClient + OAuth2" as client <<java>>
@@ -22,8 +23,10 @@ token --> idp: Access Token
 idp -> scim: POST /Users · PUT · PATCH · DELETE\nPOST /Groups · PATCH members
 scim -> scim: SCOPE_write:iam_scim\nIf-Match vs W/"version" → 412 on mismatch
 scim -> identity: provisionUser / replace / disableUser / deleteUser
-identity -> db: Save aggregate + domain event\n(UserProvisioned, UserDeactivated, GroupMembershipChanged …)\n+ event publication (same transaction)
-scim -> db: AdminActivity scim:*
+identity -> db: Save aggregate
+identity -> handlers: publishEvent (same transaction)\nUserProvisionedEvent, UserDeactivatedEvent,\nUserDeletionRequestedEvent, GroupMembershipChangedEvent …
+handlers -> db: AdminActivity identity:* (actor = scim-provisioner)\ndelete FederatedIdentity links before the user row
+identity -> db: Event publication for after-commit listeners
 scim --> idp: 201 / 200 / 204 + ETag
 
 == Outbound: IAM pushes to Explore AI (after commit, async) ==

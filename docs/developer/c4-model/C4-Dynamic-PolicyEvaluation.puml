@@ -29,7 +29,7 @@ api -> db: 12. Load attached AllowPolicies
 api -> engine: 13. Evaluate(principal, permission, resource)
 engine -> engine: 14. Explicit Deny > Allow > implicit Deny
 engine --> api: 15. AccessDecision
-api -> db: 16. Append audit records
+api -> db: 16. AccessEvaluatedEvent → DataAccessLog\n(AdminActivityRecorder, same transaction)
 api --> caller: 17. 200 or 403
 
 note right of engine

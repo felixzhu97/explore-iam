@@ -22,7 +22,7 @@ Explore IAM 和下游产品，而不是逐个系统手工建号、停用和删�
    **GIVEN** 外部 IdP 持有 `scim-provisioner` 客户端的 `client_credentials` 令牌（`write:iam_scim`）  
    **WHEN** `POST /scim/v2/Users`（`application/scim+json`）  
    **THEN** 返回 201、`Location` 与弱 ETag `W/"<version>"`  
-   **AND** 写入 `scim:CreateUser` 管理活动
+   **AND** 写入 `identity:CreateUser` 管理活动，Actor 为 `scim-provisioner`
 
 2. **Scenario** 缺少 scope 被拒
    **GIVEN** 令牌不含 `write:iam_scim`  

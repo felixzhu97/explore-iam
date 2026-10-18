@@ -25,7 +25,7 @@ iam --> admin: 201 / 200
 
 == Provision from an enterprise IdP (SCIM) ==
 eidp -> iam: /scim/v2/Users · Groups\n(Bearer, write:iam_scim)
-iam -> db: Save User / Group + domain event\n+ AdminActivity scim:*
+iam -> db: Save User / Group, publish domain events\n→ AdminActivity identity:* (same transaction)
 iam --> eidp: 201 / 200 / 204 + ETag
 iam -> rp: Push assigned users → Explore AI /scim/v2/Users\n(client_credentials, write:ai_scim)
 ref over eidp, iam, rp : C4-Dynamic-ScimProvisioning

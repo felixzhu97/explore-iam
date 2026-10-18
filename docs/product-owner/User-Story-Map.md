@@ -101,7 +101,7 @@ journey
 |-----|-----------|--------------|
 | [US-08](./user-stories/E4-sso-federation.md#us-08-oidc-登录业务应用) OIDC 登录 | [US-18](./user-stories/E8-scim-provisioning.md#us-18-外部-idp-通过-scim-开通用户与组) IdP 开通用户与组 | [US-14](./user-stories/E7-living-docs.md#us-14-领域模型图与代码一致) 领域图与代码一致 |
 | [US-16](./user-stories/E4-sso-federation.md#us-16-mfa-第二因素后获得完整会话) MFA 第二因素 | [US-19](./user-stories/E8-scim-provisioning.md#us-19-iam-推送用户到-explore-ai) 推送到 Explore AI | [US-15](./user-stories/E7-living-docs.md#us-15-c4-图视觉风格跨仓一致) C4 视觉风格跨仓一致 |
-| [US-17](./user-stories/E4-sso-federation.md#us-17-登记-passkey-或-totp) 登记 Passkey/TOTP | [US-20](./user-stories/E8-scim-provisioning.md#us-20-删除与停用即时生效) 删除与停用即时生效 | |
+| [US-17](./user-stories/E4-sso-federation.md#us-17-登记-passkey-或-totp) 登记 Passkey/TOTP | [US-20](./user-stories/E8-scim-provisioning.md#us-20-删除与停用即时生效) 删除与停用即时生效 | [US-21](./user-stories/E7-living-docs.md#us-21-模块间以领域事件解耦) 领域事件解耦 |
 
 ---
 
@@ -115,7 +115,7 @@ journey
 | E4 SSO 与联邦 | [E4-sso-federation.md](./user-stories/E4-sso-federation.md) | US-08 – US-09, US-16 – US-17 | US-08 / US-16 / US-17 已实现 / US-09 规划中 |
 | E5 控制台与客户端 | [E5-console-clients.md](./user-stories/E5-console-clients.md) | US-10 – US-11 | US-10 已实现 / US-11 规划中 |
 | E6 审计 | [E6-audit.md](./user-stories/E6-audit.md) | US-12 – US-13 | 规划中 |
-| E7 活文档与架构 | [E7-living-docs.md](./user-stories/E7-living-docs.md) | US-14 – US-15 | 已实现 |
+| E7 活文档与架构 | [E7-living-docs.md](./user-stories/E7-living-docs.md) | US-14 – US-15, US-21 | 已实现 |
 | E8 SCIM 开通 | [E8-scim-provisioning.md](./user-stories/E8-scim-provisioning.md) | US-18 – US-20 | 已实现 |
 
 ## 参考

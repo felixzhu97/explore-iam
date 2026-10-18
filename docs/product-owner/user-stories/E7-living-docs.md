@@ -63,3 +63,34 @@
 ### 状态
 
 已实现
+
+---
+
+## US-21 模块间以领域事件解耦
+
+**As a** IAM 开发者  
+**I want** 审计、联邦清理与 SCIM 推送通过领域事件响应身份变更，而不是被各模块直接注入  
+**So that** 修改审计或联邦实现时不必改动身份、策略与 STS 模块
+
+### 验收标准
+
+1. **Scenario** 审计随业务变更同事务提交
+   **GIVEN** 管理员在控制台停用一名用户  
+   **WHEN** `UserService` 发布 `UserDeactivatedEvent`  
+   **THEN** `AdminActivityRecorder` 同步写入 `identity:DisableUser`  
+   **AND** 业务事务回滚时审计记录一并回滚
+
+2. **Scenario** 删除用户时联邦链接先于用户行删除
+   **GIVEN** 用户通过外部 IdP 登录过，存在 Federated Identity Link  
+   **WHEN** 删除该用户  
+   **THEN** `FederationLinkService` 处理 `UserDeletionRequestedEvent` 并删除链接  
+   **AND** 用户行删除成功，外键约束不被违反
+
+3. **Scenario** 架构规则守护
+   **GIVEN** `ArchitectureRulesTest`  
+   **WHEN** 任一模块引入循环依赖，或 `audit` 之外的模块依赖 `com.iam.audit..`  
+   **THEN** 构建失败
+
+### 状态
+
+已实现
