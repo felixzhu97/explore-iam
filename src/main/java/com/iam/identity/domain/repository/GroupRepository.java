@@ -44,4 +44,20 @@ public interface GroupRepository {
    * @param group aggregate to remove
    */
   void delete(Group group);
+
+  /**
+   * Finds a group by External ID.
+   *
+   * @param externalId identifier from the provisioning client
+   * @return matching group when present
+   */
+  Optional<Group> findByExternalId(String externalId);
+
+  /**
+   * Lists groups that contain the user.
+   *
+   * @param userId IAM user id
+   * @return groups with the user as a member
+   */
+  List<Group> findByMemberUserId(String userId);
 }

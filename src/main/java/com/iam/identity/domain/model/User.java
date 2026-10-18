@@ -1,12 +1,20 @@
 package com.iam.identity.domain.model;
 
-import com.iam.common.domain.base.AbstractEntity;
+import com.iam.common.domain.base.AbstractEventEntity;
 import com.iam.common.domain.base.DomainStrings;
+import com.iam.identity.domain.event.UserDeactivated;
+import com.iam.identity.domain.event.UserDeleted;
+import com.iam.identity.domain.event.UserProfileChanged;
+import com.iam.identity.domain.event.UserProvisioned;
+import com.iam.identity.domain.event.UserReactivated;
+import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -14,6 +22,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -28,7 +37,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "directory_user")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
-public class User extends AbstractEntity {
+public class User extends AbstractEventEntity {
 
   private static final String FEDERATED_NO_PASSWORD = "{noop}federated-no-password";
 
@@ -41,6 +50,15 @@ public class User extends AbstractEntity {
   @Size(max = 320)
   @Column(length = 320)
   private String email;
+
+  @Size(max = 256)
+  @Column(length = 256)
+  private String displayName;
+
+  @Embedded
+  @AttributeOverride(name = "value", column = @Column(name = "external_id", length = 256))
+  @Valid
+  private ExternalId externalId;
 
   @NotBlank
   @Size(max = 255)
@@ -67,6 +85,7 @@ public class User extends AbstractEntity {
     this.email = email;
     this.passwordHash = requirePasswordHash(passwordHash);
     this.enabled = enabled;
+    registerEvent(new UserProvisioned(id));
   }
 
   /**
@@ -100,16 +119,88 @@ public class User extends AbstractEntity {
     return createUser(username, email, FEDERATED_NO_PASSWORD);
   }
 
+  /**
+   * Creates a password-less user pushed by a SCIM Client; sign-in happens through federation.
+   *
+   * @param username unique login name
+   * @param email contact email
+   * @param displayName optional display name
+   * @param externalId optional identifier from the provisioning client
+   * @return new aggregate
+   */
+  public static User provisionUser(
+      String username, String email, String displayName, ExternalId externalId) {
+    User user = createUser(username, email, FEDERATED_NO_PASSWORD);
+    user.displayName = normalizeDisplayName(displayName);
+    user.externalId = externalId;
+    return user;
+  }
+
   /** Disables the user so form login is rejected. */
   public void disableUser() {
+    if (enabled) {
+      registerEvent(new UserDeactivated(getId()));
+    }
     this.enabled = false;
     touch();
   }
 
   /** Re-enables the user for form login. */
   public void enableUser() {
+    if (!enabled) {
+      registerEvent(new UserReactivated(getId()));
+    }
     this.enabled = true;
     touch();
+  }
+
+  /**
+   * Replaces username, email, and display name.
+   *
+   * @param username unique login name
+   * @param email contact email
+   * @param displayName optional display name
+   */
+  public void updateProfile(String username, String email, String displayName) {
+    String normalizedUsername = DomainStrings.requireNonBlank(username, "username");
+    String normalizedDisplayName = normalizeDisplayName(displayName);
+    if (normalizedUsername.equals(this.username)
+        && Objects.equals(email, this.email)
+        && Objects.equals(normalizedDisplayName, this.displayName)) {
+      return;
+    }
+    this.username = normalizedUsername;
+    this.email = email;
+    this.displayName = normalizedDisplayName;
+    registerProfileChanged();
+  }
+
+  /**
+   * Sets or clears the External ID.
+   *
+   * @param externalId new identifier, or {@code null} to clear
+   */
+  public void changeExternalId(ExternalId externalId) {
+    if (Objects.equals(externalId, getExternalId())) {
+      return;
+    }
+    this.externalId = externalId;
+    registerProfileChanged();
+  }
+
+  /** Registers {@link UserDeleted}; call right before the repository deletes this user. */
+  public void removeUser() {
+    registerEvent(new UserDeleted(getId()));
+  }
+
+  /** Returns the External ID, or {@code null} when none is set. */
+  public ExternalId getExternalId() {
+    return externalId == null || externalId.value() == null ? null : externalId;
+  }
+
+  /** Returns true when the user has no local password and signs in through federation. */
+  public boolean isPasswordless() {
+    return FEDERATED_NO_PASSWORD.equals(passwordHash);
   }
 
   /**
@@ -140,8 +231,11 @@ public class User extends AbstractEntity {
    * @param email new email
    */
   public void changeEmail(String email) {
+    if (Objects.equals(email, this.email)) {
+      return;
+    }
     this.email = email;
-    touch();
+    registerProfileChanged();
   }
 
   /**
@@ -172,6 +266,22 @@ public class User extends AbstractEntity {
   public List<String> assignedRoleIds() {
     return Collections.unmodifiableList(
         roleAssignments.stream().map(RoleBinding::roleId).toList());
+  }
+
+  private void registerProfileChanged() {
+    registerEvent(new UserProfileChanged(getId()));
+    touch();
+  }
+
+  private static String normalizeDisplayName(String displayName) {
+    if (displayName == null || displayName.isBlank()) {
+      return null;
+    }
+    String trimmed = displayName.trim();
+    if (trimmed.length() > 256) {
+      throw new IllegalArgumentException("displayName exceeds 256 characters");
+    }
+    return trimmed;
   }
 
   private static String requirePasswordHash(String passwordHash) {

@@ -449,4 +449,21 @@
             </column>
         </createTable>
     </changeSet>
+
+    <changeSet id="646f70d3-080c-4a19-9e78-f98c71267887" author="felix.zhu">
+        <addColumn tableName="directory_user">
+            <column name="display_name" type="varchar(256)"/>
+            <column name="external_id" type="varchar(256)"/>
+        </addColumn>
+        <createIndex tableName="directory_user" indexName="ix_directory_user_external_id">
+            <column name="external_id"/>
+        </createIndex>
+        <renameTable oldTableName="group" newTableName="directory_group"/>
+        <addColumn tableName="directory_group">
+            <column name="external_id" type="varchar(256)"/>
+        </addColumn>
+        <createIndex tableName="directory_group" indexName="ix_directory_group_external_id">
+            <column name="external_id"/>
+        </createIndex>
+    </changeSet>
 </databaseChangeLog>
