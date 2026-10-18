@@ -34,11 +34,6 @@ package "Domain Kernel" as pkg_kernel {
     +version: long
     # touch()
   }
-  class AbstractEventEntity <<Abstract>> {
-    # registerEvent(event)
-    +domainEvents() @DomainEvents
-    +clearDomainEvents() @AfterDomainEventPublication
-  }
   class AbstractEmbeddable <<Abstract>>
   class AbstractNamedEntity <<Abstract>> {
     +name: String
@@ -56,7 +51,6 @@ package "Domain Kernel" as pkg_kernel {
 
 AbstractEntity --|> AbstractImmutable
 AbstractNamedEntity --|> AbstractEntity
-AbstractEventEntity --|> AbstractEntity
 AbstractAuditEvent --|> AbstractImmutable
 
 package "Common" as pkg_common {
@@ -117,15 +111,14 @@ package "Identity" as pkg_identity {
     +{static} createUser(username, email, passwordHash)
     +{static} createFederatedUser(provider, subject, email)
     +{static} provisionUser(username, email, displayName, externalId)
-    +disableUser()
-    +enableUser()
+    +disableUser(): boolean
+    +enableUser(): boolean
     +resetPassword(passwordHash)
     +changeEmail(email)
-    +updateProfile(username, email, displayName)
-    +changeExternalId(externalId)
-    +removeUser()
-    +assignRole(roleId)
-    +unassignRole(roleId)
+    +updateProfile(username, email, displayName): boolean
+    +changeExternalId(externalId): boolean
+    +assignRole(roleId): boolean
+    +unassignRole(roleId): boolean
     +hasRole(roleId)
     +assignedRoleIds()
   }
@@ -136,36 +129,62 @@ package "Identity" as pkg_identity {
     +{static} createGroup(name)
     +{static} provisionGroup(name, externalId)
     +getResourceName()
-    +renameGroup(name)
-    +changeExternalId(externalId)
-    +addMember(userId)
-    +removeMember(userId)
-    +replaceMembers(userIds)
+    +renameGroup(name): boolean
+    +changeExternalId(externalId): boolean
+    +addMember(userId): boolean
+    +removeMember(userId): boolean
+    +replaceMembers(userIds): MembershipChange
     +hasMember(userId)
     +memberUserIds()
   }
   class ExternalId <<ValueObject>> {
     +value: String
   }
-  class UserProvisioned <<DomainEvent>> {
+  class UserProvisionedEvent <<DomainEvent>> {
     +userId: String
   }
-  class UserProfileChanged <<DomainEvent>> {
+  class UserProfileChangedEvent <<DomainEvent>> {
     +userId: String
   }
-  class UserDeactivated <<DomainEvent>> {
+  class UserDeactivatedEvent <<DomainEvent>> {
     +userId: String
   }
-  class UserReactivated <<DomainEvent>> {
+  class UserReactivatedEvent <<DomainEvent>> {
     +userId: String
   }
-  class UserDeleted <<DomainEvent>> {
+  class UserPasswordResetEvent <<DomainEvent>> {
     +userId: String
   }
-  class GroupMembershipChanged <<DomainEvent>> {
+  class UserRoleAssignedEvent <<DomainEvent>> {
+    +userId: String
+    +roleId: String
+  }
+  class UserRoleUnassignedEvent <<DomainEvent>> {
+    +userId: String
+    +roleId: String
+  }
+  class UserDeletionRequestedEvent <<DomainEvent>> {
+    +userId: String
+  }
+  class UserDeletedEvent <<DomainEvent>> {
+    +userId: String
+  }
+  class GroupCreatedEvent <<DomainEvent>> {
+    +groupId: String
+  }
+  class GroupProfileChangedEvent <<DomainEvent>> {
+    +groupId: String
+  }
+  class GroupMembershipChangedEvent <<DomainEvent>> {
     +groupId: String
     +addedUserIds: Set<String>
     +removedUserIds: Set<String>
+  }
+  class GroupDeletedEvent <<DomainEvent>> {
+    +groupId: String
+  }
+  class RoleCreatedEvent <<DomainEvent>> {
+    +roleId: String
   }
   class GroupMember <<Entity>> {
     +userId: String
@@ -213,8 +232,8 @@ note right of WebAuthnCredential
   PublicKeyCredential / UserCredential repos
 end note
 
-User --|> AbstractEventEntity
-Group --|> AbstractEventEntity
+User --|> AbstractEntity
+Group --|> AbstractEntity
 Role --|> AbstractNamedEntity
 TotpCredential --|> AbstractEntity
 Group "1" *-- "0..*" GroupMember : members
@@ -226,12 +245,10 @@ Role --> ImpersonationPolicy
 ExternalId --|> AbstractEmbeddable
 User --> ExternalId
 Group --> ExternalId
-User ..> UserProvisioned : registers
-User ..> UserProfileChanged : registers
-User ..> UserDeactivated : registers
-User ..> UserReactivated : registers
-User ..> UserDeleted : registers
-Group ..> GroupMembershipChanged : registers
+UserProvisionedEvent ..> User : userId
+UserDeletionRequestedEvent ..> User : userId
+GroupMembershipChangedEvent ..> Group : groupId
+RoleCreatedEvent ..> Role : roleId
 
 package "Provisioning" as pkg_provisioning {
   class ProvisioningTarget <<AggregateRoot>> {
@@ -263,8 +280,8 @@ ProvisioningTarget --|> AbstractNamedEntity
 ProvisioningTarget "1" *-- "0..*" ProvisionedAccount : accounts
 ProvisionedAccount ..> User : iamUserId
 ProvisioningTarget ..> Group : assignmentGroupId
-ProvisioningTarget ..> UserProvisioned : reacts via listener
-ProvisioningTarget ..> GroupMembershipChanged : reacts via listener
+ProvisioningTarget ..> UserProvisionedEvent : reacts via listener
+ProvisioningTarget ..> GroupMembershipChangedEvent : reacts via listener
 
 package "Policy" as pkg_policy {
   class AllowPolicy <<AggregateRoot>> {
@@ -312,6 +329,22 @@ package "Policy" as pkg_policy {
   class PolicyEngine <<DomainService>> {
     +evaluate(context, policies)
   }
+  class AllowPolicyCreatedEvent <<DomainEvent>> {
+    +policyId: String
+  }
+  class PolicyAttachedEvent <<DomainEvent>> {
+    +policyBindingId: String
+  }
+  class PermissionCreatedEvent <<DomainEvent>> {
+    +code: String
+  }
+  class AccessEvaluatedEvent <<DomainEvent>> {
+    +principalId: String
+    +action: String
+    +resource: String
+    +effect: Effect
+    +reasonCode: String
+  }
 }
 
 AllowPolicy --|> AbstractNamedEntity
@@ -342,10 +375,14 @@ package "Short-lived credentials" as pkg_sts {
     +{static} createShortLivedCredential(roleArn, sessionName, callerPrincipal, expiresAt)
     +isExpired(now)
   }
+  class RoleAssumedEvent <<DomainEvent>> {
+    +roleId: String
+  }
 }
 
 ShortLivedCredential --|> AbstractImmutable
 ShortLivedCredential --> ResourceName
+RoleAssumedEvent ..> Role : roleId
 
 package "Federation" as pkg_federation {
   class OAuthClient <<AggregateRoot>> {
@@ -372,6 +409,12 @@ package "Federation" as pkg_federation {
   }
   class RedirectUri <<ValueObject>> {
     +value: String
+  }
+  class OAuthClientRegisteredEvent <<DomainEvent>> {
+    +clientId: String
+  }
+  class OAuthClientScopesChangedEvent <<DomainEvent>> {
+    +clientId: String
   }
   note right of OAuthClient
     Public clients (explore-ai-ios / explore-chat-ios):
@@ -440,6 +483,8 @@ DataAccessLog --> Resource
 DataAccessLog --> Effect
 DataAccessLog --> ReasonCode
 DataAccessLog ..> AccessDecision : records
+AccessEvaluatedEvent ..> DataAccessLog : handled into
+AdminActivity ..> UserDeletedEvent : handled into
 
 note as N_LAYERS
   Layering (per module): controller → service → domain ← infra
@@ -447,8 +492,11 @@ note as N_LAYERS
   Kernel: @CreationTimestamp / @UpdateTimestamp; Bean Validation on fields.
   Persisted string VOs: @Embeddable (ResourceName, Permission, Resource, …).
   restoreOAuthClient: OAuthClient only (non-JPA aggregate).
-  Domain events carry ids only (no PII); published by Spring Data
-  @DomainEvents on save / delete; SCIM types stay in com.iam.scim.
+  Domain events: records named *Event, ids only (no PII); published by
+  application services via ApplicationEventPublisher after the state
+  change; handled by @EventListener handleXxxEvent on the consuming
+  service (audit, federation) in the same transaction; SCIM push uses
+  @ApplicationModuleListener after commit. SCIM types stay in com.iam.scim.
   Preferred Terms: docs/Glossary.md
 end note
 

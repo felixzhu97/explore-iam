@@ -200,7 +200,6 @@ Terms mapping Explore IAM security behavior to [Spring Security](https://docs.sp
 | Abstract Immutable | 不可变聚合基类 | Domain/JPA base: `id` + `createdAt` | `com.iam.common.domain.base.AbstractImmutable` | implemented |
 | Abstract Entity | 可变聚合基类 | Extends immutable; adds `updatedAt` + `@Version` | `AbstractEntity` | implemented |
 | Abstract Named Entity | 具名聚合基类 | Mutable aggregate with unique `name` | `AbstractNamedEntity` | implemented |
-| Abstract Event Entity | 事件聚合基类 | Mutable aggregate that registers domain events (`User`, `Group`) | `AbstractEventEntity` | implemented |
 | Abstract Audit Event | 不可变审计聚合基类 | Immutable audit aggregate base; `occurred_at` column | `AbstractAuditEvent` | implemented |
 | Abstract Embeddable | 可嵌入值对象基类 | Embeddable VO base preventing empty composite `null` | `AbstractEmbeddable` | implemented |
 | Domain Strings | 域字符串校验 | Shared non-blank string validation | `DomainStrings.requireNonBlank` | implemented |
@@ -209,7 +208,8 @@ Terms mapping Explore IAM security behavior to [Spring Security](https://docs.sp
 | Optimistic Locking | 乐观锁 | Concurrent update detection via `@Version` | `AbstractEntity.version` | implemented |
 | Liquibase Changelog | Liquibase 变更日志 | Versioned SQL schema migrations | `db/changelog/0.1.xml` | implemented |
 | Schema Validation | 模式校验 | Hibernate validates entities against DB schema | `spring.jpa.hibernate.ddl-auto: validate` | implemented |
-| Domain Event | 领域事件 | Fact registered by an aggregate and published on repository `save` / `delete`; carries ids only | `AbstractEventEntity.registerEvent` + Spring Data `@DomainEvents` | implemented |
+| Domain Event | 领域事件 | Fact published by an application service after a state change, inside its transaction; a `record` named `*Event` in `<module>/domain/event`, carrying ids only | `ApplicationEventPublisher.publishEvent` | implemented |
+| Event Handler | 事件处理方法 | Synchronous `handleXxxEvent` method on the consuming module's service; runs in the publisher's transaction | `@EventListener` | implemented |
 
 ### 4.8 Provisioning Delivery
 
@@ -281,18 +281,25 @@ Cross-bounded-context value objects in `com.iam.common.domain.model`
 | Provision User | 开通用户 | Factory for a password-less user created by a SCIM Client | Behavior | `User.provisionUser` | implemented |
 | Update Profile | 更新资料 | Replaces username, email, and display name | Behavior | `User.updateProfile` | implemented |
 | Change External ID | 修改外部 ID | Sets or clears the External ID | Behavior | `User.changeExternalId` / `Group.changeExternalId` | implemented |
-| Remove User | 移除用户 | Registers `UserDeleted` before the repository deletes the user | Behavior | `User.removeUser` | implemented |
 | Group | 组 | Collection of users for shared policy binding | Aggregate | `Group` | implemented |
 | Group Member | 组成员 | Child entity linking a user to a group | Entity | `GroupMember` | implemented |
 | Provision Group | 开通组 | Factory for a group created by a SCIM Client | Behavior | `Group.provisionGroup` | implemented |
 | Rename Group | 重命名组 | Changes the group display name | Behavior | `Group.renameGroup` | implemented |
-| Replace Members | 替换成员 | Sets the full member list; registers added / removed ids | Behavior | `Group.replaceMembers` | implemented |
-| User Provisioned | 用户已开通 | Domain event: user created | Domain Event | `UserProvisioned` | implemented |
-| User Profile Changed | 用户资料已变更 | Domain event: username / email / display name / External ID changed | Domain Event | `UserProfileChanged` | implemented |
-| User Deactivated | 用户已停用 | Domain event: user disabled | Domain Event | `UserDeactivated` | implemented |
-| User Reactivated | 用户已恢复 | Domain event: user re-enabled | Domain Event | `UserReactivated` | implemented |
-| User Deleted | 用户已删除 | Domain event: user removed | Domain Event | `UserDeleted` | implemented |
-| Group Membership Changed | 组成员已变更 | Domain event: user ids added to / removed from a group | Domain Event | `GroupMembershipChanged` | implemented |
+| Replace Members | 替换成员 | Sets the full member list; returns the added / removed ids | Behavior | `Group.replaceMembers` | implemented |
+| User Provisioned Event | 用户已开通事件 | User created (console, SCIM, federated sign-in, or seed) | Domain Event | `UserProvisionedEvent` | implemented |
+| User Profile Changed Event | 用户资料已变更事件 | Username / email / display name / External ID changed | Domain Event | `UserProfileChangedEvent` | implemented |
+| User Deactivated Event | 用户已停用事件 | User disabled | Domain Event | `UserDeactivatedEvent` | implemented |
+| User Reactivated Event | 用户已恢复事件 | User re-enabled | Domain Event | `UserReactivatedEvent` | implemented |
+| User Password Reset Event | 用户密码已重置事件 | Admin reset a user's password | Domain Event | `UserPasswordResetEvent` | implemented |
+| User Role Assigned Event | 用户已分配角色事件 | Role bound to a user | Domain Event | `UserRoleAssignedEvent` | implemented |
+| User Role Unassigned Event | 用户已解除角色事件 | Role unbound from a user | Domain Event | `UserRoleUnassignedEvent` | implemented |
+| User Deletion Requested Event | 用户删除请求事件 | Published before the user row is deleted so other modules clean up their links in the same transaction | Domain Event | `UserDeletionRequestedEvent` | implemented |
+| User Deleted Event | 用户已删除事件 | User removed | Domain Event | `UserDeletedEvent` | implemented |
+| Group Created Event | 组已创建事件 | Group created | Domain Event | `GroupCreatedEvent` | implemented |
+| Group Profile Changed Event | 组资料已变更事件 | Group name / External ID changed | Domain Event | `GroupProfileChangedEvent` | implemented |
+| Group Membership Changed Event | 组成员已变更事件 | User ids added to / removed from a group | Domain Event | `GroupMembershipChangedEvent` | implemented |
+| Group Deleted Event | 组已删除事件 | Group removed | Domain Event | `GroupDeletedEvent` | implemented |
+| Role Created Event | 角色已创建事件 | Role created | Domain Event | `RoleCreatedEvent` | implemented |
 | Role | 角色 | Named collection of permissions (Google IAM role) | Aggregate | `Role` | implemented |
 | Role Binding | 角色绑定 | Links a principal to a Role | Entity | `RoleBinding` | implemented |
 | Assign Role | 分配角色 | Bind a role to a user | Behavior | `User.assignRole` | implemented |
@@ -315,6 +322,10 @@ Cross-bounded-context value objects in `com.iam.common.domain.model`
 | Access Tuple | 访问元组 | Principal + Permission + Resource (Policy Troubleshooter shape) | Value Object | `AccessTuple` | implemented |
 | Access Decision | 访问决策 | Allow or Deny with reason | Value Object | `AccessDecision` | implemented |
 | Policy Engine | 策略引擎 | Evaluates policies: Deny > Allow > Implicit Deny | Domain Service | `PolicyEngine` | implemented |
+| Allow Policy Created Event | 允许策略已创建事件 | Allow Policy created | Domain Event | `AllowPolicyCreatedEvent` | implemented |
+| Policy Attached Event | 策略已绑定事件 | Policy Binding created | Domain Event | `PolicyAttachedEvent` | implemented |
+| Permission Created Event | 权限已创建事件 | Permission catalog entry created | Domain Event | `PermissionCreatedEvent` | implemented |
+| Access Evaluated Event | 访问已评估事件 | Access Tuple evaluated to an Access Decision | Domain Event | `AccessEvaluatedEvent` | implemented |
 
 ---
 
@@ -326,6 +337,7 @@ Cross-bounded-context value objects in `com.iam.common.domain.model`
 | Impersonation Policy | 模拟策略 | Who may create short-lived credentials for a Role | Concept | `ImpersonationPolicy` on `Role` | implemented |
 | Create Short-Lived Credential | 创建短期凭证 | Exchange caller identity for role session credentials | Use Case | `ShortLivedCredentialService` | implemented |
 | Session Expired | 会话已过期 | Whether credentials are no longer valid | Behavior | `ShortLivedCredential.isExpired` | implemented |
+| Role Assumed Event | 角色已扮演事件 | Caller obtained short-lived credentials for a Role | Domain Event | `RoleAssumedEvent` | implemented |
 
 ---
 
@@ -342,6 +354,8 @@ Cross-bounded-context value objects in `com.iam.common.domain.model`
 | Create OAuth Client | 创建 OAuth 客户端 | Factory for confidential / public clients | Behavior | `OAuthClient.createOAuthClient` | implemented |
 | Restore OAuth Client | 恢复 OAuth 客户端 | Rehydrate from persistence | Behavior | `OAuthClient.restoreOAuthClient` | implemented |
 | SSO Login | 单点登录 | One login for multiple Relying Parties | Use Case | OIDC Authorization Code | implemented |
+| OAuth Client Registered Event | OAuth 客户端已注册事件 | OAuth Client created | Domain Event | `OAuthClientRegisteredEvent` | implemented |
+| OAuth Client Scopes Changed Event | OAuth 客户端范围已变更事件 | Allowed scopes replaced | Domain Event | `OAuthClientScopesChangedEvent` | implemented |
 
 ---
 
@@ -359,7 +373,7 @@ Immutable **aggregate roots** for append-only audit rows (Google Cloud Audit Log
 | Record Admin Activity | 记录管理活动 | Factory on `AdminActivity` | Behavior | `AdminActivity.recordAdminActivity` | implemented |
 | Record Sign-In Activity | 记录登录活动 | Factory for sign-in admin activity | Behavior | `AdminActivity.recordSignInActivity` | implemented |
 | Record Data Access Log | 记录数据访问 | Factory on `DataAccessLog` | Behavior | `DataAccessLog.recordDataAccessLog` | implemented |
-| Admin Activity Recorder | 管理活动记录器 | Application helper persisting admin activity | Service | `AdminActivityRecorder` | implemented |
+| Admin Activity Recorder | 管理活动记录器 | Handles domain events from other modules and persists Admin Activity / Data Access Log rows; other modules never call it | Service | `AdminActivityRecorder.handleXxxEvent` | implemented |
 
 ---
 
