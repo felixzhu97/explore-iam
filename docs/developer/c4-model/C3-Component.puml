@@ -43,9 +43,9 @@ Container_Boundary(iam_app, "IAM Application (Spring Boot :9100)") {
 
     Container_Boundary(federation, "Federation Module") {
         Component(fed_ctrl, "OAuthClientController", "controller", "/api/v1/oauthClients")
-        Component(fed_svc, "OAuthClientService", "service", "Create / list OAuth clients")
+        Component(fed_svc, "Federation Services", "service", "OAuthClientService / FederationLinkService\nhandleUserDeletionRequestedEvent removes links")
         Component(fed_dom, "Federation Domain", "domain", "OAuthClient, FederatedIdentity")
-        Component(fed_infra, "Federation Infra", "infra", "SAS config, JWK persistence, OAuth2 client")
+        Component(fed_infra, "Federation Infra", "infra", "SAS config, JWK persistence,\nFederatedLoginService (OAuth2UserService)")
     }
 
     Container_Boundary(scim, "SCIM Module") {
@@ -58,7 +58,7 @@ Container_Boundary(iam_app, "IAM Application (Spring Boot :9100)") {
 
     Container_Boundary(audit, "Audit Module") {
         Component(audit_ctrl, "AuditController", "controller", "/api/v1/adminActivities")
-        Component(audit_svc, "AuditService", "service", "AdminActivity + DataAccessLog")
+        Component(audit_svc, "AdminActivityRecorder + AuditService", "service", "@EventListener handleXxxEvent (sync, same tx)\n→ AdminActivity + DataAccessLog")
         Component(audit_dom, "Audit Domain", "domain", "AdminActivity, DataAccessLog")
         Component(audit_infra, "Audit Infra", "infra", "JpaAuditRepository, auth listener")
     }
@@ -108,7 +108,7 @@ Rel(policy_svc, policy_infra, "Persists")
 Rel(sts_ctrl, sts_svc, "Delegates")
 Rel(sts_svc, sts_dom, "Creates short-lived credential")
 Rel(sts_svc, policy_dom, "Impersonation policy (via Role)")
-Rel(sts_svc, audit_svc, "Admin activity")
+Rel(sts_svc, audit_svc, "RoleAssumedEvent (sync)")
 Rel(fed_ctrl, fed_svc, "Delegates")
 Rel(fed_svc, fed_infra, "SAS RegisteredClient")
 Rel(audit_ctrl, audit_svc, "Delegates")
@@ -118,8 +118,12 @@ Rel(audit_svc, audit_infra, "Persists")
 Rel(enterprise_idp, scim_ctrl, "SCIM 2.0 Bearer", "HTTPS")
 Rel(scim_ctrl, scim_prov_svc, "Delegates")
 Rel(scim_prov_svc, identity_svc, "Provision / deactivate / delete User, Group")
-Rel(scim_prov_svc, audit_svc, "scim:* admin activity")
-Rel(identity_dom, scim_push, "Domain events\n(UserProvisioned, UserDeleted, GroupMembershipChanged …)")
+Rel(identity_svc, scim_push, "Domain events after commit\n(UserProvisionedEvent, UserDeletedEvent, GroupMembershipChangedEvent …)")
+Rel(identity_svc, audit_svc, "Domain events (sync)\n(UserDeactivatedEvent, GroupCreatedEvent, RoleCreatedEvent …)")
+Rel(identity_svc, fed_svc, "UserDeletionRequestedEvent (sync)")
+Rel(policy_svc, audit_svc, "AllowPolicyCreatedEvent, PolicyAttachedEvent,\nPermissionCreatedEvent, AccessEvaluatedEvent (sync)")
+Rel(fed_svc, audit_svc, "OAuthClientRegisteredEvent,\nOAuthClientScopesChangedEvent (sync)")
+Rel(identity_infra, fed_infra, "oauth2Login userService\n(OAuth2UserService interface)")
 Rel(scim_push, scim_dom, "Target + account bookkeeping")
 Rel(scim_push, scim_infra, "ScimTargetGateway")
 Rel(scim_infra, explore_ai_scim, "Push users", "SCIM 2.0 / HTTPS")
