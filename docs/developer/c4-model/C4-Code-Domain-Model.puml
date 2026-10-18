@@ -21,6 +21,7 @@ legend right
   | <<ValueObject>> | 值对象 |
   | <<Enum>> | 枚举 |
   | <<DomainService>> | 领域服务 |
+  | <<DomainEvent>> | 领域事件 |
 endlegend
 
 package "Domain Kernel" as pkg_kernel {
@@ -32,6 +33,11 @@ package "Domain Kernel" as pkg_kernel {
     +updatedAt: Instant @UpdateTimestamp
     +version: long
     # touch()
+  }
+  class AbstractEventEntity <<Abstract>> {
+    # registerEvent(event)
+    +domainEvents() @DomainEvents
+    +clearDomainEvents() @AfterDomainEventPublication
   }
   class AbstractEmbeddable <<Abstract>>
   class AbstractNamedEntity <<Abstract>> {
@@ -50,6 +56,7 @@ package "Domain Kernel" as pkg_kernel {
 
 AbstractEntity --|> AbstractImmutable
 AbstractNamedEntity --|> AbstractEntity
+AbstractEventEntity --|> AbstractEntity
 AbstractAuditEvent --|> AbstractImmutable
 
 package "Common" as pkg_common {
@@ -102,15 +109,21 @@ package "Identity" as pkg_identity {
   class User <<AggregateRoot>> {
     +username: String
     +email: String
+    +displayName: String
+    +externalId: ExternalId
     +passwordHash: String
     +enabled: boolean
     --
     +{static} createUser(username, email, passwordHash)
     +{static} createFederatedUser(provider, subject, email)
+    +{static} provisionUser(username, email, displayName, externalId)
     +disableUser()
     +enableUser()
     +resetPassword(passwordHash)
     +changeEmail(email)
+    +updateProfile(username, email, displayName)
+    +changeExternalId(externalId)
+    +removeUser()
     +assignRole(roleId)
     +unassignRole(roleId)
     +hasRole(roleId)
@@ -118,13 +131,41 @@ package "Identity" as pkg_identity {
   }
   class Group <<AggregateRoot>> {
     +name: String
+    +externalId: ExternalId
     --
     +{static} createGroup(name)
+    +{static} provisionGroup(name, externalId)
     +getResourceName()
+    +renameGroup(name)
+    +changeExternalId(externalId)
     +addMember(userId)
     +removeMember(userId)
+    +replaceMembers(userIds)
     +hasMember(userId)
     +memberUserIds()
+  }
+  class ExternalId <<ValueObject>> {
+    +value: String
+  }
+  class UserProvisioned <<DomainEvent>> {
+    +userId: String
+  }
+  class UserProfileChanged <<DomainEvent>> {
+    +userId: String
+  }
+  class UserDeactivated <<DomainEvent>> {
+    +userId: String
+  }
+  class UserReactivated <<DomainEvent>> {
+    +userId: String
+  }
+  class UserDeleted <<DomainEvent>> {
+    +userId: String
+  }
+  class GroupMembershipChanged <<DomainEvent>> {
+    +groupId: String
+    +addedUserIds: Set<String>
+    +removedUserIds: Set<String>
   }
   class GroupMember <<Entity>> {
     +userId: String
@@ -172,8 +213,8 @@ note right of WebAuthnCredential
   PublicKeyCredential / UserCredential repos
 end note
 
-User --|> AbstractEntity
-Group --|> AbstractNamedEntity
+User --|> AbstractEventEntity
+Group --|> AbstractEventEntity
 Role --|> AbstractNamedEntity
 TotpCredential --|> AbstractEntity
 Group "1" *-- "0..*" GroupMember : members
@@ -182,6 +223,48 @@ User "1" o-- "0..1" TotpCredential : optional
 User "1" o-- "0..*" WebAuthnCredential : passkeys
 Role --> ResourceName
 Role --> ImpersonationPolicy
+ExternalId --|> AbstractEmbeddable
+User --> ExternalId
+Group --> ExternalId
+User ..> UserProvisioned : registers
+User ..> UserProfileChanged : registers
+User ..> UserDeactivated : registers
+User ..> UserReactivated : registers
+User ..> UserDeleted : registers
+Group ..> GroupMembershipChanged : registers
+
+package "Provisioning" as pkg_provisioning {
+  class ProvisioningTarget <<AggregateRoot>> {
+    +name: String
+    +baseUrl: String
+    +registrationId: String
+    +enabled: boolean
+    +assignmentGroupId: String
+    --
+    +{static} createProvisioningTarget(name, baseUrl, registrationId, assignmentGroupId)
+    +reconfigure(baseUrl, registrationId, assignmentGroupId)
+    +enableTarget()
+    +disableTarget()
+    +requiresAssignment()
+    +recordProvisionedAccount(iamUserId, remoteId, version)
+    +forgetProvisionedAccount(iamUserId)
+    +findProvisionedAccount(iamUserId)
+  }
+  class ProvisionedAccount <<Entity>> {
+    +iamUserId: String
+    +remoteId: String
+    +lastSyncedVersion: long
+    --
+    +isSyncedAt(version)
+  }
+}
+
+ProvisioningTarget --|> AbstractNamedEntity
+ProvisioningTarget "1" *-- "0..*" ProvisionedAccount : accounts
+ProvisionedAccount ..> User : iamUserId
+ProvisioningTarget ..> Group : assignmentGroupId
+ProvisioningTarget ..> UserProvisioned : reacts via listener
+ProvisioningTarget ..> GroupMembershipChanged : reacts via listener
 
 package "Policy" as pkg_policy {
   class AllowPolicy <<AggregateRoot>> {
@@ -364,6 +447,8 @@ note as N_LAYERS
   Kernel: @CreationTimestamp / @UpdateTimestamp; Bean Validation on fields.
   Persisted string VOs: @Embeddable (ResourceName, Permission, Resource, …).
   restoreOAuthClient: OAuthClient only (non-JPA aggregate).
+  Domain events carry ids only (no PII); published by Spring Data
+  @DomainEvents on save / delete; SCIM types stay in com.iam.scim.
   Preferred Terms: docs/Glossary.md
 end note
 
