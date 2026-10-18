@@ -200,6 +200,7 @@ public class OidcSeedClientProperties {
     private String clientSecret;
     /** When true, seeds a public client ({@code none}) with no secret. */
     private boolean publicClient;
+    private boolean machineClient;
     private List<String> redirectUris = new ArrayList<>();
     private List<String> postLogoutRedirectUris = new ArrayList<>();
     private List<String> scopes = new ArrayList<>();

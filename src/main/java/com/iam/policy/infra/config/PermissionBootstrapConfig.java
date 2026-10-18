@@ -81,6 +81,18 @@ class PermissionBootstrapConfig implements ApplicationRunner {
             "arn:ai:::tools/*",
             "Explore AI mcp tools and eval"),
         new Seed(
+            "write:ai_scim",
+            "ai",
+            "ai:Provision",
+            "arn:ai:::scim/*",
+            "Explore AI SCIM user provisioning"),
+        new Seed(
+            "write:iam_scim",
+            "iam",
+            "iam:Provision",
+            "arn:iam:::scim/*",
+            "Explore IAM SCIM user and group provisioning"),
+        new Seed(
             "write:chat_messaging",
             "chat",
             "chat:Invoke",

@@ -24,4 +24,9 @@ public class JpaTotpCredentialRepository implements TotpCredentialRepository {
   public Optional<TotpCredential> findByUserId(String userId) {
     return springData.findByUserId(userId);
   }
+
+  @Override
+  public void deleteByUserId(String userId) {
+    springData.deleteByUserId(userId);
+  }
 }

@@ -21,4 +21,11 @@ public interface TotpCredentialRepository {
    * @return optional credential
    */
   Optional<TotpCredential> findByUserId(String userId);
+
+  /**
+   * Deletes the user's TOTP credential when present.
+   *
+   * @param userId IAM user id
+   */
+  void deleteByUserId(String userId);
 }

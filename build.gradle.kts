@@ -31,6 +31,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-liquibase")
+    implementation("com.unboundid.product.scim2:scim2-sdk-common:6.1.0")
     runtimeOnly("com.h2database:h2")
 
     compileOnly("org.projectlombok:lombok")

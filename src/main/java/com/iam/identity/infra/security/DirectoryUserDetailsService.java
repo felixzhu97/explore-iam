@@ -1,5 +1,6 @@
 package com.iam.identity.infra.security;
 
+import com.iam.common.security.IamUserDetails;
 import com.iam.common.security.SecurityRoles;
 import com.iam.identity.domain.model.User;
 import com.iam.identity.domain.repository.RoleRepository;
@@ -42,11 +43,7 @@ public class DirectoryUserDetailsService implements UserDetailsService {
     roleRepository
         .findByUserId(user.getId())
         .forEach(role -> authorities.add(new SimpleGrantedAuthority(role.authority())));
-    return org.springframework.security.core.userdetails.User.builder()
-        .username(user.getUsername())
-        .password(user.getPasswordHash())
-        .disabled(!user.isEnabled())
-        .authorities(authorities)
-        .build();
+    return new IamUserDetails(
+        user.getId(), user.getUsername(), user.getPasswordHash(), user.isEnabled(), authorities);
   }
 }

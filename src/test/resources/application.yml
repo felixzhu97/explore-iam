@@ -38,3 +38,15 @@ app:
           - openid
           - profile
           - email
+      - client-id: scim-provisioner
+        client-name: SCIM Provisioner
+        client-secret: scim-test-secret
+        machine-client: true
+        scopes:
+          - write:iam_scim
+      - client-id: scim-no-scope
+        client-name: SCIM Without Scope
+        client-secret: scim-test-secret
+        machine-client: true
+        scopes:
+          - write:ai_chat

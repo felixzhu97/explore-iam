@@ -23,4 +23,11 @@ public interface FederatedIdentityRepository {
    */
   Optional<FederatedIdentity> findByProviderAndExternalSubject(
       String provider, String externalSubject);
+
+  /**
+   * Deletes every federated identity linked to the user.
+   *
+   * @param userId IAM user id
+   */
+  void deleteByUserId(String userId);
 }

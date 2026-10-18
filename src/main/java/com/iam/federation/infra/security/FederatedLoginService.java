@@ -1,11 +1,14 @@
 package com.iam.federation.infra.security;
 
+import com.iam.common.security.IamPrincipals;
 import com.iam.common.security.SecurityRoles;
 import com.iam.federation.service.FederationLinkService;
 import com.iam.identity.domain.model.User;
 import com.iam.identity.domain.repository.RoleRepository;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -50,6 +53,8 @@ public class FederatedLoginService extends DefaultOAuth2UserService {
     roleRepository
         .findByUserId(user.getId())
         .forEach(role -> authorities.add(new SimpleGrantedAuthority(role.authority())));
-    return new DefaultOAuth2User(authorities, oauthUser.getAttributes(), "sub");
+    Map<String, Object> attributes = new HashMap<>(oauthUser.getAttributes());
+    attributes.put(IamPrincipals.USER_ID_ATTRIBUTE, user.getId());
+    return new DefaultOAuth2User(authorities, attributes, "sub");
   }
 }

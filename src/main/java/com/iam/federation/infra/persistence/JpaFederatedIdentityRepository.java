@@ -24,4 +24,9 @@ class JpaFederatedIdentityRepository implements FederatedIdentityRepository {
       String provider, String externalSubject) {
     return springData.findByProviderAndExternalSubject(provider, externalSubject);
   }
+
+  @Override
+  public void deleteByUserId(String userId) {
+    springData.deleteByUserId(userId);
+  }
 }

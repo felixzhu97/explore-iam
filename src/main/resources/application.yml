@@ -102,6 +102,13 @@ app:
           - write:ai_media
           - write:ai_agent
           - write:ai_tools
+      - client-id: ${IAM_CLIENT_SCIM_PROVISIONER_ID:scim-provisioner}
+        client-name: SCIM Provisioner
+        # No default secret: the client is skipped until the secret is set.
+        client-secret: ${IAM_CLIENT_SCIM_PROVISIONER_SECRET:}
+        machine-client: true
+        scopes:
+          - write:iam_scim
       - client-id: ${IAM_CLIENT_EXPLORE_CHAT_ID:explore-chat}
         client-name: Explore Chat
         client-secret: ${IAM_CLIENT_EXPLORE_CHAT_SECRET:explore-chat-dev-secret}
