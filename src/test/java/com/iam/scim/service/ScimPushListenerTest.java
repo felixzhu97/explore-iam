@@ -13,6 +13,8 @@ import com.iam.identity.domain.model.Group;
 import com.iam.identity.domain.model.User;
 import com.iam.identity.domain.repository.GroupRepository;
 import com.iam.identity.domain.repository.UserRepository;
+import com.iam.identity.service.GroupService;
+import com.iam.identity.service.UserProfile;
 import com.iam.identity.service.UserProvisioningService;
 import com.iam.scim.domain.model.ProvisionedAccount;
 import com.iam.scim.domain.model.ProvisioningTarget;
@@ -20,7 +22,6 @@ import com.iam.scim.domain.repository.ProvisioningTargetRepository;
 import com.iam.scim.domain.service.ScimTargetGateway;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Consumer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -47,6 +48,8 @@ class ScimPushListenerTest {
   @Autowired private GroupRepository groupRepository;
 
   @Autowired private UserProvisioningService userProvisioningService;
+
+  @Autowired private GroupService groupService;
 
   @Autowired private TransactionTemplate tx;
 
@@ -77,7 +80,7 @@ class ScimPushListenerTest {
     when(gateway.createAccount(any(), any())).thenReturn("remote-1");
 
     scenario
-        .stimulate(() -> tx.execute(status -> userRepository.save(newUser()).getId()))
+        .stimulate(this::provisionUser)
         .andWaitForStateChange(() -> Optional.ofNullable(latestAccount()))
         .andVerify(
             account ->
@@ -94,15 +97,19 @@ class ScimPushListenerTest {
     when(gateway.findRemoteId(any(), any())).thenReturn(Optional.empty());
     when(gateway.createAccount(any(), any())).thenReturn("remote-2");
     when(gateway.replaceAccount(any(), any(), any())).thenReturn(true);
-    String userId = tx.execute(status -> userRepository.save(newUser()).getId());
+    String userId = provisionUser();
     verify(gateway, timeout(WAIT_MS)).createAccount(any(), any());
 
-    tx.executeWithoutResult(
-        status -> {
-          User user = userRepository.findById(userId).orElseThrow();
-          user.disableUser();
-          userRepository.save(user);
-        });
+    User user = userRepository.findById(userId).orElseThrow();
+    userProvisioningService.replaceUser(
+        userId,
+        new UserProfile(
+            user.getUsername(),
+            user.getEmail(),
+            user.getDisplayName(),
+            user.getExternalId(),
+            false),
+        null);
 
     verify(gateway, timeout(WAIT_MS))
         .replaceAccount(any(), eq("remote-2"), any(User.class));
@@ -114,7 +121,7 @@ class ScimPushListenerTest {
     givenTarget(null);
     when(gateway.findRemoteId(any(), any())).thenReturn(Optional.empty());
     when(gateway.createAccount(any(), any())).thenReturn("remote-3");
-    String userId = tx.execute(status -> userRepository.save(newUser()).getId());
+    String userId = provisionUser();
     verify(gateway, timeout(WAIT_MS)).createAccount(any(), any());
 
     userProvisioningService.deleteUser(userId, null);
@@ -128,7 +135,7 @@ class ScimPushListenerTest {
     givenTarget(null);
     when(gateway.findRemoteId(any(), any())).thenReturn(Optional.empty());
     when(gateway.createAccount(any(), any())).thenReturn("remote-5");
-    String userId = tx.execute(status -> userRepository.save(newUser()).getId());
+    String userId = provisionUser();
     verify(gateway, timeout(WAIT_MS)).createAccount(any(), any());
     disableTarget();
 
@@ -146,13 +153,13 @@ class ScimPushListenerTest {
     when(gateway.findRemoteId(any(), any())).thenReturn(Optional.empty());
     when(gateway.createAccount(any(), any())).thenReturn("remote-4");
     when(gateway.setAccountActive(any(), any(), eq(false))).thenReturn(true);
-    String userId = tx.execute(status -> userRepository.save(newUser()).getId());
+    String userId = provisionUser();
     verify(gateway, timeout(WAIT_MS).times(0)).createAccount(any(), any());
 
-    updateGroup(groupId, group -> group.addMember(userId));
+    groupService.addMember(groupId, userId);
     verify(gateway, timeout(WAIT_MS)).createAccount(any(), any());
 
-    updateGroup(groupId, group -> group.removeMember(userId));
+    groupService.removeMember(groupId, userId);
     verify(gateway, timeout(WAIT_MS)).setAccountActive(any(), eq("remote-4"), eq(false));
     verify(gateway, never()).deleteAccount(any(), any());
   }
@@ -179,19 +186,13 @@ class ScimPushListenerTest {
                 .orElse(null));
   }
 
-  private User newUser() {
-    User user = User.provisionUser(unique("push"), null, "Push User", new ExternalId(unique("x")));
+  private String provisionUser() {
+    User user =
+        userProvisioningService.provisionUser(
+            new UserProfile(
+                unique("push"), null, "Push User", new ExternalId(unique("x")), true));
     lastUserId = user.getId();
-    return user;
-  }
-
-  private void updateGroup(String groupId, Consumer<Group> change) {
-    tx.executeWithoutResult(
-        status -> {
-          Group group = groupRepository.findById(groupId).orElseThrow();
-          change.accept(group);
-          groupRepository.save(group);
-        });
+    return lastUserId;
   }
 
   private static String unique(String prefix) {

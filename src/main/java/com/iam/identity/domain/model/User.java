@@ -1,12 +1,7 @@
 package com.iam.identity.domain.model;
 
-import com.iam.common.domain.base.AbstractEventEntity;
+import com.iam.common.domain.base.AbstractEntity;
 import com.iam.common.domain.base.DomainStrings;
-import com.iam.identity.domain.event.UserDeactivated;
-import com.iam.identity.domain.event.UserDeleted;
-import com.iam.identity.domain.event.UserProfileChanged;
-import com.iam.identity.domain.event.UserProvisioned;
-import com.iam.identity.domain.event.UserReactivated;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -37,7 +32,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "directory_user")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
-public class User extends AbstractEventEntity {
+public class User extends AbstractEntity {
 
   private static final String FEDERATED_NO_PASSWORD = "{noop}federated-no-password";
 
@@ -85,7 +80,6 @@ public class User extends AbstractEventEntity {
     this.email = email;
     this.passwordHash = requirePasswordHash(passwordHash);
     this.enabled = enabled;
-    registerEvent(new UserProvisioned(id));
   }
 
   /**
@@ -136,22 +130,32 @@ public class User extends AbstractEventEntity {
     return user;
   }
 
-  /** Disables the user so form login is rejected. */
-  public void disableUser() {
-    if (enabled) {
-      registerEvent(new UserDeactivated(getId()));
+  /**
+   * Disables the user so form login is rejected.
+   *
+   * @return whether the user was enabled before
+   */
+  public boolean disableUser() {
+    if (!enabled) {
+      return false;
     }
     this.enabled = false;
     touch();
+    return true;
   }
 
-  /** Re-enables the user for form login. */
-  public void enableUser() {
-    if (!enabled) {
-      registerEvent(new UserReactivated(getId()));
+  /**
+   * Re-enables the user for form login.
+   *
+   * @return whether the user was disabled before
+   */
+  public boolean enableUser() {
+    if (enabled) {
+      return false;
     }
     this.enabled = true;
     touch();
+    return true;
   }
 
   /**
@@ -160,37 +164,36 @@ public class User extends AbstractEventEntity {
    * @param username unique login name
    * @param email contact email
    * @param displayName optional display name
+   * @return whether any field changed
    */
-  public void updateProfile(String username, String email, String displayName) {
+  public boolean updateProfile(String username, String email, String displayName) {
     String normalizedUsername = DomainStrings.requireNonBlank(username, "username");
     String normalizedDisplayName = normalizeDisplayName(displayName);
     if (normalizedUsername.equals(this.username)
         && Objects.equals(email, this.email)
         && Objects.equals(normalizedDisplayName, this.displayName)) {
-      return;
+      return false;
     }
     this.username = normalizedUsername;
     this.email = email;
     this.displayName = normalizedDisplayName;
-    registerProfileChanged();
+    touch();
+    return true;
   }
 
   /**
    * Sets or clears the External ID.
    *
    * @param externalId new identifier, or {@code null} to clear
+   * @return whether the External ID changed
    */
-  public void changeExternalId(ExternalId externalId) {
+  public boolean changeExternalId(ExternalId externalId) {
     if (Objects.equals(externalId, getExternalId())) {
-      return;
+      return false;
     }
     this.externalId = externalId;
-    registerProfileChanged();
-  }
-
-  /** Registers {@link UserDeleted}; call right before the repository deletes this user. */
-  public void removeUser() {
-    registerEvent(new UserDeleted(getId()));
+    touch();
+    return true;
   }
 
   /** Returns the External ID, or {@code null} when none is set. */
@@ -217,39 +220,46 @@ public class User extends AbstractEventEntity {
    * Removes a role assignment when present.
    *
    * @param roleId role id
+   * @return whether the role was assigned before
    */
-  public void unassignRole(String roleId) {
+  public boolean unassignRole(String roleId) {
     String normalized = DomainStrings.requireNonBlank(roleId, "roleId");
-    if (roleAssignments.removeIf(assignment -> assignment.roleId().equals(normalized))) {
-      touch();
+    if (!roleAssignments.removeIf(assignment -> assignment.roleId().equals(normalized))) {
+      return false;
     }
+    touch();
+    return true;
   }
 
   /**
    * Updates the user's email address.
    *
    * @param email new email
+   * @return whether the email changed
    */
-  public void changeEmail(String email) {
+  public boolean changeEmail(String email) {
     if (Objects.equals(email, this.email)) {
-      return;
+      return false;
     }
     this.email = email;
-    registerProfileChanged();
+    touch();
+    return true;
   }
 
   /**
    * Assigns a role when not already assigned.
    *
    * @param roleId role id
+   * @return whether the role was newly assigned
    */
-  public void assignRole(String roleId) {
+  public boolean assignRole(String roleId) {
     String normalized = DomainStrings.requireNonBlank(roleId, "roleId");
     if (hasRole(normalized)) {
-      return;
+      return false;
     }
     roleAssignments.add(new RoleBinding(this, normalized));
     touch();
+    return true;
   }
 
   /**
@@ -266,11 +276,6 @@ public class User extends AbstractEventEntity {
   public List<String> assignedRoleIds() {
     return Collections.unmodifiableList(
         roleAssignments.stream().map(RoleBinding::roleId).toList());
-  }
-
-  private void registerProfileChanged() {
-    registerEvent(new UserProfileChanged(getId()));
-    touch();
   }
 
   private static String normalizeDisplayName(String displayName) {

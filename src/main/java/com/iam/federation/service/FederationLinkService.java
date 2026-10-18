@@ -2,9 +2,11 @@ package com.iam.federation.service;
 
 import com.iam.federation.domain.model.FederatedIdentity;
 import com.iam.federation.domain.repository.FederatedIdentityRepository;
+import com.iam.identity.domain.event.UserProvisionedEvent;
 import com.iam.identity.domain.model.User;
 import com.iam.identity.domain.repository.UserRepository;
 import java.util.Optional;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,17 +17,22 @@ public class FederationLinkService {
 
   private final FederatedIdentityRepository linkRepository;
   private final UserRepository userRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   /**
    * Creates the federation link service.
    *
    * @param linkRepository federated identity link repository
    * @param userRepository IAM user repository
+   * @param eventPublisher domain event publisher
    */
   public FederationLinkService(
-      FederatedIdentityRepository linkRepository, UserRepository userRepository) {
+      FederatedIdentityRepository linkRepository,
+      UserRepository userRepository,
+      ApplicationEventPublisher eventPublisher) {
     this.linkRepository = linkRepository;
     this.userRepository = userRepository;
+    this.eventPublisher = eventPublisher;
   }
 
   /**
@@ -49,11 +56,14 @@ public class FederationLinkService {
     User user =
         userRepository
             .findByUsername(username)
-            .orElseGet(
-                () ->
-                    userRepository.save(
-                        User.createFederatedUser(provider, subject, email)));
+            .orElseGet(() -> provisionUser(provider, subject, email));
     linkRepository.save(FederatedIdentity.createFederatedIdentity(user.getId(), provider, subject));
+    return user;
+  }
+
+  private User provisionUser(String provider, String subject, String email) {
+    User user = userRepository.save(User.createFederatedUser(provider, subject, email));
+    eventPublisher.publishEvent(new UserProvisionedEvent(user.getId()));
     return user;
   }
 }

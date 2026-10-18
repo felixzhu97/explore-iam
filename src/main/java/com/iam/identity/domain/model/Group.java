@@ -1,9 +1,8 @@
 package com.iam.identity.domain.model;
 
-import com.iam.common.domain.base.AbstractEventEntity;
+import com.iam.common.domain.base.AbstractEntity;
 import com.iam.common.domain.base.DomainStrings;
 import com.iam.common.domain.model.ResourceName;
-import com.iam.identity.domain.event.GroupMembershipChanged;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -36,7 +35,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "directory_group")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
-public class Group extends AbstractEventEntity {
+public class Group extends AbstractEntity {
 
   @NotBlank
   @Size(max = 256)
@@ -90,27 +89,31 @@ public class Group extends AbstractEventEntity {
    * Renames the group.
    *
    * @param name new unique name
+   * @return whether the name changed
    */
-  public void renameGroup(String name) {
+  public boolean renameGroup(String name) {
     String normalized = DomainStrings.requireNonBlank(name, "name");
     if (normalized.equals(this.name)) {
-      return;
+      return false;
     }
     this.name = normalized;
     touch();
+    return true;
   }
 
   /**
    * Sets or clears the External ID.
    *
    * @param externalId new identifier, or {@code null} to clear
+   * @return whether the External ID changed
    */
-  public void changeExternalId(ExternalId externalId) {
+  public boolean changeExternalId(ExternalId externalId) {
     if (Objects.equals(externalId, getExternalId())) {
-      return;
+      return false;
     }
     this.externalId = externalId;
     touch();
+    return true;
   }
 
   /** Returns the resource name for this group. */
@@ -122,35 +125,39 @@ public class Group extends AbstractEventEntity {
    * Adds a user to the group when not already a member.
    *
    * @param userId user id
+   * @return whether the user joined
    */
-  public void addMember(String userId) {
+  public boolean addMember(String userId) {
     String normalized = DomainStrings.requireNonBlank(userId, "userId");
     if (hasMember(normalized)) {
-      return;
+      return false;
     }
     members.add(new GroupMember(this, normalized));
-    registerEvent(new GroupMembershipChanged(getId(), Set.of(normalized), Set.of()));
     touch();
+    return true;
   }
 
   /**
    * Removes a user from the group.
    *
    * @param userId user id
+   * @return whether the user was a member
    */
-  public void removeMember(String userId) {
-    if (members.removeIf(member -> member.userId().equals(userId))) {
-      registerEvent(new GroupMembershipChanged(getId(), Set.of(), Set.of(userId)));
-      touch();
+  public boolean removeMember(String userId) {
+    if (!members.removeIf(member -> member.userId().equals(userId))) {
+      return false;
     }
+    touch();
+    return true;
   }
 
   /**
    * Replaces the full member list.
    *
    * @param userIds desired member user ids
+   * @return added and removed user ids
    */
-  public void replaceMembers(Collection<String> userIds) {
+  public MembershipChange replaceMembers(Collection<String> userIds) {
     Set<String> desired = new LinkedHashSet<>();
     for (String userId : userIds) {
       desired.add(DomainStrings.requireNonBlank(userId, "userId"));
@@ -159,13 +166,14 @@ public class Group extends AbstractEventEntity {
     removed.removeAll(desired);
     Set<String> added = new LinkedHashSet<>(desired);
     added.removeAll(memberUserIds());
-    if (added.isEmpty() && removed.isEmpty()) {
-      return;
+    MembershipChange change = new MembershipChange(added, removed);
+    if (change.isEmpty()) {
+      return change;
     }
     members.removeIf(member -> removed.contains(member.userId()));
     added.forEach(userId -> members.add(new GroupMember(this, userId)));
-    registerEvent(new GroupMembershipChanged(getId(), added, removed));
     touch();
+    return change;
   }
 
   /**

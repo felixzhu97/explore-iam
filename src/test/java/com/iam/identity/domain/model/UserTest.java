@@ -3,11 +3,6 @@ package com.iam.identity.domain.model;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.iam.identity.domain.event.UserDeactivated;
-import com.iam.identity.domain.event.UserDeleted;
-import com.iam.identity.domain.event.UserProfileChanged;
-import com.iam.identity.domain.event.UserProvisioned;
-import com.iam.identity.domain.event.UserReactivated;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,8 +13,8 @@ class UserTest {
   void shouldAssignRoleIdempotentlyWhenAssigningSameRoleTwice() {
     User user = User.createUser("demo", "demo@example.com", "{noop}secret");
 
-    user.assignRole("role-1");
-    user.assignRole("role-1");
+    assertThat(user.assignRole("role-1")).isTrue();
+    assertThat(user.assignRole("role-1")).isFalse();
 
     assertThat(user.assignedRoleIds()).containsExactly("role-1");
   }
@@ -34,43 +29,37 @@ class UserTest {
   }
 
   @Test
-  @DisplayName("should provision passwordless user with external id and register user provisioned")
-  void shouldProvisionPasswordlessUserWithExternalIdAndRegisterUserProvisioned() {
+  @DisplayName("should provision passwordless user with external id")
+  void shouldProvisionPasswordlessUserWithExternalId() {
     User user =
         User.provisionUser("alice", "alice@example.com", " Alice ", new ExternalId("okta-1"));
 
     assertThat(user.isPasswordless()).isTrue();
     assertThat(user.getDisplayName()).isEqualTo("Alice");
     assertThat(user.getExternalId()).isEqualTo(new ExternalId("okta-1"));
-    assertThat(user.domainEvents()).containsExactly(new UserProvisioned(user.getId()));
   }
 
   @Test
-  @DisplayName("should register deactivated and reactivated only when state changes")
-  void shouldRegisterDeactivatedAndReactivatedOnlyWhenStateChanges() {
+  @DisplayName("should report deactivation and reactivation only when state changes")
+  void shouldReportDeactivationAndReactivationOnlyWhenStateChanges() {
     User user = User.createUser("demo", null, "{noop}secret");
-    user.clearDomainEvents();
 
-    user.enableUser();
-    user.disableUser();
-    user.disableUser();
-    user.enableUser();
-
-    assertThat(user.domainEvents())
-        .containsExactly(new UserDeactivated(user.getId()), new UserReactivated(user.getId()));
+    assertThat(user.enableUser()).isFalse();
+    assertThat(user.disableUser()).isTrue();
+    assertThat(user.disableUser()).isFalse();
+    assertThat(user.enableUser()).isTrue();
+    assertThat(user.isEnabled()).isTrue();
   }
 
   @Test
-  @DisplayName("should register profile changed when profile differs")
-  void shouldRegisterProfileChangedWhenProfileDiffers() {
+  @DisplayName("should report profile change only when profile differs")
+  void shouldReportProfileChangeOnlyWhenProfileDiffers() {
     User user = User.provisionUser("alice", "a@example.com", "Alice", null);
-    user.clearDomainEvents();
 
-    user.updateProfile("alice", "a@example.com", "Alice");
-    user.updateProfile("alice2", "a@example.com", "Alice");
+    assertThat(user.updateProfile("alice", "a@example.com", "Alice")).isFalse();
+    assertThat(user.updateProfile("alice2", "a@example.com", "Alice")).isTrue();
 
     assertThat(user.getUsername()).isEqualTo("alice2");
-    assertThat(user.domainEvents()).containsExactly(new UserProfileChanged(user.getId()));
   }
 
   @Test
@@ -78,20 +67,20 @@ class UserTest {
   void shouldClearExternalIdWhenNullIsGiven() {
     User user = User.provisionUser("alice", null, null, new ExternalId("okta-1"));
 
-    user.changeExternalId(null);
+    assertThat(user.changeExternalId(null)).isTrue();
 
     assertThat(user.getExternalId()).isNull();
+    assertThat(user.changeExternalId(null)).isFalse();
   }
 
   @Test
-  @DisplayName("should register user deleted when remove user is called")
-  void shouldRegisterUserDeletedWhenRemoveUserIsCalled() {
+  @DisplayName("should report unassign only when role was assigned")
+  void shouldReportUnassignOnlyWhenRoleWasAssigned() {
     User user = User.createUser("demo", null, "{noop}secret");
-    user.clearDomainEvents();
+    user.assignRole("role-1");
 
-    user.removeUser();
-
-    assertThat(user.domainEvents()).containsExactly(new UserDeleted(user.getId()));
+    assertThat(user.unassignRole("role-1")).isTrue();
+    assertThat(user.unassignRole("role-1")).isFalse();
   }
 
   @Test

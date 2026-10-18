@@ -1,9 +1,13 @@
 package com.iam.identity.service;
 
 import com.iam.audit.service.AdminActivityRecorder;
+import com.iam.identity.domain.event.UserDeactivatedEvent;
+import com.iam.identity.domain.event.UserProvisionedEvent;
+import com.iam.identity.domain.event.UserReactivatedEvent;
 import com.iam.identity.domain.model.User;
 import com.iam.identity.domain.repository.UserRepository;
 import java.util.List;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,6 +23,7 @@ public class UserService {
   private final AdminActivityRecorder adminActivityRecorder;
   private final PasswordEncoder passwordEncoder;
   private final UserProvisioningService userProvisioningService;
+  private final ApplicationEventPublisher eventPublisher;
 
   /**
    * Creates the user service.
@@ -27,16 +32,19 @@ public class UserService {
    * @param adminActivityRecorder management audit recorder
    * @param passwordEncoder password encoder
    * @param userProvisioningService user lifecycle shared with SCIM
+   * @param eventPublisher domain event publisher
    */
   public UserService(
       UserRepository userRepository,
       AdminActivityRecorder adminActivityRecorder,
       PasswordEncoder passwordEncoder,
-      UserProvisioningService userProvisioningService) {
+      UserProvisioningService userProvisioningService,
+      ApplicationEventPublisher eventPublisher) {
     this.userRepository = userRepository;
     this.adminActivityRecorder = adminActivityRecorder;
     this.passwordEncoder = passwordEncoder;
     this.userProvisioningService = userProvisioningService;
+    this.eventPublisher = eventPublisher;
   }
 
   /**
@@ -76,6 +84,7 @@ public class UserService {
     User user =
         userRepository.save(
             User.createUser(username, email, passwordEncoder.encode(password)));
+    eventPublisher.publishEvent(new UserProvisionedEvent(user.getId()));
     adminActivityRecorder.recordSuccess("identity:CreateUser", "User", user.getId());
     return user;
   }
@@ -91,8 +100,11 @@ public class UserService {
   public User disable(String userId, String actorUserId) {
     requireNotSelf(userId, actorUserId);
     User user = get(userId);
-    user.disableUser();
+    boolean deactivated = user.disableUser();
     User saved = userRepository.save(user);
+    if (deactivated) {
+      eventPublisher.publishEvent(new UserDeactivatedEvent(userId));
+    }
     adminActivityRecorder.recordSuccess("identity:DisableUser", "User", userId);
     return saved;
   }
@@ -106,8 +118,11 @@ public class UserService {
   @Transactional
   public User enable(String userId) {
     User user = get(userId);
-    user.enableUser();
+    boolean reactivated = user.enableUser();
     User saved = userRepository.save(user);
+    if (reactivated) {
+      eventPublisher.publishEvent(new UserReactivatedEvent(userId));
+    }
     adminActivityRecorder.recordSuccess("identity:EnableUser", "User", userId);
     return saved;
   }

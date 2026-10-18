@@ -1,11 +1,11 @@
 package com.iam.scim.service;
 
-import com.iam.identity.domain.event.GroupMembershipChanged;
-import com.iam.identity.domain.event.UserDeactivated;
-import com.iam.identity.domain.event.UserDeleted;
-import com.iam.identity.domain.event.UserProfileChanged;
-import com.iam.identity.domain.event.UserProvisioned;
-import com.iam.identity.domain.event.UserReactivated;
+import com.iam.identity.domain.event.GroupMembershipChangedEvent;
+import com.iam.identity.domain.event.UserDeactivatedEvent;
+import com.iam.identity.domain.event.UserDeletedEvent;
+import com.iam.identity.domain.event.UserProfileChangedEvent;
+import com.iam.identity.domain.event.UserProvisionedEvent;
+import com.iam.identity.domain.event.UserReactivatedEvent;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import org.springframework.modulith.events.ApplicationModuleListener;
@@ -30,32 +30,32 @@ public class ScimPushListener {
   }
 
   @ApplicationModuleListener
-  void on(UserProvisioned event) {
+  void handleUserProvisionedEvent(UserProvisionedEvent event) {
     pushService.syncUser(event.userId());
   }
 
   @ApplicationModuleListener
-  void on(UserProfileChanged event) {
+  void handleUserProfileChangedEvent(UserProfileChangedEvent event) {
     pushService.syncUser(event.userId());
   }
 
   @ApplicationModuleListener
-  void on(UserDeactivated event) {
+  void handleUserDeactivatedEvent(UserDeactivatedEvent event) {
     pushService.syncUser(event.userId());
   }
 
   @ApplicationModuleListener
-  void on(UserReactivated event) {
+  void handleUserReactivatedEvent(UserReactivatedEvent event) {
     pushService.syncUser(event.userId());
   }
 
   @ApplicationModuleListener
-  void on(UserDeleted event) {
+  void handleUserDeletedEvent(UserDeletedEvent event) {
     pushService.deleteUser(event.userId());
   }
 
   @ApplicationModuleListener
-  void on(GroupMembershipChanged event) {
+  void handleGroupMembershipChangedEvent(GroupMembershipChangedEvent event) {
     Set<String> userIds = new LinkedHashSet<>(event.addedUserIds());
     userIds.addAll(event.removedUserIds());
     pushService.syncAssignment(event.groupId(), userIds);
