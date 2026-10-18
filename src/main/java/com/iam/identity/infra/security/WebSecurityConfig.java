@@ -3,6 +3,7 @@ package com.iam.identity.infra.security;
 import static org.springframework.security.config.Customizer.withDefaults;
 
 import com.iam.federation.infra.security.FederatedLoginService;
+import com.iam.identity.domain.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,6 +21,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -53,7 +55,8 @@ public class WebSecurityConfig {
   @Bean
   @Order(1)
   SecurityFilterChain authorizationServerSecurityFilterChain(
-      HttpSecurity http, MfaAuthorizationManagers mfa) throws Exception {
+      HttpSecurity http, MfaAuthorizationManagers mfa, UserRepository userRepository)
+      throws Exception {
     http.oauth2AuthorizationServer(
         (authorizationServer) -> {
           http.securityMatcher(authorizationServer.getEndpointsMatcher());
@@ -68,6 +71,7 @@ public class WebSecurityConfig {
                 .anyRequest()
                 .authenticated());
     http.oauth2ResourceServer((resourceServer) -> resourceServer.jwt(withDefaults()));
+    http.addFilterBefore(new ActiveUserSessionFilter(userRepository), AuthorizationFilter.class);
     http.exceptionHandling(
         (exceptions) ->
             exceptions.defaultAuthenticationEntryPointFor(
@@ -76,13 +80,14 @@ public class WebSecurityConfig {
   }
 
   @Bean
-  @Order(2)
+  @Order(3)
   SecurityFilterChain defaultSecurityFilterChain(
       HttpSecurity http,
       MfaAuthorizationManagers mfa,
       WebAuthnConfig.WebAuthnProperties webAuthnProperties,
       ObjectProvider<ClientRegistrationRepository> clientRegistrations,
-      ObjectProvider<FederatedLoginService> federatedLoginService)
+      ObjectProvider<FederatedLoginService> federatedLoginService,
+      UserRepository userRepository)
       throws Exception {
     CookieCsrfTokenRepository csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
     csrfTokenRepository.setCookiePath("/");
@@ -143,7 +148,8 @@ public class WebSecurityConfig {
             (csrf) ->
                 csrf.csrfTokenRepository(csrfTokenRepository)
                     .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()))
-        .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class);
+        .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
+        .addFilterBefore(new ActiveUserSessionFilter(userRepository), AuthorizationFilter.class);
 
     clientRegistrations.ifAvailable(
         repo ->

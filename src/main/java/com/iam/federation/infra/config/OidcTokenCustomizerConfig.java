@@ -1,5 +1,6 @@
 package com.iam.federation.infra.config;
 
+import com.iam.common.security.IamPrincipals;
 import com.iam.identity.domain.model.User;
 import com.iam.identity.domain.repository.UserRepository;
 import java.util.LinkedHashSet;
@@ -7,6 +8,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
@@ -26,8 +30,16 @@ public class OidcTokenCustomizerConfig {
       if (!idToken && !accessToken) {
         return;
       }
-      String username = context.getPrincipal().getName();
-      userRepository.findByUsername(username).ifPresent(user -> applyClaims(context, user));
+      // Machine tokens carry the client id as principal; never bind them to a user.
+      if (AuthorizationGrantType.CLIENT_CREDENTIALS.equals(context.getAuthorizationGrantType())) {
+        return;
+      }
+      User user =
+          IamPrincipals.userId(context.getPrincipal())
+              .flatMap(userRepository::findById)
+              .filter(User::isEnabled)
+              .orElseThrow(() -> new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_GRANT));
+      applyClaims(context, user);
     };
   }
 

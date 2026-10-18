@@ -57,6 +57,13 @@ public class OAuthClient {
         copyStrings(clientAuthenticationMethods, "clientAuthenticationMethods");
     this.authorizationGrantTypes = copyStrings(authorizationGrantTypes, "authorizationGrantTypes");
     this.requireAuthorizationConsent = requireAuthorizationConsent;
+    if (this.authorizationGrantTypes.isEmpty()) {
+      throw new IllegalArgumentException("at least one authorization grant type is required");
+    }
+    if (isMachineClient()) {
+      requireMachineClientRules();
+      return;
+    }
     if (this.redirectUris.isEmpty()) {
       throw new IllegalArgumentException("at least one redirect_uri is required");
     }
@@ -68,9 +75,6 @@ public class OAuthClient {
     }
     if (this.clientAuthenticationMethods.isEmpty()) {
       throw new IllegalArgumentException("at least one client authentication method is required");
-    }
-    if (this.authorizationGrantTypes.isEmpty()) {
-      throw new IllegalArgumentException("at least one authorization grant type is required");
     }
     requireOpenIdScope(this.scopes);
     requireAuthorizationCodeGrant(this.authorizationGrantTypes);
@@ -150,6 +154,33 @@ public class OAuthClient {
         Set.of("code"),
         Set.of("client_secret_basic", "client_secret_post"),
         Set.of("authorization_code", "refresh_token"),
+        false);
+  }
+
+  /**
+   * Seeds a confidential machine client using only the {@code client_credentials} grant.
+   *
+   * @param clientId client_id
+   * @param clientName display name
+   * @param clientSecretHash encoded secret
+   * @param scopes product scopes granted to the client
+   * @return seeded machine aggregate
+   */
+  public static OAuthClient createMachineBootstrapOAuthClient(
+      ClientId clientId, String clientName, String clientSecretHash, Set<String> scopes) {
+    return new OAuthClient(
+        UUID.randomUUID().toString(),
+        clientId,
+        Instant.now(),
+        clientName,
+        clientSecretHash,
+        null,
+        Set.of(),
+        Set.of(),
+        scopes,
+        Set.of(),
+        Set.of("client_secret_basic", "client_secret_post"),
+        Set.of("client_credentials"),
         false);
   }
 
@@ -257,6 +288,22 @@ public class OAuthClient {
     return Set.copyOf(copy);
   }
 
+  private void requireMachineClientRules() {
+    if (this.scopes.isEmpty()) {
+      throw new IllegalArgumentException("at least one scope is required");
+    }
+    if (!this.redirectUris.isEmpty()) {
+      throw new IllegalArgumentException("machine clients must not have redirect_uris");
+    }
+    if (this.clientSecretHash == null || this.clientSecretHash.isBlank()) {
+      throw new IllegalArgumentException("machine clients require a client secret");
+    }
+    if (this.clientAuthenticationMethods.isEmpty()
+        || this.clientAuthenticationMethods.contains("none")) {
+      throw new IllegalArgumentException("machine clients cannot use none authentication");
+    }
+  }
+
   private static void requireOpenIdScope(Set<String> scopes) {
     if (!scopes.contains("openid")) {
       throw new IllegalArgumentException("scopes must include openid");
@@ -274,6 +321,11 @@ public class OAuthClient {
       throw new IllegalArgumentException(
           "none cannot be combined with other authentication methods");
     }
+  }
+
+  /** Returns true when the client uses only the {@code client_credentials} grant. */
+  public boolean isMachineClient() {
+    return this.authorizationGrantTypes.equals(Set.of("client_credentials"));
   }
 
   public boolean isPublicClient() {
