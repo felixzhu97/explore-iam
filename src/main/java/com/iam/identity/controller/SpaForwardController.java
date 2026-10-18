@@ -23,6 +23,7 @@ public class SpaForwardController {
     "/oauth-clients/**",
     "/clients",
     "/clients/**",
+    "/users",
     "/security/passkeys",
     "/security/totp"
   })

@@ -306,18 +306,30 @@ type UserSubmenu = 'profile' | 'billing' | 'appearance' | 'language' | 'timezone
                 </button>
                 <div
                   class="console-nav-sub"
-                  [class.console-nav-sub-open]="manageAccountOpen() && showClients()"
+                  [class.console-nav-sub-open]="manageAccountOpen() && (showClients() || showUsers())"
                 >
                   <div class="console-nav-sub-inner">
                     <div class="console-nav-tree">
-                      <a
-                        routerLink="/oauth-clients"
-                        routerLinkActive="console-nav-active"
-                        class="console-nav-item console-nav-child"
-                        title="OAuth 客户端"
-                      >
-                        <span class="console-nav-label">OAuth 客户端</span>
-                      </a>
+                      @if (showUsers()) {
+                        <a
+                          routerLink="/users"
+                          routerLinkActive="console-nav-active"
+                          class="console-nav-item console-nav-child"
+                          title="用户"
+                        >
+                          <span class="console-nav-label">用户</span>
+                        </a>
+                      }
+                      @if (showClients()) {
+                        <a
+                          routerLink="/oauth-clients"
+                          routerLinkActive="console-nav-active"
+                          class="console-nav-item console-nav-child"
+                          title="OAuth 客户端"
+                        >
+                          <span class="console-nav-label">OAuth 客户端</span>
+                        </a>
+                      }
                     </div>
                   </div>
                 </div>
@@ -533,9 +545,14 @@ export class ConsoleShellComponent implements OnInit {
     );
   }
 
+  showUsers(): boolean {
+    return this.matches('用户') || this.matches('user') || this.q() === '';
+  }
+
   showManageSection(): boolean {
     return (
       this.showClients() ||
+      this.showUsers() ||
       this.matches('管理') ||
       this.matches('账户') ||
       this.q() === ''
