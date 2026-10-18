@@ -2,7 +2,6 @@ package com.iam.identity.infra.security;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
-import com.iam.federation.infra.security.FederatedLoginService;
 import com.iam.identity.domain.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -21,7 +20,10 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
@@ -88,7 +90,7 @@ public class WebSecurityConfig {
       MfaAuthorizationManagers mfa,
       WebAuthnConfig.WebAuthnProperties webAuthnProperties,
       ObjectProvider<ClientRegistrationRepository> clientRegistrations,
-      ObjectProvider<FederatedLoginService> federatedLoginService,
+      ObjectProvider<OAuth2UserService<OAuth2UserRequest, OAuth2User>> oauth2UserService,
       UserRepository userRepository)
       throws Exception {
     CookieCsrfTokenRepository csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
@@ -158,7 +160,7 @@ public class WebSecurityConfig {
           if (!hasLoginRegistration(repo)) {
             return;
           }
-          federatedLoginService.ifAvailable(
+          oauth2UserService.ifAvailable(
               service ->
                   http.oauth2Login(
                       (oauth2) ->

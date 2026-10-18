@@ -2,11 +2,13 @@ package com.iam.federation.service;
 
 import com.iam.federation.domain.model.FederatedIdentity;
 import com.iam.federation.domain.repository.FederatedIdentityRepository;
+import com.iam.identity.domain.event.UserDeletionRequestedEvent;
 import com.iam.identity.domain.event.UserProvisionedEvent;
 import com.iam.identity.domain.model.User;
 import com.iam.identity.domain.repository.UserRepository;
 import java.util.Optional;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,6 +61,12 @@ public class FederationLinkService {
             .orElseGet(() -> provisionUser(provider, subject, email));
     linkRepository.save(FederatedIdentity.createFederatedIdentity(user.getId(), provider, subject));
     return user;
+  }
+
+  @EventListener
+  @Transactional
+  void handleUserDeletionRequestedEvent(UserDeletionRequestedEvent event) {
+    linkRepository.deleteByUserId(event.userId());
   }
 
   private User provisionUser(String provider, String subject, String email) {
