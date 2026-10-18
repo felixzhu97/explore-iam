@@ -39,6 +39,7 @@ objects live in `domain.model` (no `domain.vo`).
 | Federation     | 联邦   | `com.iam.federation` | `/oauth-clients` | OIDC + `/api/v1/oauthClients` | partial | SAS Provider + `OAuthClient` |
 | Console        | 控制台 | — | `/` | — | partial | Login + OAuth client registration |
 | Audit          | 审计   | `com.iam.audit` | `/audit` | `/api/v1/adminActivities`, `/api/v1/dataAccessLogs` | partial | AdminActivity + DataAccessLog |
+| Provisioning   | 开通   | `com.iam.scim` | — | `/scim/v2` | planned | SCIM 2.0 Service Provider (IdP → IAM) + SCIM Client (IAM → Explore AI) |
 | Common         | 横切   | `com.iam.common` | — | — | partial | Shared model VOs, security, AIP helpers |
 
 **Frontend route map (canonical)**
@@ -72,6 +73,16 @@ objects live in `domain.model` (no `domain.vo`).
 | Token Introspection | 令牌自省 | Resource server validates opaque or JWT tokens | SAS introspection endpoint (optional) |
 | OAuth2 Client Authentication | OAuth2 客户端认证 | `client_secret_basic`, `client_secret_post`, `none` | Registered client settings |
 | SAML 2.0 | SAML 2.0 | Secondary federation protocol (document only) | Not in current scope |
+| SCIM 2.0 | SCIM 2.0 | System for Cross-domain Identity Management; REST provisioning of Users and Groups ([RFC 7643](https://datatracker.ietf.org/doc/html/rfc7643), [RFC 7644](https://datatracker.ietf.org/doc/html/rfc7644)) | UnboundID `scim2-sdk-common` models + Spring MVC |
+| SCIM Service Provider | SCIM 服务端 | Server receiving provisioning calls at `/scim/v2` | `com.iam.scim.controller` (IAM); `com.ai.scim` (Explore AI, Users only) |
+| SCIM Client | SCIM 客户端 | Caller pushing provisioning changes to a Service Provider | Okta / Entra ID → IAM; `ScimPushService` (IAM → Explore AI) |
+| SCIM Media Type | SCIM 媒体类型 | `application/scim+json` request and response body | `ScimJsonHttpMessageConverter` |
+| SCIM Discovery | SCIM 发现端点 | `/ServiceProviderConfig`, `/ResourceTypes`, `/Schemas` | `ScimDiscoveryController` |
+| SCIM Filter | SCIM 过滤 | `filter` query (`eq`, `and`) on `userName`, `externalId`, `displayName`, `id` | UnboundID `Filter` + `ScimFilterTranslator` |
+| SCIM PATCH | SCIM 局部更新 | `PatchOp` with `add` / `replace` / `remove` operations | UnboundID `PatchRequest` |
+| List Response | 列表响应 | Paged SCIM list (`startIndex`, `count`, `totalResults`) | UnboundID `ListResponse` |
+| SCIM Error | SCIM 错误 | Error body with `status` and `scimType` (RFC 7644 §3.12) | UnboundID `ErrorResponse` |
+| Weak ETag | 弱 ETag | `W/"<version>"` from `@Version`; `If-Match` mismatch → 412 | `AbstractEntity.version` |
 
 ---
 
@@ -188,6 +199,7 @@ Terms mapping Explore IAM security behavior to [Spring Security](https://docs.sp
 | Abstract Immutable | 不可变聚合基类 | Domain/JPA base: `id` + `createdAt` | `com.iam.common.domain.base.AbstractImmutable` | implemented |
 | Abstract Entity | 可变聚合基类 | Extends immutable; adds `updatedAt` + `@Version` | `AbstractEntity` | implemented |
 | Abstract Named Entity | 具名聚合基类 | Mutable aggregate with unique `name` | `AbstractNamedEntity` | implemented |
+| Abstract Event Entity | 事件聚合基类 | Mutable aggregate that registers domain events (`User`, `Group`) | `AbstractEventEntity` | planned |
 | Abstract Audit Event | 不可变审计聚合基类 | Immutable audit aggregate base; `occurred_at` column | `AbstractAuditEvent` | implemented |
 | Abstract Embeddable | 可嵌入值对象基类 | Embeddable VO base preventing empty composite `null` | `AbstractEmbeddable` | implemented |
 | Domain Strings | 域字符串校验 | Shared non-blank string validation | `DomainStrings.requireNonBlank` | implemented |
@@ -196,6 +208,17 @@ Terms mapping Explore IAM security behavior to [Spring Security](https://docs.sp
 | Optimistic Locking | 乐观锁 | Concurrent update detection via `@Version` | `AbstractEntity.version` | implemented |
 | Liquibase Changelog | Liquibase 变更日志 | Versioned SQL schema migrations | `db/changelog/0.1.xml` | implemented |
 | Schema Validation | 模式校验 | Hibernate validates entities against DB schema | `spring.jpa.hibernate.ddl-auto: validate` | implemented |
+| Domain Event | 领域事件 | Fact registered by an aggregate and published on repository `save` / `delete`; carries ids only | `AbstractEventEntity.registerEvent` + Spring Data `@DomainEvents` | planned |
+
+### 4.8 Provisioning Delivery
+
+| Preferred Term (English) | 中文 | Definition | Framework Mapping | Status |
+| ------------------------ | ---- | ---------- | ----------------- | ------ |
+| Event Publication Registry | 事件发布登记表 | Stores each event publication in the business transaction (transactional outbox) | `spring-modulith-starter-jpa` → `event_publication` | planned |
+| Application Module Listener | 应用模块监听器 | Async, after-commit listener in its own transaction | `@ApplicationModuleListener` on `ScimPushListener` | planned |
+| Incomplete Event Publication | 未完成事件发布 | Publication whose listener failed; re-delivered later | `IncompleteEventPublications` | planned |
+| OAuth2 Client HTTP Request Interceptor | OAuth2 客户端请求拦截器 | Adds a `client_credentials` Bearer token to `RestClient` calls | `OAuth2ClientHttpRequestInterceptor` (`iam-scim-outbound`) | planned |
+| Retryable | 可重试 | Retry 5xx / 429 with backoff and jitter; honors `Retry-After` | Spring Framework 7 `@Retryable` | planned |
 
 ---
 
@@ -252,8 +275,23 @@ Cross-bounded-context value objects in `com.iam.common.domain.model`
 | Change Email | 修改邮箱 | Updates the user's contact email | Behavior | `User.changeEmail` | implemented |
 | Create User | 创建用户 | Factory for a local user | Behavior | `User.createUser` | implemented |
 | Create Federated User | 创建联邦用户 | Factory for external IdP login | Behavior | `User.createFederatedUser` | implemented |
+| External ID | 外部 ID | Identifier assigned by the provisioning client (SCIM `externalId`) | Value Object | `ExternalId` | planned |
+| Display Name | 显示名 | Human-readable name (SCIM `displayName`) | Attribute | `User.displayName` | planned |
+| Provision User | 开通用户 | Factory for a password-less user created by a SCIM Client | Behavior | `User.provisionUser` | planned |
+| Update Profile | 更新资料 | Replaces username, email, and display name | Behavior | `User.updateProfile` | planned |
+| Change External ID | 修改外部 ID | Sets or clears the External ID | Behavior | `User.changeExternalId` / `Group.changeExternalId` | planned |
+| Remove User | 移除用户 | Registers `UserDeleted` before the repository deletes the user | Behavior | `User.removeUser` | planned |
 | Group | 组 | Collection of users for shared policy binding | Aggregate | `Group` | implemented |
 | Group Member | 组成员 | Child entity linking a user to a group | Entity | `GroupMember` | implemented |
+| Provision Group | 开通组 | Factory for a group created by a SCIM Client | Behavior | `Group.provisionGroup` | planned |
+| Rename Group | 重命名组 | Changes the group display name | Behavior | `Group.renameGroup` | planned |
+| Replace Members | 替换成员 | Sets the full member list; registers added / removed ids | Behavior | `Group.replaceMembers` | planned |
+| User Provisioned | 用户已开通 | Domain event: user created | Domain Event | `UserProvisioned` | planned |
+| User Profile Changed | 用户资料已变更 | Domain event: username / email / display name / External ID changed | Domain Event | `UserProfileChanged` | planned |
+| User Deactivated | 用户已停用 | Domain event: user disabled | Domain Event | `UserDeactivated` | planned |
+| User Reactivated | 用户已恢复 | Domain event: user re-enabled | Domain Event | `UserReactivated` | planned |
+| User Deleted | 用户已删除 | Domain event: user removed | Domain Event | `UserDeleted` | planned |
+| Group Membership Changed | 组成员已变更 | Domain event: user ids added to / removed from a group | Domain Event | `GroupMembershipChanged` | planned |
 | Role | 角色 | Named collection of permissions (Google IAM role) | Aggregate | `Role` | implemented |
 | Role Binding | 角色绑定 | Links a principal to a Role | Entity | `RoleBinding` | implemented |
 | Assign Role | 分配角色 | Bind a role to a user | Behavior | `User.assignRole` | implemented |
@@ -324,6 +362,26 @@ Immutable **aggregate roots** for append-only audit rows (Google Cloud Audit Log
 
 ---
 
+## 10.1 Provisioning | 开通（SCIM）
+
+IAM is the identity hub: external IdPs push to IAM; IAM pushes users to
+downstream products. Protocol types stay in `com.iam.scim`; the
+identity domain never imports SCIM classes.
+
+| Preferred Term (English) | 中文 | Definition | Type | Code Mapping | Status |
+| ------------------------ | ---- | ---------- | ---- | ------------ | ------ |
+| Provisioning | 开通 | Creating, updating, deactivating, and deleting identities across systems | Concept | `com.iam.scim` | planned |
+| Provisioning Target | 开通目标 | Downstream SCIM Service Provider IAM pushes to | Aggregate | `ProvisioningTarget` | planned |
+| Assignment Group | 分配组 | Optional group limiting which users a Target receives | Attribute | `ProvisioningTarget.assignmentGroupId` | planned |
+| Provisioned Account | 已开通账号 | Mapping of IAM user id to the Target's remote id and last synced version | Entity | `ProvisionedAccount` | planned |
+| SCIM Provisioning Service | SCIM 开通服务 | Orchestrates inbound SCIM calls via `UserService` / `GroupService` | Service | `ScimProvisioningService` | planned |
+| SCIM Push Service | SCIM 推送服务 | Sends idempotent SCIM calls to a Provisioning Target | Service | `ScimPushService` | planned |
+| SCIM Push Listener | SCIM 推送监听器 | Turns identity domain events into pushes | Listener | `ScimPushListener` | planned |
+| SCIM Provisioner Client | SCIM 开通客户端 | OAuth client for external IdPs (`client_credentials`, `write:iam_scim`) | OAuth Client | `scim-provisioner` | planned |
+| SCIM Outbound Registration | SCIM 出站注册 | IAM's own OAuth client for pushes (`client_credentials`, `write:ai_scim`) | Client Registration | `iam-scim-outbound` | planned |
+
+---
+
 ## 11. Console | 控制台
 
 | Preferred Term (English) | 中文 | Definition | Type | Code Mapping | Status |
@@ -349,6 +407,8 @@ Permission `oauthScope` / `code` uses GitHub OAuth scope shape
 | ai | `write:ai_media` | image / vision |
 | ai | `write:ai_agent` | pipeline / workflow / automation / skill |
 | ai | `write:ai_tools` | mcp / tools / eval |
+| ai | `write:ai_scim` | IAM → Explore AI SCIM `/scim/v2/Users` |
+| iam | `write:iam_scim` | External IdP → IAM SCIM `/scim/v2` |
 | chat | `write:chat_messaging` | chats / messages / calls / media / notifications |
 | chat | `write:chat_social` | posts / follow / groups / status / search |
 | chat | `admin:chat` | Chat admin APIs |
