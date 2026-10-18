@@ -8,6 +8,7 @@ import com.iam.audit.service.AdminActivityRecorder;
 import com.iam.identity.domain.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -21,7 +22,8 @@ class UserServiceTest {
           userRepository,
           mock(AdminActivityRecorder.class),
           mock(PasswordEncoder.class),
-          provisioning);
+          provisioning,
+          mock(ApplicationEventPublisher.class));
 
   @Test
   @DisplayName("should refuse to delete when the acting admin is unknown")

@@ -1,10 +1,13 @@
 package com.iam.identity.service;
 
+import com.iam.identity.domain.event.GroupMembershipChangedEvent;
 import com.iam.identity.domain.model.Group;
+import com.iam.identity.domain.model.MembershipChange;
 import com.iam.identity.domain.repository.GroupRepository;
 import com.iam.identity.domain.repository.UserRepository;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,16 +20,22 @@ public class GroupProvisioningService {
 
   private final GroupRepository groupRepository;
   private final UserRepository userRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   /**
    * Creates the group provisioning service.
    *
    * @param groupRepository IAM group repository
    * @param userRepository IAM user repository
+   * @param eventPublisher domain event publisher
    */
-  public GroupProvisioningService(GroupRepository groupRepository, UserRepository userRepository) {
+  public GroupProvisioningService(
+      GroupRepository groupRepository,
+      UserRepository userRepository,
+      ApplicationEventPublisher eventPublisher) {
     this.groupRepository = groupRepository;
     this.userRepository = userRepository;
+    this.eventPublisher = eventPublisher;
   }
 
   /**
@@ -87,8 +96,10 @@ public class GroupProvisioningService {
     requireNameAvailable(profile.name(), null);
     requireUsersExist(profile);
     Group group = Group.provisionGroup(profile.name(), profile.externalId());
-    group.replaceMembers(profile.memberUserIds());
-    return groupRepository.save(group);
+    MembershipChange change = group.replaceMembers(profile.memberUserIds());
+    Group saved = groupRepository.save(group);
+    publishMembershipChange(saved.getId(), change);
+    return saved;
   }
 
   /**
@@ -107,8 +118,10 @@ public class GroupProvisioningService {
     requireUsersExist(profile);
     group.renameGroup(profile.name());
     group.changeExternalId(profile.externalId());
-    group.replaceMembers(profile.memberUserIds());
-    return groupRepository.save(group);
+    MembershipChange change = group.replaceMembers(profile.memberUserIds());
+    Group saved = groupRepository.save(group);
+    publishMembershipChange(groupId, change);
+    return saved;
   }
 
   /**
@@ -121,8 +134,17 @@ public class GroupProvisioningService {
   public void deleteGroup(String groupId, Long expectedVersion) {
     Group group = get(groupId);
     UserProvisioningService.requireVersion(group.getVersion(), expectedVersion);
-    group.replaceMembers(List.of());
+    MembershipChange change = group.replaceMembers(List.of());
     groupRepository.delete(group);
+    publishMembershipChange(groupId, change);
+  }
+
+  private void publishMembershipChange(String groupId, MembershipChange change) {
+    if (!change.isEmpty()) {
+      eventPublisher.publishEvent(
+          new GroupMembershipChangedEvent(
+              groupId, change.addedUserIds(), change.removedUserIds()));
+    }
   }
 
   private void requireNameAvailable(String name, String currentGroupId) {

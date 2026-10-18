@@ -1,9 +1,12 @@
 package com.iam.identity.service;
 
 import com.iam.audit.service.AdminActivityRecorder;
+import com.iam.identity.domain.event.GroupMembershipChangedEvent;
 import com.iam.identity.domain.model.Group;
 import com.iam.identity.domain.repository.GroupRepository;
 import java.util.List;
+import java.util.Set;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,17 +19,22 @@ public class GroupService {
 
   private final GroupRepository groupRepository;
   private final AdminActivityRecorder adminActivityRecorder;
+  private final ApplicationEventPublisher eventPublisher;
 
   /**
    * Creates the group service.
    *
    * @param groupRepository group repository
    * @param adminActivityRecorder management audit recorder
+   * @param eventPublisher domain event publisher
    */
   public GroupService(
-      GroupRepository groupRepository, AdminActivityRecorder adminActivityRecorder) {
+      GroupRepository groupRepository,
+      AdminActivityRecorder adminActivityRecorder,
+      ApplicationEventPublisher eventPublisher) {
     this.groupRepository = groupRepository;
     this.adminActivityRecorder = adminActivityRecorder;
+    this.eventPublisher = eventPublisher;
   }
 
   /**
@@ -72,8 +80,11 @@ public class GroupService {
   @Transactional
   public void addMember(String groupId, String userId) {
     Group group = get(groupId);
-    group.addMember(userId);
-    groupRepository.save(group);
+    if (group.addMember(userId)) {
+      groupRepository.save(group);
+      eventPublisher.publishEvent(
+          new GroupMembershipChangedEvent(groupId, Set.of(userId), Set.of()));
+    }
     adminActivityRecorder.recordSuccess("identity:AddGroupMember", "Group", groupId);
   }
 
@@ -86,8 +97,11 @@ public class GroupService {
   @Transactional
   public void removeMember(String groupId, String userId) {
     Group group = get(groupId);
-    group.removeMember(userId);
-    groupRepository.save(group);
+    if (group.removeMember(userId)) {
+      groupRepository.save(group);
+      eventPublisher.publishEvent(
+          new GroupMembershipChangedEvent(groupId, Set.of(), Set.of(userId)));
+    }
     adminActivityRecorder.recordSuccess("identity:RemoveGroupMember", "Group", groupId);
   }
 

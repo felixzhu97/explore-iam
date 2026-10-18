@@ -2,7 +2,6 @@ package com.iam.identity.domain.model;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.iam.identity.domain.event.GroupMembershipChanged;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
@@ -15,8 +14,8 @@ class GroupTest {
   void shouldAddMemberIdempotentlyWhenAddingSameUserTwice() {
     Group group = Group.createGroup("developers");
 
-    group.addMember("user-1");
-    group.addMember("user-1");
+    assertThat(group.addMember("user-1")).isTrue();
+    assertThat(group.addMember("user-1")).isFalse();
 
     assertThat(group.memberUserIds()).containsExactly("user-1");
   }
@@ -27,37 +26,32 @@ class GroupTest {
     Group group = Group.createGroup("developers");
     group.addMember("user-1");
 
-    group.removeMember("user-1");
+    assertThat(group.removeMember("user-1")).isTrue();
 
     assertThat(group.hasMember("user-1")).isFalse();
+    assertThat(group.removeMember("user-1")).isFalse();
   }
 
   @Test
-  @DisplayName("should replace members and register added and removed ids")
-  void shouldReplaceMembersAndRegisterAddedAndRemovedIds() {
+  @DisplayName("should replace members and return added and removed ids")
+  void shouldReplaceMembersAndReturnAddedAndRemovedIds() {
     Group group = Group.createGroup("developers");
     group.addMember("user-1");
     group.addMember("user-2");
-    group.clearDomainEvents();
 
-    group.replaceMembers(List.of("user-2", "user-3"));
+    MembershipChange change = group.replaceMembers(List.of("user-2", "user-3"));
 
     assertThat(group.memberUserIds()).containsExactlyInAnyOrder("user-2", "user-3");
-    assertThat(group.domainEvents())
-        .containsExactly(
-            new GroupMembershipChanged(group.getId(), Set.of("user-3"), Set.of("user-1")));
+    assertThat(change).isEqualTo(new MembershipChange(Set.of("user-3"), Set.of("user-1")));
   }
 
   @Test
-  @DisplayName("should not register event when replace members keeps same set")
-  void shouldNotRegisterEventWhenReplaceMembersKeepsSameSet() {
+  @DisplayName("should return empty change when replace members keeps same set")
+  void shouldReturnEmptyChangeWhenReplaceMembersKeepsSameSet() {
     Group group = Group.createGroup("developers");
     group.addMember("user-1");
-    group.clearDomainEvents();
 
-    group.replaceMembers(List.of("user-1"));
-
-    assertThat(group.domainEvents()).isEmpty();
+    assertThat(group.replaceMembers(List.of("user-1")).isEmpty()).isTrue();
   }
 
   @Test
@@ -65,7 +59,8 @@ class GroupTest {
   void shouldProvisionAndRenameGroupWithExternalId() {
     Group group = Group.provisionGroup("developers", new ExternalId("okta-g1"));
 
-    group.renameGroup("engineering");
+    assertThat(group.renameGroup("engineering")).isTrue();
+    assertThat(group.renameGroup("engineering")).isFalse();
 
     assertThat(group.getName()).isEqualTo("engineering");
     assertThat(group.getExternalId()).isEqualTo(new ExternalId("okta-g1"));

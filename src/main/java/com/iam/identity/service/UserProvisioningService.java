@@ -1,6 +1,12 @@
 package com.iam.identity.service;
 
 import com.iam.federation.domain.repository.FederatedIdentityRepository;
+import com.iam.identity.domain.event.GroupMembershipChangedEvent;
+import com.iam.identity.domain.event.UserDeactivatedEvent;
+import com.iam.identity.domain.event.UserDeletedEvent;
+import com.iam.identity.domain.event.UserProfileChangedEvent;
+import com.iam.identity.domain.event.UserProvisionedEvent;
+import com.iam.identity.domain.event.UserReactivatedEvent;
 import com.iam.identity.domain.model.Group;
 import com.iam.identity.domain.model.User;
 import com.iam.identity.domain.repository.GroupRepository;
@@ -8,6 +14,8 @@ import com.iam.identity.domain.repository.TotpCredentialRepository;
 import com.iam.identity.domain.repository.UserRepository;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.web.webauthn.api.CredentialRecord;
 import org.springframework.security.web.webauthn.api.ImmutablePublicKeyCredentialUserEntity;
@@ -29,6 +37,7 @@ public class UserProvisioningService {
   private final FederatedIdentityRepository federatedIdentityRepository;
   private final PublicKeyCredentialUserEntityRepository passkeyUserRepository;
   private final UserCredentialRepository passkeyCredentialRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   /**
    * Creates the user provisioning service.
@@ -39,6 +48,7 @@ public class UserProvisioningService {
    * @param federatedIdentityRepository federated identity repository
    * @param passkeyUserRepository WebAuthn user entity repository
    * @param passkeyCredentialRepository WebAuthn credential repository
+   * @param eventPublisher domain event publisher
    */
   public UserProvisioningService(
       UserRepository userRepository,
@@ -46,13 +56,15 @@ public class UserProvisioningService {
       TotpCredentialRepository totpCredentialRepository,
       FederatedIdentityRepository federatedIdentityRepository,
       PublicKeyCredentialUserEntityRepository passkeyUserRepository,
-      UserCredentialRepository passkeyCredentialRepository) {
+      UserCredentialRepository passkeyCredentialRepository,
+      ApplicationEventPublisher eventPublisher) {
     this.userRepository = userRepository;
     this.groupRepository = groupRepository;
     this.totpCredentialRepository = totpCredentialRepository;
     this.federatedIdentityRepository = federatedIdentityRepository;
     this.passkeyUserRepository = passkeyUserRepository;
     this.passkeyCredentialRepository = passkeyCredentialRepository;
+    this.eventPublisher = eventPublisher;
   }
 
   /**
@@ -108,10 +120,13 @@ public class UserProvisioningService {
     User user =
         User.provisionUser(
             profile.username(), profile.email(), profile.displayName(), profile.externalId());
-    if (!profile.active()) {
-      user.disableUser();
+    boolean deactivated = !profile.active() && user.disableUser();
+    User saved = userRepository.save(user);
+    eventPublisher.publishEvent(new UserProvisionedEvent(saved.getId()));
+    if (deactivated) {
+      eventPublisher.publishEvent(new UserDeactivatedEvent(saved.getId()));
     }
-    return userRepository.save(user);
+    return saved;
   }
 
   /**
@@ -128,15 +143,22 @@ public class UserProvisioningService {
     requireVersion(user.getVersion(), expectedVersion);
     requireUsernameAvailable(profile.username(), userId);
     final String previousUsername = user.getUsername();
-    user.updateProfile(profile.username(), profile.email(), profile.displayName());
-    user.changeExternalId(profile.externalId());
-    if (profile.active()) {
-      user.enableUser();
-    } else {
-      user.disableUser();
-    }
+    boolean profileChanged =
+        user.updateProfile(profile.username(), profile.email(), profile.displayName());
+    profileChanged |= user.changeExternalId(profile.externalId());
+    final boolean reactivated = profile.active() && user.enableUser();
+    final boolean deactivated = !profile.active() && user.disableUser();
     User saved = userRepository.save(user);
     renamePasskeyUser(previousUsername, saved.getUsername());
+    if (profileChanged) {
+      eventPublisher.publishEvent(new UserProfileChangedEvent(userId));
+    }
+    if (reactivated) {
+      eventPublisher.publishEvent(new UserReactivatedEvent(userId));
+    }
+    if (deactivated) {
+      eventPublisher.publishEvent(new UserDeactivatedEvent(userId));
+    }
     return saved;
   }
 
@@ -151,14 +173,17 @@ public class UserProvisioningService {
     User user = get(userId);
     requireVersion(user.getVersion(), expectedVersion);
     for (Group group : groupRepository.findByMemberUserId(userId)) {
-      group.removeMember(userId);
-      groupRepository.save(group);
+      if (group.removeMember(userId)) {
+        groupRepository.save(group);
+        eventPublisher.publishEvent(
+            new GroupMembershipChangedEvent(group.getId(), Set.of(), Set.of(userId)));
+      }
     }
     federatedIdentityRepository.deleteByUserId(userId);
     totpCredentialRepository.deleteByUserId(userId);
     deletePasskeys(user.getUsername());
-    user.removeUser();
     userRepository.delete(user);
+    eventPublisher.publishEvent(new UserDeletedEvent(userId));
   }
 
   private void requireUsernameAvailable(String username, String currentUserId) {

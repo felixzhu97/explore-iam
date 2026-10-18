@@ -1,5 +1,6 @@
 package com.iam.identity.infra.config;
 
+import com.iam.identity.domain.event.UserProvisionedEvent;
 import com.iam.identity.domain.model.ImpersonationPolicy;
 import com.iam.identity.domain.model.Role;
 import com.iam.identity.domain.model.User;
@@ -10,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -36,20 +38,22 @@ public class IdentityBootstrapConfig {
       RoleRepository roleRepository,
       PasswordEncoder passwordEncoder,
       DemoUserProperties properties,
-      PlatformTransactionManager transactionManager) {
+      PlatformTransactionManager transactionManager,
+      ApplicationEventPublisher eventPublisher) {
     TransactionTemplate tx = new TransactionTemplate(transactionManager);
     return (ApplicationArguments args) ->
         tx.executeWithoutResult(
             status ->
                 seedDemoUserInTransaction(
-                    userRepository, roleRepository, passwordEncoder, properties));
+                    userRepository, roleRepository, passwordEncoder, properties, eventPublisher));
   }
 
   private static void seedDemoUserInTransaction(
       UserRepository userRepository,
       RoleRepository roleRepository,
       PasswordEncoder passwordEncoder,
-      DemoUserProperties properties) {
+      DemoUserProperties properties,
+      ApplicationEventPublisher eventPublisher) {
     Role adminRole = ensureAdminRole(roleRepository);
     if (!properties.isEnabled()) {
       return;
@@ -65,6 +69,7 @@ public class IdentityBootstrapConfig {
                           properties.getEmail(),
                           passwordEncoder.encode(properties.getPassword()));
                   User saved = userRepository.save(created);
+                  eventPublisher.publishEvent(new UserProvisionedEvent(saved.getId()));
                   log.info("Seeded demo IAM User '{}'", properties.getUsername());
                   return saved;
                 });
