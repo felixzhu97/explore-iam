@@ -1,17 +1,21 @@
 package com.iam.identity.controller;
 
+import com.iam.common.security.IamPrincipals;
 import com.iam.identity.domain.model.User;
 import com.iam.identity.service.UserService;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * AIP Identity User API.
@@ -19,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @see <a href="https://google.aip.dev/131">AIP-131 Get</a>
  * @see <a href="https://google.aip.dev/132">AIP-132 List</a>
  * @see <a href="https://google.aip.dev/133">AIP-133 Create</a>
+ * @see <a href="https://google.aip.dev/135">AIP-135 Delete</a>
  * @see <a href="https://google.aip.dev/136">AIP-136 Custom methods</a>
  */
 @RestController
@@ -78,12 +83,27 @@ public class UserController {
    * Disables an IAM user (AIP-136).
    *
    * @param user user id
+   * @param authentication signed-in admin
    * @return updated user
    */
   @PostMapping("/{user}:disable")
   @PreAuthorize("hasRole('IAM_ADMIN')")
-  public UserResponse disable(@PathVariable String user) {
-    return UserResponse.from(userService.disable(user));
+  public UserResponse disable(@PathVariable String user, Authentication authentication) {
+    return UserResponse.from(userService.disable(user, actorUserId(authentication)));
+  }
+
+  /**
+   * Deletes an IAM user (AIP-135).
+   *
+   * @param user user id
+   * @param authentication signed-in admin
+   * @return empty response
+   */
+  @DeleteMapping("/{user}")
+  @PreAuthorize("hasRole('IAM_ADMIN')")
+  public ResponseEntity<Void> delete(@PathVariable String user, Authentication authentication) {
+    userService.delete(user, actorUserId(authentication));
+    return ResponseEntity.noContent().build();
   }
 
   /**
@@ -117,6 +137,11 @@ public class UserController {
 
   /** Reset password request. */
   public record ResetPasswordRequest(String password) {}
+
+  private static String actorUserId(Authentication authentication) {
+    return IamPrincipals.userId(authentication)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "unknown actor"));
+  }
 
   /** AIP list response. */
   public record ListUsersResponse(List<UserResponse> users) {}

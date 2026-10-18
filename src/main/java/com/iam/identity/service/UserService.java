@@ -18,6 +18,7 @@ public class UserService {
   private final UserRepository userRepository;
   private final AdminActivityRecorder adminActivityRecorder;
   private final PasswordEncoder passwordEncoder;
+  private final UserProvisioningService userProvisioningService;
 
   /**
    * Creates the user service.
@@ -25,14 +26,17 @@ public class UserService {
    * @param userRepository IAM user repository
    * @param adminActivityRecorder management audit recorder
    * @param passwordEncoder password encoder
+   * @param userProvisioningService user lifecycle shared with SCIM
    */
   public UserService(
       UserRepository userRepository,
       AdminActivityRecorder adminActivityRecorder,
-      PasswordEncoder passwordEncoder) {
+      PasswordEncoder passwordEncoder,
+      UserProvisioningService userProvisioningService) {
     this.userRepository = userRepository;
     this.adminActivityRecorder = adminActivityRecorder;
     this.passwordEncoder = passwordEncoder;
+    this.userProvisioningService = userProvisioningService;
   }
 
   /**
@@ -80,10 +84,12 @@ public class UserService {
    * Disables the user with the given id.
    *
    * @param userId internal user id
+   * @param actorUserId IAM user id of the signed-in admin
    * @return updated user
    */
   @Transactional
-  public User disable(String userId) {
+  public User disable(String userId, String actorUserId) {
+    requireNotSelf(userId, actorUserId);
     User user = get(userId);
     user.disableUser();
     User saved = userRepository.save(user);
@@ -120,5 +126,27 @@ public class UserService {
     User saved = userRepository.save(user);
     adminActivityRecorder.recordSuccess("identity:ResetPassword", "User", userId);
     return saved;
+  }
+
+  /**
+   * Deletes the user with memberships and credentials.
+   *
+   * @param userId internal user id
+   * @param actorUserId IAM user id of the signed-in admin
+   */
+  @Transactional
+  public void delete(String userId, String actorUserId) {
+    requireNotSelf(userId, actorUserId);
+    userProvisioningService.deleteUser(userId, null);
+    adminActivityRecorder.recordSuccess("identity:DeleteUser", "User", userId);
+  }
+
+  private static void requireNotSelf(String userId, String actorUserId) {
+    if (actorUserId == null) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "unknown actor");
+    }
+    if (userId.equals(actorUserId)) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "cannot change own account");
+    }
   }
 }

@@ -46,6 +46,11 @@ export const routes: Routes = [
       import('./pages/oauth-clients/oauth-clients-list-page.component').then((m) => m.OAuthClientsListPageComponent),
   },
   {
+    path: 'users',
+    loadComponent: () =>
+      import('./pages/users/users-list-page.component').then((m) => m.UsersListPageComponent),
+  },
+  {
     path: '',
     pathMatch: 'full',
     loadComponent: () =>
