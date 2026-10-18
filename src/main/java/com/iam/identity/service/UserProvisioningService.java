@@ -1,9 +1,9 @@
 package com.iam.identity.service;
 
-import com.iam.federation.domain.repository.FederatedIdentityRepository;
 import com.iam.identity.domain.event.GroupMembershipChangedEvent;
 import com.iam.identity.domain.event.UserDeactivatedEvent;
 import com.iam.identity.domain.event.UserDeletedEvent;
+import com.iam.identity.domain.event.UserDeletionRequestedEvent;
 import com.iam.identity.domain.event.UserProfileChangedEvent;
 import com.iam.identity.domain.event.UserProvisionedEvent;
 import com.iam.identity.domain.event.UserReactivatedEvent;
@@ -34,7 +34,6 @@ public class UserProvisioningService {
   private final UserRepository userRepository;
   private final GroupRepository groupRepository;
   private final TotpCredentialRepository totpCredentialRepository;
-  private final FederatedIdentityRepository federatedIdentityRepository;
   private final PublicKeyCredentialUserEntityRepository passkeyUserRepository;
   private final UserCredentialRepository passkeyCredentialRepository;
   private final ApplicationEventPublisher eventPublisher;
@@ -45,7 +44,6 @@ public class UserProvisioningService {
    * @param userRepository IAM user repository
    * @param groupRepository IAM group repository
    * @param totpCredentialRepository TOTP credential repository
-   * @param federatedIdentityRepository federated identity repository
    * @param passkeyUserRepository WebAuthn user entity repository
    * @param passkeyCredentialRepository WebAuthn credential repository
    * @param eventPublisher domain event publisher
@@ -54,14 +52,12 @@ public class UserProvisioningService {
       UserRepository userRepository,
       GroupRepository groupRepository,
       TotpCredentialRepository totpCredentialRepository,
-      FederatedIdentityRepository federatedIdentityRepository,
       PublicKeyCredentialUserEntityRepository passkeyUserRepository,
       UserCredentialRepository passkeyCredentialRepository,
       ApplicationEventPublisher eventPublisher) {
     this.userRepository = userRepository;
     this.groupRepository = groupRepository;
     this.totpCredentialRepository = totpCredentialRepository;
-    this.federatedIdentityRepository = federatedIdentityRepository;
     this.passkeyUserRepository = passkeyUserRepository;
     this.passkeyCredentialRepository = passkeyCredentialRepository;
     this.eventPublisher = eventPublisher;
@@ -163,7 +159,8 @@ public class UserProvisioningService {
   }
 
   /**
-   * Deletes a user with memberships, role bindings, federated links, TOTP, and passkeys.
+   * Deletes a user with memberships, role bindings, TOTP, and passkeys. Other modules remove
+   * their own rows for the user while handling {@link UserDeletionRequestedEvent}.
    *
    * @param userId IAM user id
    * @param expectedVersion version from {@code If-Match}, or {@code null} to skip the check
@@ -179,7 +176,7 @@ public class UserProvisioningService {
             new GroupMembershipChangedEvent(group.getId(), Set.of(), Set.of(userId)));
       }
     }
-    federatedIdentityRepository.deleteByUserId(userId);
+    eventPublisher.publishEvent(new UserDeletionRequestedEvent(userId));
     totpCredentialRepository.deleteByUserId(userId);
     deletePasskeys(user.getUsername());
     userRepository.delete(user);
