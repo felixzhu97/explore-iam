@@ -19,7 +19,9 @@ import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.authorization.EnableMultiFactorAuthentication;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
@@ -152,17 +154,34 @@ public class WebSecurityConfig {
         .addFilterBefore(new ActiveUserSessionFilter(userRepository), AuthorizationFilter.class);
 
     clientRegistrations.ifAvailable(
-        repo ->
-            federatedLoginService.ifAvailable(
-                service ->
-                    http.oauth2Login(
-                        (oauth2) ->
-                            oauth2
-                                .loginPage("/login")
-                                .userInfoEndpoint(
-                                    (userInfo) -> userInfo.userService(service)))));
+        repo -> {
+          if (!hasLoginRegistration(repo)) {
+            return;
+          }
+          federatedLoginService.ifAvailable(
+              service ->
+                  http.oauth2Login(
+                      (oauth2) ->
+                          oauth2
+                              .loginPage("/login")
+                              .userInfoEndpoint((userInfo) -> userInfo.userService(service))));
+        });
 
     return http.build();
+  }
+
+  private static boolean hasLoginRegistration(ClientRegistrationRepository repo) {
+    if (!(repo instanceof Iterable<?> registrations)) {
+      return true;
+    }
+    for (Object registration : registrations) {
+      if (registration instanceof ClientRegistration client
+          && AuthorizationGrantType.AUTHORIZATION_CODE.equals(
+              client.getAuthorizationGrantType())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static MediaTypeRequestMatcher createHtmlRequestMatcher() {

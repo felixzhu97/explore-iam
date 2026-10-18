@@ -47,6 +47,26 @@ public class ScimUserMapper {
   }
 
   /**
+   * Maps a user to the resource IAM pushes to a Provisioning Target. The target's {@code
+   * externalId} is the IAM user id, so repeated pushes can find the account again.
+   *
+   * @param user IAM user
+   * @return SCIM resource without target-assigned id or meta
+   */
+  public UserResource toTargetResource(User user) {
+    UserResource resource = new UserResource();
+    resource.setExternalId(user.getId());
+    resource.setUserName(user.getUsername());
+    resource.setDisplayName(user.getDisplayName());
+    resource.setActive(user.isEnabled());
+    if (user.getEmail() != null) {
+      resource.setEmails(
+          List.of(new Email().setValue(user.getEmail()).setType("work").setPrimary(true)));
+    }
+    return resource;
+  }
+
+  /**
    * Maps a SCIM User resource to the desired user state.
    *
    * @param resource SCIM resource from the client

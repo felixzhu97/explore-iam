@@ -15,6 +15,20 @@ spring:
     oauth2:
       authorizationserver:
         issuer: http://localhost:9100
+      client:
+        registration:
+          iam-scim-outbound:
+            provider: iam-self
+            client-id: iam-scim-outbound
+            client-secret: scim-test-secret
+            authorization-grant-type: client_credentials
+            scope: write:ai_scim
+        provider:
+          iam-self:
+            token-uri: http://localhost:9100/oauth2/token
+  modulith:
+    events:
+      completion-mode: delete
 
 app:
   demo-user:
