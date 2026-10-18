@@ -466,4 +466,88 @@
             <column name="external_id"/>
         </createIndex>
     </changeSet>
+    <changeSet id="3dee24fb-fbd0-4541-8ec0-a7bd60a4309c" author="felix.zhu">
+        <createTable tableName="event_publication">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="listener_id" type="varchar(512)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event_type" type="varchar(512)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="serialized_event" type="varchar(4000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="publication_date" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="completion_date" type="timestamp"/>
+            <column name="status" type="varchar(20)"/>
+            <column name="completion_attempts" type="int"/>
+            <column name="last_resubmission_date" type="timestamp"/>
+        </createTable>
+        <createIndex tableName="event_publication"
+            indexName="event_publication_by_listener_id_and_serialized_event_idx">
+            <column name="listener_id"/>
+            <column name="serialized_event"/>
+        </createIndex>
+        <createIndex tableName="event_publication"
+            indexName="event_publication_by_completion_date_idx">
+            <column name="completion_date"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="7f909937-e50c-4bbc-bd3a-7c460a03b77e" author="felix.zhu">
+        <createTable tableName="provisioning_target">
+            <column name="id" type="varchar(36)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="varchar(256)">
+                <constraints nullable="false" unique="true"
+                    uniqueConstraintName="uk_provisioning_target_name"/>
+            </column>
+            <column name="base_url" type="varchar(512)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="registration_id" type="varchar(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="enabled" type="boolean" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="assignment_group_id" type="varchar(36)"/>
+            <column name="created_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="bigint" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createTable tableName="provisioned_account">
+            <column name="target_id" type="varchar(36)">
+                <constraints nullable="false"
+                    foreignKeyName="fk_provisioned_account_target"
+                    references="provisioning_target(id)"/>
+            </column>
+            <column name="iam_user_id" type="varchar(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="remote_id" type="varchar(256)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_synced_version" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_synced_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="provisioned_account"
+            columnNames="target_id, iam_user_id" constraintName="pk_provisioned_account"/>
+    </changeSet>
 </databaseChangeLog>

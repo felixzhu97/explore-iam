@@ -28,6 +28,21 @@ spring:
     oauth2:
       authorizationserver:
         issuer: ${OIDC_ISSUER:http://localhost:9100}
+      client:
+        registration:
+          iam-scim-outbound:
+            provider: iam-self
+            client-id: ${IAM_CLIENT_SCIM_OUTBOUND_ID:iam-scim-outbound}
+            client-secret: ${IAM_CLIENT_SCIM_OUTBOUND_SECRET:}
+            authorization-grant-type: client_credentials
+            scope: write:ai_scim
+        provider:
+          iam-self:
+            token-uri: ${OIDC_ISSUER:http://localhost:9100}/oauth2/token
+  modulith:
+    events:
+      completion-mode: delete
+      republish-outstanding-events-on-restart: true
 
 management:
   endpoints:
@@ -36,6 +51,15 @@ management:
         include: health,info
 
 app:
+  scim:
+    resubmit-interval: PT5M
+    resubmit-older-than: PT5M
+    targets:
+      # Push is off until EXPLORE_AI_SCIM_URL is set, e.g. http://localhost:9000/scim/v2.
+      - name: explore-ai
+        base-url: ${EXPLORE_AI_SCIM_URL:}
+        registration-id: iam-scim-outbound
+        assignment-group: ${EXPLORE_AI_SCIM_ASSIGNMENT_GROUP:}
   demo-user:
     enabled: ${APP_DEMO_USER_ENABLED:true}
     username: ${APP_DEMO_USER_USERNAME:demo}
@@ -109,6 +133,13 @@ app:
         machine-client: true
         scopes:
           - write:iam_scim
+      - client-id: ${IAM_CLIENT_SCIM_OUTBOUND_ID:iam-scim-outbound}
+        client-name: IAM SCIM Outbound
+        # Same secret as the iam-scim-outbound client registration; skipped while blank.
+        client-secret: ${IAM_CLIENT_SCIM_OUTBOUND_SECRET:}
+        machine-client: true
+        scopes:
+          - write:ai_scim
       - client-id: ${IAM_CLIENT_EXPLORE_CHAT_ID:explore-chat}
         client-name: Explore Chat
         client-secret: ${IAM_CLIENT_EXPLORE_CHAT_SECRET:explore-chat-dev-secret}

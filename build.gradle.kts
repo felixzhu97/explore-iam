@@ -21,6 +21,12 @@ repositories {
     maven { url = uri("https://maven.aliyun.com/repository/spring") }
 }
 
+dependencyManagement {
+    imports {
+        mavenBom("org.springframework.modulith:spring-modulith-bom:2.1.1")
+    }
+}
+
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
@@ -29,9 +35,11 @@ dependencies {
     implementation("org.springframework.security:spring-security-webauthn")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-authorization-server")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
+    implementation("org.springframework.boot:spring-boot-starter-restclient")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-liquibase")
     implementation("com.unboundid.product.scim2:scim2-sdk-common:6.1.0")
+    implementation("org.springframework.modulith:spring-modulith-starter-jpa")
     runtimeOnly("com.h2database:h2")
 
     compileOnly("org.projectlombok:lombok")
@@ -42,6 +50,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("com.tngtech.archunit:archunit-junit5:1.5.0")
+    testImplementation("org.springframework.modulith:spring-modulith-starter-test")
 }
 
 checkstyle {
