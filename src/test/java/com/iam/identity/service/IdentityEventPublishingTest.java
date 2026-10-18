@@ -2,7 +2,10 @@ package com.iam.identity.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.iam.identity.domain.event.GroupCreatedEvent;
+import com.iam.identity.domain.event.GroupDeletedEvent;
 import com.iam.identity.domain.event.GroupMembershipChangedEvent;
+import com.iam.identity.domain.event.GroupProfileChangedEvent;
 import com.iam.identity.domain.event.UserDeactivatedEvent;
 import com.iam.identity.domain.event.UserDeletedEvent;
 import com.iam.identity.domain.event.UserProfileChangedEvent;
@@ -108,6 +111,27 @@ class IdentityEventPublishingTest {
     assertThat(events.stream(GroupMembershipChangedEvent.class))
         .containsExactly(
             new GroupMembershipChangedEvent(groupId, Set.of(second), Set.of(first)));
+  }
+
+  @Test
+  @DisplayName("should publish group lifecycle events when group is created renamed and deleted")
+  void shouldPublishGroupLifecycleEventsWhenGroupIsCreatedRenamedAndDeleted() {
+    String groupId =
+        groupProvisioningService
+            .provisionGroup(new GroupProfile(unique("group"), null, Set.of()))
+            .getId();
+
+    groupProvisioningService.replaceGroup(
+        groupId, new GroupProfile(unique("renamed"), null, Set.of()), null);
+    groupProvisioningService.deleteGroup(groupId, null);
+
+    assertThat(events.stream(GroupCreatedEvent.class))
+        .containsExactly(new GroupCreatedEvent(groupId));
+    assertThat(events.stream(GroupProfileChangedEvent.class))
+        .containsExactly(new GroupProfileChangedEvent(groupId));
+    assertThat(events.stream(GroupDeletedEvent.class))
+        .containsExactly(new GroupDeletedEvent(groupId));
+    assertThat(events.stream(GroupMembershipChangedEvent.class)).isEmpty();
   }
 
   private static UserProfile profile(String username, boolean active) {

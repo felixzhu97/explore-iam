@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 
-import com.iam.audit.service.AdminActivityRecorder;
 import com.iam.identity.domain.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,7 +19,6 @@ class UserServiceTest {
   private final UserService service =
       new UserService(
           userRepository,
-          mock(AdminActivityRecorder.class),
           mock(PasswordEncoder.class),
           provisioning,
           mock(ApplicationEventPublisher.class));

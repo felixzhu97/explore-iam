@@ -1,13 +1,13 @@
 package com.iam.policy.service;
 
-import com.iam.audit.domain.model.DataAccessLog;
-import com.iam.audit.service.AdminActivityRecorder;
-import com.iam.audit.service.AuditService;
 import com.iam.common.domain.model.Effect;
 import com.iam.common.domain.model.Permission;
 import com.iam.common.domain.model.PrincipalId;
 import com.iam.common.domain.model.Resource;
 import com.iam.common.domain.model.ResourceName;
+import com.iam.policy.domain.event.AccessEvaluatedEvent;
+import com.iam.policy.domain.event.AllowPolicyCreatedEvent;
+import com.iam.policy.domain.event.PolicyAttachedEvent;
 import com.iam.policy.domain.model.AccessDecision;
 import com.iam.policy.domain.model.AccessTuple;
 import com.iam.policy.domain.model.AllowPolicy;
@@ -18,6 +18,7 @@ import com.iam.policy.domain.service.PolicyEngine;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,26 +29,22 @@ public class PolicyService {
 
   private final PolicyRepository policyRepository;
   private final PolicyEngine policyEngine;
-  private final AuditService auditService;
-  private final AdminActivityRecorder adminActivityRecorder;
+  private final ApplicationEventPublisher eventPublisher;
 
   /**
    * Creates the policy service.
    *
    * @param policyRepository policy repository
    * @param policyEngine policy evaluation engine
-   * @param auditService audit application service
-   * @param adminActivityRecorder management audit recorder
+   * @param eventPublisher domain event publisher
    */
   public PolicyService(
       PolicyRepository policyRepository,
       PolicyEngine policyEngine,
-      AuditService auditService,
-      AdminActivityRecorder adminActivityRecorder) {
+      ApplicationEventPublisher eventPublisher) {
     this.policyRepository = policyRepository;
     this.policyEngine = policyEngine;
-    this.auditService = auditService;
-    this.adminActivityRecorder = adminActivityRecorder;
+    this.eventPublisher = eventPublisher;
   }
 
   /**
@@ -79,7 +76,7 @@ public class PolicyService {
             .toList();
     AllowPolicy policy =
         policyRepository.save(AllowPolicy.createAllowPolicy(command.name(), statements));
-    adminActivityRecorder.recordSuccess("policy:CreatePolicy", "AllowPolicy", policy.getId());
+    eventPublisher.publishEvent(new AllowPolicyCreatedEvent(policy.getId()));
     return policy;
   }
 
@@ -97,8 +94,7 @@ public class PolicyService {
         .orElseThrow(() -> new IllegalArgumentException("Policy not found: " + policyId));
     PolicyBinding attachment =
         policyRepository.saveAttachment(PolicyBinding.createPolicyBinding(policyId, principalArn));
-    adminActivityRecorder.recordSuccess(
-        "policy:AttachPolicy", "PolicyBinding", attachment.getId());
+    eventPublisher.publishEvent(new PolicyAttachedEvent(attachment.getId()));
     return attachment;
   }
 
@@ -119,13 +115,13 @@ public class PolicyService {
     AccessDecision decision =
         policyEngine.evaluate(
             context, policyRepository.findAttachedToPrincipal(principalArn));
-    auditService.save(
-        DataAccessLog.recordAccessDecisionLog(
-            context.principalId(),
-            context.action(),
-            context.resource(),
+    eventPublisher.publishEvent(
+        new AccessEvaluatedEvent(
+            context.principalId().value(),
+            context.action().value(),
+            context.resource().value(),
             decision.effect(),
-            decision.reasonCode()));
+            decision.reasonCode().value()));
     return decision;
   }
 

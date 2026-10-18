@@ -1,12 +1,13 @@
 package com.iam.policy.service;
 
-import com.iam.audit.service.AdminActivityRecorder;
 import com.iam.common.domain.model.Resource;
+import com.iam.policy.domain.event.PermissionCreatedEvent;
 import com.iam.policy.domain.model.Permission;
 import com.iam.policy.domain.repository.PermissionRepository;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,18 +18,18 @@ import org.springframework.web.server.ResponseStatusException;
 public class PermissionService {
 
   private final PermissionRepository permissionRepository;
-  private final AdminActivityRecorder auditRecorder;
+  private final ApplicationEventPublisher eventPublisher;
 
   /**
    * Creates the service.
    *
    * @param permissionRepository catalog repository
-   * @param auditRecorder management audit
+   * @param eventPublisher domain event publisher
    */
   public PermissionService(
-      PermissionRepository permissionRepository, AdminActivityRecorder auditRecorder) {
+      PermissionRepository permissionRepository, ApplicationEventPublisher eventPublisher) {
     this.permissionRepository = permissionRepository;
-    this.auditRecorder = auditRecorder;
+    this.eventPublisher = eventPublisher;
   }
 
   /**
@@ -52,8 +53,7 @@ public class PermissionService {
               new Resource(command.resource()),
               command.description());
       Permission saved = permissionRepository.save(point);
-      auditRecorder.recordSuccess(
-          "policy:CreatePermission", "Permission", saved.getCode());
+      eventPublisher.publishEvent(new PermissionCreatedEvent(saved.getCode()));
       return saved;
     } catch (IllegalArgumentException ex) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage(), ex);
