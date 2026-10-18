@@ -1,6 +1,5 @@
 package com.iam.scim.service;
 
-import com.iam.audit.service.AdminActivityRecorder;
 import com.iam.identity.domain.model.Group;
 import com.iam.identity.domain.model.User;
 import com.iam.identity.service.GroupProvisioningService;
@@ -29,7 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Orchestrates inbound SCIM calls: maps protocol resources, delegates to the identity provisioning
- * services, and records {@code scim:*} admin activity.
+ * services.
  */
 @Service
 public class ScimProvisioningService {
@@ -42,7 +41,6 @@ public class ScimProvisioningService {
   private final ScimUserMapper userMapper;
   private final ScimGroupMapper groupMapper;
   private final ScimFilterTranslator filterTranslator;
-  private final AdminActivityRecorder adminActivityRecorder;
 
   /**
    * Creates the SCIM provisioning service.
@@ -52,21 +50,18 @@ public class ScimProvisioningService {
    * @param userMapper SCIM user mapper
    * @param groupMapper SCIM group mapper
    * @param filterTranslator SCIM filter translator
-   * @param adminActivityRecorder management audit recorder
    */
   public ScimProvisioningService(
       UserProvisioningService userProvisioningService,
       GroupProvisioningService groupProvisioningService,
       ScimUserMapper userMapper,
       ScimGroupMapper groupMapper,
-      ScimFilterTranslator filterTranslator,
-      AdminActivityRecorder adminActivityRecorder) {
+      ScimFilterTranslator filterTranslator) {
     this.userProvisioningService = userProvisioningService;
     this.groupProvisioningService = groupProvisioningService;
     this.userMapper = userMapper;
     this.groupMapper = groupMapper;
     this.filterTranslator = filterTranslator;
-    this.adminActivityRecorder = adminActivityRecorder;
   }
 
   /**
@@ -120,7 +115,6 @@ public class ScimProvisioningService {
   public UserResource createUser(UserResource body, ScimLocations locations)
       throws ScimException {
     User user = userProvisioningService.provisionUser(userMapper.toProfile(body));
-    adminActivityRecorder.recordSuccess("scim:CreateUser", "User", user.getId());
     return userMapper.toResource(user, locations.users());
   }
 
@@ -139,7 +133,6 @@ public class ScimProvisioningService {
       throws ScimException {
     User user =
         userProvisioningService.replaceUser(userId, userMapper.toProfile(body), expectedVersion);
-    adminActivityRecorder.recordSuccess("scim:ReplaceUser", "User", userId);
     return userMapper.toResource(user, locations.users());
   }
 
@@ -162,7 +155,6 @@ public class ScimProvisioningService {
     Long version = expectedVersion == null ? current.getVersion() : expectedVersion;
     User user =
         userProvisioningService.replaceUser(userId, userMapper.toProfile(patched), version);
-    adminActivityRecorder.recordSuccess("scim:PatchUser", "User", userId);
     return userMapper.toResource(user, locations.users());
   }
 
@@ -174,7 +166,6 @@ public class ScimProvisioningService {
    */
   public void deleteUser(String userId, Long expectedVersion) {
     userProvisioningService.deleteUser(userId, expectedVersion);
-    adminActivityRecorder.recordSuccess("scim:DeleteUser", "User", userId);
   }
 
   /**
@@ -238,7 +229,6 @@ public class ScimProvisioningService {
   public GroupResource createGroup(GroupResource body, ScimLocations locations)
       throws ScimException {
     Group group = groupProvisioningService.provisionGroup(groupMapper.toProfile(body));
-    adminActivityRecorder.recordSuccess("scim:CreateGroup", "Group", group.getId());
     return toGroupResource(group, true, locations);
   }
 
@@ -258,7 +248,6 @@ public class ScimProvisioningService {
     Group group =
         groupProvisioningService.replaceGroup(
             groupId, groupMapper.toProfile(body), expectedVersion);
-    adminActivityRecorder.recordSuccess("scim:ReplaceGroup", "Group", groupId);
     return toGroupResource(group, true, locations);
   }
 
@@ -281,7 +270,6 @@ public class ScimProvisioningService {
     Long version = expectedVersion == null ? current.getVersion() : expectedVersion;
     Group group =
         groupProvisioningService.replaceGroup(groupId, groupMapper.toProfile(patched), version);
-    adminActivityRecorder.recordSuccess("scim:PatchGroup", "Group", groupId);
     return toGroupResource(group, true, locations);
   }
 
@@ -293,7 +281,6 @@ public class ScimProvisioningService {
    */
   public void deleteGroup(String groupId, Long expectedVersion) {
     groupProvisioningService.deleteGroup(groupId, expectedVersion);
-    adminActivityRecorder.recordSuccess("scim:DeleteGroup", "Group", groupId);
   }
 
   private GroupResource toGroupResource(

@@ -1,15 +1,16 @@
 package com.iam.sts.service;
 
-import com.iam.audit.service.AdminActivityRecorder;
 import com.iam.common.domain.model.ResourceName;
 import com.iam.identity.domain.model.Role;
 import com.iam.identity.domain.repository.RoleRepository;
+import com.iam.sts.domain.event.RoleAssumedEvent;
 import com.iam.sts.domain.model.ShortLivedCredential;
 import com.iam.sts.domain.repository.ShortLivedCredentialRepository;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
@@ -25,7 +26,7 @@ public class ShortLivedCredentialService {
   private final RoleRepository roleRepository;
   private final ShortLivedCredentialRepository sessionRepository;
   private final JwtEncoder jwtEncoder;
-  private final AdminActivityRecorder adminActivityRecorder;
+  private final ApplicationEventPublisher eventPublisher;
   private final Duration sessionTtl;
 
   /**
@@ -34,19 +35,19 @@ public class ShortLivedCredentialService {
    * @param roleRepository role repository
    * @param sessionRepository assumed-role session repository
    * @param jwtEncoder JWT encoder
-   * @param adminActivityRecorder management audit recorder
+   * @param eventPublisher domain event publisher
    * @param sessionTtl session time-to-live
    */
   public ShortLivedCredentialService(
       RoleRepository roleRepository,
       ShortLivedCredentialRepository sessionRepository,
       JwtEncoder jwtEncoder,
-      AdminActivityRecorder adminActivityRecorder,
+      ApplicationEventPublisher eventPublisher,
       @Value("${app.security.token.assume-role-ttl:PT1H}") Duration sessionTtl) {
     this.roleRepository = roleRepository;
     this.sessionRepository = sessionRepository;
     this.jwtEncoder = jwtEncoder;
-    this.adminActivityRecorder = adminActivityRecorder;
+    this.eventPublisher = eventPublisher;
     this.sessionTtl = sessionTtl;
   }
 
@@ -71,7 +72,7 @@ public class ShortLivedCredentialService {
             ShortLivedCredential.createShortLivedCredential(
                 roleArn, command.sessionName(), caller, expiresAt));
     String accessToken = encodeToken(session, role);
-    adminActivityRecorder.recordSuccess("sts:AssumeRole", "Role", role.getId());
+    eventPublisher.publishEvent(new RoleAssumedEvent(role.getId()));
     return new AssumeRoleResult(accessToken, session.getExpiresAt(), session.getId());
   }
 

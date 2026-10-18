@@ -7,7 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.iam.audit.service.AdminActivityRecorder;
+import com.iam.federation.domain.event.OAuthClientRegisteredEvent;
 import com.iam.federation.domain.model.OAuthClient;
 import com.iam.federation.domain.model.RedirectUri;
 import com.iam.federation.domain.repository.OAuthClientRepository;
@@ -20,6 +20,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,7 +31,7 @@ class OAuthClientServiceTest {
 
   @Mock private PasswordEncoder passwordEncoder;
 
-  @Mock private AdminActivityRecorder adminActivityRecorder;
+  @Mock private ApplicationEventPublisher eventPublisher;
 
   private OAuthClientService oauthClientService;
 
@@ -41,7 +42,7 @@ class OAuthClientServiceTest {
             oauthClientRepository,
             passwordEncoder,
             new OidcSeedClientProperties(),
-            adminActivityRecorder);
+            eventPublisher);
   }
 
   @Test
@@ -77,6 +78,7 @@ class OAuthClientServiceTest {
     assertThat(captor.getValue().storedSecretHash()).isEqualTo("{bcrypt}hash");
     assertThat(captor.getValue().redirectUris())
         .containsExactly(new RedirectUri("http://localhost:3000/callback"));
+    verify(eventPublisher).publishEvent(new OAuthClientRegisteredEvent(result.clientId()));
   }
 
   @Test

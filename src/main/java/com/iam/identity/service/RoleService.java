@@ -1,11 +1,14 @@
 package com.iam.identity.service;
 
-import com.iam.audit.service.AdminActivityRecorder;
+import com.iam.identity.domain.event.RoleCreatedEvent;
+import com.iam.identity.domain.event.UserRoleAssignedEvent;
+import com.iam.identity.domain.event.UserRoleUnassignedEvent;
 import com.iam.identity.domain.model.Role;
 import com.iam.identity.domain.model.User;
 import com.iam.identity.domain.repository.RoleRepository;
 import com.iam.identity.domain.repository.UserRepository;
 import java.util.List;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,22 +21,22 @@ public class RoleService {
 
   private final RoleRepository roleRepository;
   private final UserRepository userRepository;
-  private final AdminActivityRecorder adminActivityRecorder;
+  private final ApplicationEventPublisher eventPublisher;
 
   /**
    * Creates the role service.
    *
    * @param roleRepository role repository
    * @param userRepository IAM user repository
-   * @param adminActivityRecorder management audit recorder
+   * @param eventPublisher domain event publisher
    */
   public RoleService(
       RoleRepository roleRepository,
       UserRepository userRepository,
-      AdminActivityRecorder adminActivityRecorder) {
+      ApplicationEventPublisher eventPublisher) {
     this.roleRepository = roleRepository;
     this.userRepository = userRepository;
-    this.adminActivityRecorder = adminActivityRecorder;
+    this.eventPublisher = eventPublisher;
   }
 
   /**
@@ -55,7 +58,7 @@ public class RoleService {
   @Transactional
   public Role createRole(String name, String trustPolicyJson) {
     Role role = roleRepository.save(Role.createRole(name, trustPolicyJson));
-    adminActivityRecorder.recordSuccess("identity:CreateRole", "Role", role.getId());
+    eventPublisher.publishEvent(new RoleCreatedEvent(role.getId()));
     return role;
   }
 
@@ -74,9 +77,10 @@ public class RoleService {
         userRepository
             .findById(userId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
-    user.assignRole(roleId);
-    userRepository.save(user);
-    adminActivityRecorder.recordSuccess("identity:AssignRole", "User", userId);
+    if (user.assignRole(roleId)) {
+      userRepository.save(user);
+      eventPublisher.publishEvent(new UserRoleAssignedEvent(userId, roleId));
+    }
   }
 
   /**
@@ -94,8 +98,9 @@ public class RoleService {
         userRepository
             .findById(userId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "user not found"));
-    user.unassignRole(roleId);
-    userRepository.save(user);
-    adminActivityRecorder.recordSuccess("identity:UnassignRole", "User", userId);
+    if (user.unassignRole(roleId)) {
+      userRepository.save(user);
+      eventPublisher.publishEvent(new UserRoleUnassignedEvent(userId, roleId));
+    }
   }
 }

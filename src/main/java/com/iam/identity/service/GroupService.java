@@ -1,6 +1,7 @@
 package com.iam.identity.service;
 
-import com.iam.audit.service.AdminActivityRecorder;
+import com.iam.identity.domain.event.GroupCreatedEvent;
+import com.iam.identity.domain.event.GroupDeletedEvent;
 import com.iam.identity.domain.event.GroupMembershipChangedEvent;
 import com.iam.identity.domain.model.Group;
 import com.iam.identity.domain.repository.GroupRepository;
@@ -18,22 +19,16 @@ import org.springframework.web.server.ResponseStatusException;
 public class GroupService {
 
   private final GroupRepository groupRepository;
-  private final AdminActivityRecorder adminActivityRecorder;
   private final ApplicationEventPublisher eventPublisher;
 
   /**
    * Creates the group service.
    *
    * @param groupRepository group repository
-   * @param adminActivityRecorder management audit recorder
    * @param eventPublisher domain event publisher
    */
-  public GroupService(
-      GroupRepository groupRepository,
-      AdminActivityRecorder adminActivityRecorder,
-      ApplicationEventPublisher eventPublisher) {
+  public GroupService(GroupRepository groupRepository, ApplicationEventPublisher eventPublisher) {
     this.groupRepository = groupRepository;
-    this.adminActivityRecorder = adminActivityRecorder;
     this.eventPublisher = eventPublisher;
   }
 
@@ -67,7 +62,7 @@ public class GroupService {
   @Transactional
   public Group createGroup(String name) {
     Group group = groupRepository.save(Group.createGroup(name));
-    adminActivityRecorder.recordSuccess("identity:CreateGroup", "Group", group.getId());
+    eventPublisher.publishEvent(new GroupCreatedEvent(group.getId()));
     return group;
   }
 
@@ -85,7 +80,6 @@ public class GroupService {
       eventPublisher.publishEvent(
           new GroupMembershipChangedEvent(groupId, Set.of(userId), Set.of()));
     }
-    adminActivityRecorder.recordSuccess("identity:AddGroupMember", "Group", groupId);
   }
 
   /**
@@ -102,7 +96,6 @@ public class GroupService {
       eventPublisher.publishEvent(
           new GroupMembershipChangedEvent(groupId, Set.of(), Set.of(userId)));
     }
-    adminActivityRecorder.recordSuccess("identity:RemoveGroupMember", "Group", groupId);
   }
 
   /**
@@ -117,6 +110,6 @@ public class GroupService {
       throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "group still has members");
     }
     groupRepository.delete(group);
-    adminActivityRecorder.recordSuccess("identity:DeleteGroup", "Group", groupId);
+    eventPublisher.publishEvent(new GroupDeletedEvent(groupId));
   }
 }

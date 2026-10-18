@@ -1,6 +1,7 @@
 package com.iam.federation.service;
 
-import com.iam.audit.service.AdminActivityRecorder;
+import com.iam.federation.domain.event.OAuthClientRegisteredEvent;
+import com.iam.federation.domain.event.OAuthClientScopesChangedEvent;
 import com.iam.federation.domain.model.ClientId;
 import com.iam.federation.domain.model.OAuthClient;
 import com.iam.federation.domain.model.RedirectUri;
@@ -14,6 +15,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +34,7 @@ public class OAuthClientService {
   private final OAuthClientRepository oauthClientRepository;
   private final PasswordEncoder passwordEncoder;
   private final OidcSeedClientProperties oidcProperties;
-  private final AdminActivityRecorder adminActivityRecorder;
+  private final ApplicationEventPublisher eventPublisher;
 
   /**
    * Creates the OIDC client service.
@@ -40,17 +42,17 @@ public class OAuthClientService {
    * @param oauthClientRepository client repository
    * @param passwordEncoder encoder for client secrets
    * @param oidcProperties OIDC defaults and allow-lists
-   * @param adminActivityRecorder management audit recorder
+   * @param eventPublisher domain event publisher
    */
   public OAuthClientService(
       OAuthClientRepository oauthClientRepository,
       PasswordEncoder passwordEncoder,
       OidcSeedClientProperties oidcProperties,
-      AdminActivityRecorder adminActivityRecorder) {
+      ApplicationEventPublisher eventPublisher) {
     this.oauthClientRepository = oauthClientRepository;
     this.passwordEncoder = passwordEncoder;
     this.oidcProperties = oidcProperties;
-    this.adminActivityRecorder = adminActivityRecorder;
+    this.eventPublisher = eventPublisher;
   }
 
   /**
@@ -112,8 +114,7 @@ public class OAuthClientService {
             authMethods,
             grantTypes);
     OAuthClient saved = oauthClientRepository.save(client);
-    adminActivityRecorder.recordSuccess(
-        "federation:RegisterClient", "OAuthClient", saved.clientId().value());
+    eventPublisher.publishEvent(new OAuthClientRegisteredEvent(saved.clientId().value()));
     return RegisteredOAuthClientResult.from(saved, plaintextSecret);
   }
 
@@ -132,8 +133,7 @@ public class OAuthClientService {
             .orElseThrow(() -> new IllegalArgumentException("client not found: " + clientId));
     client.replaceScopes(normalizeScopes(scopes));
     OAuthClient saved = oauthClientRepository.save(client);
-    adminActivityRecorder.recordSuccess(
-        "federation:UpdateClientScopes", "OAuthClient", saved.clientId().value());
+    eventPublisher.publishEvent(new OAuthClientScopesChangedEvent(saved.clientId().value()));
     return OAuthClientView.from(saved);
   }
 

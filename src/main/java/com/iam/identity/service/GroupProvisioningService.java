@@ -1,6 +1,9 @@
 package com.iam.identity.service;
 
+import com.iam.identity.domain.event.GroupCreatedEvent;
+import com.iam.identity.domain.event.GroupDeletedEvent;
 import com.iam.identity.domain.event.GroupMembershipChangedEvent;
+import com.iam.identity.domain.event.GroupProfileChangedEvent;
 import com.iam.identity.domain.model.Group;
 import com.iam.identity.domain.model.MembershipChange;
 import com.iam.identity.domain.repository.GroupRepository;
@@ -98,6 +101,7 @@ public class GroupProvisioningService {
     Group group = Group.provisionGroup(profile.name(), profile.externalId());
     MembershipChange change = group.replaceMembers(profile.memberUserIds());
     Group saved = groupRepository.save(group);
+    eventPublisher.publishEvent(new GroupCreatedEvent(saved.getId()));
     publishMembershipChange(saved.getId(), change);
     return saved;
   }
@@ -116,10 +120,13 @@ public class GroupProvisioningService {
     UserProvisioningService.requireVersion(group.getVersion(), expectedVersion);
     requireNameAvailable(profile.name(), groupId);
     requireUsersExist(profile);
-    group.renameGroup(profile.name());
-    group.changeExternalId(profile.externalId());
+    boolean profileChanged = group.renameGroup(profile.name());
+    profileChanged |= group.changeExternalId(profile.externalId());
     MembershipChange change = group.replaceMembers(profile.memberUserIds());
     Group saved = groupRepository.save(group);
+    if (profileChanged) {
+      eventPublisher.publishEvent(new GroupProfileChangedEvent(groupId));
+    }
     publishMembershipChange(groupId, change);
     return saved;
   }
@@ -137,6 +144,7 @@ public class GroupProvisioningService {
     MembershipChange change = group.replaceMembers(List.of());
     groupRepository.delete(group);
     publishMembershipChange(groupId, change);
+    eventPublisher.publishEvent(new GroupDeletedEvent(groupId));
   }
 
   private void publishMembershipChange(String groupId, MembershipChange change) {
