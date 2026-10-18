@@ -39,4 +39,14 @@ class JpaGroupRepository implements GroupRepository {
   public void delete(Group group) {
     groupRepository.delete(group);
   }
+
+  @Override
+  public Optional<Group> findByExternalId(String externalId) {
+    return groupRepository.findByExternalIdValue(externalId);
+  }
+
+  @Override
+  public List<Group> findByMemberUserId(String userId) {
+    return groupRepository.findByMemberUserId(userId);
+  }
 }

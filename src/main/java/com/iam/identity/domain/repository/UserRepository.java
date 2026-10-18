@@ -37,4 +37,19 @@ public interface UserRepository {
    * @return all users
    */
   List<User> findAll();
+
+  /**
+   * Finds a user by External ID.
+   *
+   * @param externalId identifier from the provisioning client
+   * @return matching user when present
+   */
+  Optional<User> findByExternalId(String externalId);
+
+  /**
+   * Deletes a user aggregate and publishes its registered domain events.
+   *
+   * @param user aggregate to remove
+   */
+  void delete(User user);
 }

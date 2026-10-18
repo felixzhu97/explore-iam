@@ -40,4 +40,14 @@ public class JpaUserRepository implements UserRepository {
   public List<User> findAll() {
     return springData.findAll();
   }
+
+  @Override
+  public Optional<User> findByExternalId(String externalId) {
+    return springData.findByExternalIdValue(externalId);
+  }
+
+  @Override
+  public void delete(User user) {
+    springData.delete(user);
+  }
 }

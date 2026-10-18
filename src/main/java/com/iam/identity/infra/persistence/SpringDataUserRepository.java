@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 interface SpringDataUserRepository extends JpaRepository<User, String> {
 
   Optional<User> findByUsername(String username);
+
+  Optional<User> findByExternalIdValue(String externalId);
 }
