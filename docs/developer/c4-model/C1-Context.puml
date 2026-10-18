@@ -14,7 +14,8 @@ System_Boundary(explore_iam, "Explore IAM") {
 
 System_Ext(google_idp, "Google IdP", "External OIDC / OAuth federation")
 System_Ext(github_idp, "GitHub IdP", "External OAuth federation")
-System_Ext(explore_ai, "Explore AI", "Relying Party — web OAuth Login + native public client explore-ai-ios")
+System_Ext(enterprise_idp, "Enterprise IdP", "Okta / Microsoft Entra ID — SCIM 2.0 client")
+System_Ext(explore_ai, "Explore AI", "Relying Party — web OAuth Login + native public client explore-ai-ios\nSCIM 2.0 Provisioning Target")
 System_Ext(explore_chat, "Explore Chat", "Relying Party — password JWT + native public client explore-chat-ios")
 System_Ext(shopping, "Shopping System", "Relying Party")
 System_Ext(low_code, "Low Code Platform", "Relying Party")
@@ -34,6 +35,9 @@ Rel(low_code, iam_platform, "OIDC login / token / AuthZ", "OIDC / HTTPS")
 
 Rel(iam_platform, google_idp, "Federated auth", "OIDC")
 Rel(iam_platform, github_idp, "Federated auth", "OAuth 2.0")
+
+Rel(enterprise_idp, iam_platform, "Provision users and groups", "SCIM 2.0 / HTTPS")
+Rel(iam_platform, explore_ai, "Push users (SCIM Provisioning)", "SCIM 2.0 / HTTPS")
 
 SHOW_LEGEND()
 

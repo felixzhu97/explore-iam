@@ -296,6 +296,27 @@ flowchart LR
   Disabled --> Revoke
 ```
 
+### SCIM provisioning
+
+**Let the enterprise IdP own the joiner–mover–leaver lifecycle and propagate it
+over SCIM 2.0.** IAM is the hub: Okta / Entra ID call `/scim/v2` with a
+`client_credentials` token scoped `write:iam_scim`; IAM pushes users to
+downstream products such as Explore AI with its own `write:ai_scim` client.
+Keep pushes idempotent (`externalId` = IAM user id, version check), send ids
+only in events, deactivate on unassignment, and propagate deletes so the
+target can erase data. Deleted or disabled users must not receive new tokens.
+See [RFC 7644](https://datatracker.ietf.org/doc/html/rfc7644) and
+[Microsoft Entra SCIM](https://learn.microsoft.com/en-us/entra/identity/app-provisioning/use-scim-to-provision-users-and-groups).
+
+```mermaid
+flowchart LR
+  IdP[Enterprise_IdP]
+  IAM[Explore_IAM]
+  AI[Explore_AI]
+  IdP -->|"SCIM write:iam_scim"| IAM
+  IAM -->|"SCIM write:ai_scim"| AI
+```
+
 ### Machine credentials
 
 **Prefer short-lived access tokens and AssumeRole-style elevation over shared

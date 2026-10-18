@@ -14,6 +14,7 @@ participant "Business App\nRelying Party (web / iOS)" as rp <<ui>>
 participant "Business API\nResource Server" as rs <<java>>
 participant "IAM Application :9100\nConsole · REST · OIDC Provider" as iam <<java>>
 participant "External IdP\nGoogle / GitHub" as idp <<external>>
+participant "Enterprise IdP\nOkta / Entra ID" as eidp <<external>>
 database "Metadata DB" as db <<db>>
 
 == Govern identity and policy ==
@@ -21,6 +22,13 @@ admin -> iam: Console → /api/v1/users · groups · roles\npolicies · permissi
 iam -> iam: Method Security (IAM_ADMIN)
 iam -> db: Save aggregates + ManagementEvent
 iam --> admin: 201 / 200
+
+== Provision from an enterprise IdP (SCIM) ==
+eidp -> iam: /scim/v2/Users · Groups\n(Bearer, write:iam_scim)
+iam -> db: Save User / Group + domain event\n+ AdminActivity scim:*
+iam --> eidp: 201 / 200 / 204 + ETag
+iam -> rp: Push assigned users → Explore AI /scim/v2/Users\n(client_credentials, write:ai_scim)
+ref over eidp, iam, rp : C4-Dynamic-ScimProvisioning
 
 == Onboard a Relying Party ==
 dev -> iam: POST /api/v1/clients\n(redirect URIs, scopes, PKCE for public clients)

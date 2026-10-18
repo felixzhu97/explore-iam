@@ -48,6 +48,14 @@ Container_Boundary(iam_app, "IAM Application (Spring Boot :9100)") {
         Component(fed_infra, "Federation Infra", "infra", "SAS config, JWK persistence, OAuth2 client")
     }
 
+    Container_Boundary(scim, "SCIM Module") {
+        Component(scim_ctrl, "SCIM Controllers", "controller", "/scim/v2/Users · Groups · discovery\napplication/scim+json, ETag / If-Match")
+        Component(scim_prov_svc, "ScimProvisioningService", "service", "Inbound create / replace / PATCH / delete")
+        Component(scim_push, "ScimPushListener + ScimPushService", "service", "@ApplicationModuleListener → idempotent push")
+        Component(scim_dom, "SCIM Domain", "domain", "ProvisioningTarget, ProvisionedAccount, ScimTargetGateway")
+        Component(scim_infra, "SCIM Infra", "infra", "ScimSecurityConfig (write:iam_scim), ScimFilterTranslator,\nScimTargetClient (RestClient + OAuth2 client_credentials, @Retryable)")
+    }
+
     Container_Boundary(audit, "Audit Module") {
         Component(audit_ctrl, "AuditController", "controller", "/api/v1/adminActivities")
         Component(audit_svc, "AuditService", "service", "AdminActivity + DataAccessLog")
@@ -63,6 +71,8 @@ Container_Boundary(iam_app, "IAM Application (Spring Boot :9100)") {
 
 ContainerDb_Ext(metadata_db, "Metadata Database", "H2 / PostgreSQL", "Liquibase 0.1.xml")
 System_Ext(external_idp, "External IdP", "Google / GitHub", "Optional OAuth2 Login")
+System_Ext(enterprise_idp, "Enterprise IdP", "Okta / Entra ID", "SCIM 2.0 client")
+System_Ext(explore_ai_scim, "Explore AI SCIM", "/scim/v2/Users", "Provisioning Target")
 
 Rel(console_shell, clients_ui, "Routes")
 Rel(console_shell, login_ui, "Routes")
@@ -105,6 +115,15 @@ Rel(audit_ctrl, audit_svc, "Delegates")
 Rel(audit_svc, audit_dom, "Append-only")
 Rel(audit_svc, audit_infra, "Persists")
 
+Rel(enterprise_idp, scim_ctrl, "SCIM 2.0 Bearer", "HTTPS")
+Rel(scim_ctrl, scim_prov_svc, "Delegates")
+Rel(scim_prov_svc, identity_svc, "Provision / deactivate / delete User, Group")
+Rel(scim_prov_svc, audit_svc, "scim:* admin activity")
+Rel(identity_dom, scim_push, "Domain events\n(UserProvisioned, UserDeleted, GroupMembershipChanged …)")
+Rel(scim_push, scim_dom, "Target + account bookkeeping")
+Rel(scim_push, scim_infra, "ScimTargetGateway")
+Rel(scim_infra, explore_ai_scim, "Push users", "SCIM 2.0 / HTTPS")
+Rel(scim_infra, metadata_db, "JPA + event_publication")
 Rel(identity_infra, metadata_db, "JPA / SQL")
 Rel(policy_infra, metadata_db, "JPA / SQL")
 Rel(sts_infra, metadata_db, "JPA / SQL")
