@@ -18,15 +18,16 @@ Style standards: global [c4-model](~/.cursor/skills/scrum-team/developers/develo
 
 | File | Level | Description |
 |------|-------|-------------|
-| `C1-Context.puml` | Context | People, Explore IAM boundary, Relying Parties, external IdPs |
-| `C2-Container.puml` | Container | IAM Application monolith (:9100), metadata database |
-| `C3-Component.puml` | Component | **Single** diagram: Angular Console + backend modules (`controller → service → domain ← infra`) |
+| `C1-Context.puml` | Context | People, Explore IAM boundary, Relying Parties, external IdPs, Enterprise IdP (SCIM client), Explore AI as Provisioning Target |
+| `C2-Container.puml` | Container | IAM Application monolith (:9100) with SCIM server + outbound push, metadata database |
+| `C3-Component.puml` | Component | **Single** diagram: Angular Console + backend modules incl. SCIM (`controller → service → domain ← infra`) |
 | `C4-Code-Domain-Model.puml` | Code | DDD class model grouped by business domain (Domain Kernel, Common, Identity, Policy, Short-lived credentials, Federation, Audit) |
 | `C4-Deployment.puml` | Deployment | **Single** view: local H2 + Render Starter (Docker) |
 | `C4-Dynamic-Overview.puml` | Dynamic (macro) | End-to-end lifecycle: govern identity & policy → onboard Relying Party → SSO → Bearer API calls → STS → audit / what-if; `ref` to the detailed flows below |
 | `C4-Dynamic-SSOLogin.puml` | Dynamic | OIDC Authorization Code (confidential + public PKCE) |
 | `C4-Dynamic-NativePkceLogin.puml` | Dynamic | Native iOS ASWebAuthenticationSession + PKCE → RP Bearer |
 | `C4-Dynamic-PolicyEvaluation.puml` | Dynamic | Short-lived credentials + PolicyEngine (Deny > Allow > implicit Deny) |
+| `C4-Dynamic-ScimProvisioning.puml` | Dynamic | Enterprise IdP → IAM `/scim/v2` → domain events → idempotent push to Explore AI `/scim/v2/Users` (retry, resubmit) |
 
 ## Stack & ports
 

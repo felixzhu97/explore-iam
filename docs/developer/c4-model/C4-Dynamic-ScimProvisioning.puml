@@ -1,0 +1,61 @@
+@startuml C4-Dynamic-ScimProvisioning
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+title Dynamic — SCIM Provisioning (Enterprise IdP → Explore IAM → Explore AI)
+
+autonumber
+participant "Enterprise IdP\nOkta / Entra ID" as idp <<external>>
+participant "IAM SCIM Server\n/scim/v2" as scim <<java>>
+participant "Identity Services\nUser · Group" as identity <<java>>
+database "Metadata DB\nusers · groups · event_publication" as db <<db>>
+participant "ScimPushListener\n@ApplicationModuleListener" as listener <<java>>
+participant "ScimTargetClient\nRestClient + OAuth2" as client <<java>>
+participant "IAM OIDC Provider\n/oauth2/token" as token <<java>>
+participant "Explore AI\n/scim/v2/Users" as ai <<external>>
+
+== Inbound: IdP provisions IAM ==
+idp -> token: client_credentials (scope write:iam_scim)
+token --> idp: Access Token
+idp -> scim: POST /Users · PUT · PATCH · DELETE\nPOST /Groups · PATCH members
+scim -> scim: SCOPE_write:iam_scim\nIf-Match vs W/"version" → 412 on mismatch
+scim -> identity: provisionUser / replace / disableUser / deleteUser
+identity -> db: Save aggregate + domain event\n(UserProvisioned, UserDeactivated, GroupMembershipChanged …)\n+ event publication (same transaction)
+scim -> db: AdminActivity scim:*
+scim --> idp: 201 / 200 / 204 + ETag
+
+== Outbound: IAM pushes to Explore AI (after commit, async) ==
+db -> listener: Event (ids only)
+listener -> listener: Load ProvisioningTarget\nassigned? (assignment group)\nalready synced at this version? → skip
+listener -> client: create / replace / setActive(false) / delete
+client -> token: client_credentials iam-scim-outbound\n(scope write:ai_scim, cached)
+token --> client: Access Token
+alt Known remote id or found by externalId
+  client -> ai: PUT /Users/{id}
+else New account
+  client -> ai: POST /Users (externalId = IAM user id)
+  opt 409 uniqueness
+    client -> ai: GET /Users?filter=externalId eq "…" → PUT
+  end
+end
+ai --> client: 200 / 201 / 204
+client --> listener: remote id
+listener -> db: Record ProvisionedAccount (remote id, synced version)\ncomplete publication (deleted)
+
+== Failure and recovery ==
+alt 5xx / 429 / I/O error
+  client -> client: @Retryable backoff (Retry-After ≤ 10 s)
+else Retries exhausted
+  listener -> db: Publication stays incomplete
+  db -> listener: ProvisioningResubmitter (every 5 min)\n+ republish on restart
+end
+
+note over idp, ai
+  Unassigned / deactivated → PATCH active=false (account kept, marked stale)
+  IAM user deleted → DELETE on every target holding a Provisioned Account
+  Deleted or disabled users get no new tokens and lose live sessions; users resolve by IAM user id, never by username
+end note
+
+@enduml

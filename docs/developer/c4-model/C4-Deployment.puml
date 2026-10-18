@@ -24,11 +24,16 @@ Deployment_Node(prod, "Production", "Render Starter (Docker)") {
 
 System_Ext(rps, "Relying Parties", "Explore AI / Explore Chat / …", "OIDC clients")
 System_Ext(idp, "External IdP", "Google / GitHub", "Federation (optional)")
+System_Ext(enterprise_idp, "Enterprise IdP", "Okta / Entra ID", "SCIM 2.0 client (optional)")
+System_Ext(ai_scim, "Explore AI SCIM", "/scim/v2/Users", "Push off until EXPLORE_AI_SCIM_URL is set")
 
 Rel(rps, iam_local, "OIDC (dev)", "http://localhost:9100")
 Rel(rps, iam_prod, "OIDC (prod)", "HTTPS")
 Rel(iam_local, idp, "OAuth2 Login (optional)", "OIDC")
 Rel(iam_prod, idp, "OAuth2 Login (optional)", "HTTPS")
+Rel(enterprise_idp, iam_prod, "SCIM /scim/v2", "HTTPS")
+Rel(iam_prod, ai_scim, "SCIM push", "HTTPS + client_credentials")
+Rel(iam_local, ai_scim, "SCIM push (dev)", "http://localhost")
 
 SHOW_LEGEND()
 
