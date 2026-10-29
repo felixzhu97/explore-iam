@@ -10,7 +10,7 @@ Style standards: global [c4-model](~/.cursor/skills/scrum-team/developers/develo
 
 | Track | Files | Style |
 |-------|-------|-------|
-| **Structural C4** | C1–C3, Deployment | `C4_blue_new` theme (wireframe) |
+| **Structural C4** | C1–C3, Deployment, ZeroTrust-Target | `C4_blue_new` theme (wireframe) |
 | **Domain model** | `C4-Code-Domain-Model.puml` | 白底黑字黑边框（对齐 explore-chat Code 图） |
 | **Dynamics** | `C4-Dynamic-*` | Plain 黑白（`!theme plain` + 白底，无彩色 legend） |
 
@@ -23,7 +23,9 @@ Style standards: global [c4-model](~/.cursor/skills/scrum-team/developers/develo
 | `C3-Component.puml` | Component | **Single** diagram: Angular Console + backend modules incl. SCIM (`controller → service → domain ← infra`) |
 | `C4-Code-Domain-Model.puml` | Code | DDD class model grouped by business domain (Domain Kernel, Common, Identity, Policy, Short-lived credentials, Federation, Audit) |
 | `C4-Deployment.puml` | Deployment | **Single** view: local H2 + Render Starter (Docker) |
+| `C4-ZeroTrust-Target.puml` | Container (target) | Zero Trust target: IAM as PDP, AI / Chat / ML as PEPs, audience-bound and exchanged tokens, private ML network — see [Zero Trust Architecture](../zero-trust/Zero-Trust-Architecture.md) |
 | `C4-Dynamic-Overview.puml` | Dynamic (macro) | End-to-end lifecycle: govern identity & policy → onboard Relying Party → SSO → Bearer API calls → STS → audit / what-if; `ref` to the detailed flows below |
+| `C4-Dynamic-ZeroTrust-Target.puml` | Dynamic (macro, target) | Zero Trust runtime: MFA + audience-bound DPoP tokens → PEP verification → online PDP for high-risk ops → token exchange to ML → revocation + SIEM; phases tagged with the roadmap in [Zero Trust Architecture](../zero-trust/Zero-Trust-Architecture.md) |
 | `C4-Dynamic-SSOLogin.puml` | Dynamic | OIDC Authorization Code (confidential + public PKCE) |
 | `C4-Dynamic-NativePkceLogin.puml` | Dynamic | Native iOS ASWebAuthenticationSession + PKCE → RP Bearer |
 | `C4-Dynamic-PolicyEvaluation.puml` | Dynamic | Short-lived credentials + PolicyEngine (Deny > Allow > implicit Deny) |
@@ -55,6 +57,7 @@ Online: [PlantUML server](https://www.plantuml.com/plantuml/uml/).
 2. `C4-Code-Domain-Model.puml` (ubiquitous language)
 3. `C4-Dynamic-Overview.puml` (macro runtime), then the other `C4-Dynamic-*` (detailed paths)
 4. `C4-Deployment.puml` (where it runs)
+5. `C4-ZeroTrust-Target.puml` + `C4-Dynamic-ZeroTrust-Target.puml` (where security is heading)
 
 ## Google Cloud IAM mapping
 
@@ -78,3 +81,4 @@ Vocabulary follows [Google Cloud IAM](https://cloud.google.com/iam/docs/overview
 - [Glossary](../../Glossary.md) — Preferred Terms (English)
 - [README](../../../README.md) — features, getting started
 - [User Story Map](../../product-owner/User-Story-Map.md)
+- [Zero Trust Architecture](../zero-trust/Zero-Trust-Architecture.md)

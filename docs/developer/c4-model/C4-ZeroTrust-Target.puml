@@ -1,0 +1,50 @@
+@startuml C4-ZeroTrust-Target
+!theme C4_blue_new from https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/themes
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Zero Trust target (C4) — Explore IAM as PDP, resource servers as PEPs
+
+Person(user, "End User", "Web / iOS")
+Person(admin, "IAM Administrator", "Console, MFA required")
+
+System_Boundary(iam_b, "Explore IAM (PDP)") {
+    Container(iam, "IAM Application", "Spring Boot + Spring Authorization Server", "OIDC + PKCE, MFA, audience-bound tokens, refresh rotation, token exchange, client_credentials, PolicyEngine")
+    ContainerDb(iam_db, "Metadata Database", "PostgreSQL (encrypted at rest)", "Users, clients, authorizations, audit")
+    Container(kms, "Key Management", "KMS / encrypted keystore", "Signing keys, multi-key JWKS rotation")
+}
+
+System_Boundary(public_b, "Public edge (TLS)") {
+    Container(ai, "Explore AI API (PEP)", "Spring Boot resource server + BFF", "Verifies iss, aud=explore-ai, scope on every caller")
+    Container(chat, "Explore Chat API (PEP)", "Spring Boot resource server + Socket.IO", "Verifies iss, aud=explore-chat, scope; origin allow-list")
+}
+
+System_Boundary(private_b, "Private network (no public ingress)") {
+    Container(ml, "Explore ML (PEP)", "FastAPI + JWT dependency", "Verifies iss, aud=explore-ml, scope; egress allow-list")
+    ContainerQueue(kafka, "Kafka", "TLS + SASL", "Chat events")
+}
+
+System_Ext(siem, "Audit Sink / SIEM", "Append-only store for trace-correlated audit and token lifecycle events")
+
+Rel(user, iam, "Sign in (OIDC + PKCE, MFA)", "HTTPS")
+Rel(admin, iam, "Manage (session + MFA)", "HTTPS")
+Rel(user, ai, "Bearer or BFF session (aud=explore-ai)", "HTTPS, DPoP target")
+Rel(user, chat, "Bearer (aud=explore-chat)", "HTTPS / WSS")
+
+Rel(ai, iam, "JWKS, token exchange", "HTTPS")
+Rel(chat, iam, "JWKS, token exchange", "HTTPS")
+Rel(ml, iam, "JWKS", "HTTPS")
+
+Rel(ai, ml, "Downstream token (aud=explore-ml, act=explore-ai)", "TLS / mTLS")
+Rel(chat, ml, "Downstream token (aud=explore-ml, act=explore-chat)", "TLS / mTLS")
+Rel(chat, kafka, "Publish / consume", "TLS + SASL")
+
+Rel(iam, iam_db, "JDBC", "TLS")
+Rel(iam, kms, "Sign / rotate keys")
+Rel(iam, siem, "Audit export", "traceparent")
+Rel(ai, siem, "Access logs", "traceparent")
+Rel(chat, siem, "Access logs", "traceparent")
+Rel(ml, siem, "Access logs", "traceparent")
+
+SHOW_LEGEND()
+
+@enduml
