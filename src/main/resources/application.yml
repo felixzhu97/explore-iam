@@ -156,6 +156,7 @@ app:
           - write:chat_messaging
           - write:chat_social
           - admin:chat
+          - write:ai_agent
       - client-id: ${IAM_CLIENT_EXPLORE_CHAT_IOS_ID:explore-chat-ios}
         client-name: Explore Chat iOS
         public-client: true
@@ -168,6 +169,7 @@ app:
           - write:chat_messaging
           - write:chat_social
           - admin:chat
+          - write:ai_agent
 
 # Uncomment and set credentials to enable Google/GitHub federated login:
 # spring.security.oauth2.client.registration.google:
