@@ -73,7 +73,7 @@ class PermissionBootstrapConfig implements ApplicationRunner {
             "ai",
             "ai:Invoke",
             "arn:ai:::agent/*",
-            "Explore AI pipelines workflows automations skills"),
+            "Explore AI Gallery agents, A2A tasks, pipelines, workflows, automations, skills"),
         new Seed(
             "write:ai_tools",
             "ai",
