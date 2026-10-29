@@ -420,7 +420,7 @@ Permission `oauthScope` / `code` uses GitHub OAuth scope shape
 | ai | `write:ai_audio` | ASR / TTS |
 | ai | `write:ai_rag` | RAG |
 | ai | `write:ai_media` | image / vision |
-| ai | `write:ai_agent` | pipeline / workflow / automation / skill |
+| ai | `write:ai_agent` | Gallery `/api/agents` invoke、A2A Tasks、pipeline / workflow / automation / skill（Agent Registry 总闸；非 per-skill scope） |
 | ai | `write:ai_tools` | mcp / tools / eval |
 | ai | `write:ai_scim` | IAM → Explore AI SCIM `/scim/v2/Users` |
 | iam | `write:iam_scim` | External IdP → IAM SCIM `/scim/v2` |
