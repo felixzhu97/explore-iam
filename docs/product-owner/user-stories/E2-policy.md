@@ -82,3 +82,28 @@
 ### 状态
 
 规划中
+
+---
+
+## US-05b Agent Registry scope（write:ai_agent）
+
+**As a** IAM 管理员  
+**I want** `write:ai_agent` 表示 Gallery / A2A / pipeline 的可调用权，并为 Chat 等客户端授予该 scope  
+**So that** Explore 具备 Copilot Agent Registry 形态的客户端治理（非 per-skill OAuth）
+
+### 验收标准
+
+1. **Scenario** 目录含 Agent 总闸  
+   **GIVEN** Permission 种子已加载  
+   **WHEN** 查看 `write:ai_agent`  
+   **THEN** 描述覆盖 Gallery agents、A2A tasks、pipelines/skills  
+   **AND** Resource 为 `arn:ai:::agent/*`
+
+2. **Scenario** Chat 客户端可请求该 scope  
+   **GIVEN** RegisteredClient `explore-chat`  
+   **WHEN** 查看其 allowed scopes  
+   **THEN** 包含 `write:ai_agent`
+
+### 状态
+
+已实现
