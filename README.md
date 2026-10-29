@@ -1,6 +1,6 @@
 # Explore IAM
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Java](https://img.shields.io/badge/Java-25-orange.svg)](https://adoptium.net/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1-green.svg)](https://spring.io/projects/spring-boot)
 [![Angular](https://img.shields.io/badge/Angular-22-red.svg)](https://angular.dev/)
@@ -131,4 +131,4 @@ Explore IAM is under active development. Behavior may change across minor versio
 
 ## License
 
-[MIT](LICENSE) © 2026 Felix
+[Apache-2.0](LICENSE) © 2026 Felix Zhu
