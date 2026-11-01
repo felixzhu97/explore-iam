@@ -103,9 +103,11 @@ journey
 
 ### 规划中
 
-| SSO | 控制台与客户端 |
-|-----|----------------|
-| [US-09](./user-stories/E4-sso-federation.md#us-09-联邦-googlegithub) 联邦 IdP | [US-11](./user-stories/E5-console-clients.md#us-11-console-管理面) Console |
+下一优先级：外部身份联邦（US-09）与完整 Console 管理面（US-11）。身份、策略、STS 与审计查询已实现；显式 Deny 可通过 US-13 追查，无需另开重复故事。
+
+| SSO（下一刀） | 控制台与客户端（下一刀） |
+|---------------|--------------------------|
+| [US-09](./user-stories/E4-sso-federation.md#us-09-联邦-googlegithub) 联邦 Google/GitHub IdP | [US-11](./user-stories/E5-console-clients.md#us-11-console-管理面) Console 管理面（用户/策略/审计壳） |
 
 ---
 
@@ -116,8 +118,8 @@ journey
 | E1 身份 | [E1-identity.md](./user-stories/E1-identity.md) | US-01 – US-03 | 已实现 |
 | E2 策略 | [E2-policy.md](./user-stories/E2-policy.md) | US-04 – US-05b | 已实现 |
 | E3 STS | [E3-sts.md](./user-stories/E3-sts.md) | US-06 – US-07 | 已实现 |
-| E4 SSO 与联邦 | [E4-sso-federation.md](./user-stories/E4-sso-federation.md) | US-08 – US-09, US-16 – US-17 | US-08 / US-16 / US-17 已实现 / US-09 规划中 |
-| E5 控制台与客户端 | [E5-console-clients.md](./user-stories/E5-console-clients.md) | US-10 – US-11 | US-10 已实现 / US-11 规划中 |
+| E4 SSO 与联邦 | [E4-sso-federation.md](./user-stories/E4-sso-federation.md) | US-08 – US-09, US-16 – US-17 | 已实现；**US-09 联邦 IdP 规划中（下一刀）** |
+| E5 控制台与客户端 | [E5-console-clients.md](./user-stories/E5-console-clients.md) | US-10 – US-11 | US-10 已实现；**US-11 Console 管理面规划中（下一刀）** |
 | E6 审计 | [E6-audit.md](./user-stories/E6-audit.md) | US-12 – US-13 | 已实现 |
 | E7 活文档与架构 | [E7-living-docs.md](./user-stories/E7-living-docs.md) | US-14 – US-15, US-21 | 已实现 |
 | E8 SCIM 开通 | [E8-scim-provisioning.md](./user-stories/E8-scim-provisioning.md) | US-18 – US-20 | 已实现 |
