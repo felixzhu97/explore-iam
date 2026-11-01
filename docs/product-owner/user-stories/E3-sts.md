@@ -30,7 +30,7 @@ STS 通过 AssumeRole 发放 Temporary Credentials，支持最小权限短时会
 
 ### 状态
 
-规划中
+已实现
 
 ---
 
@@ -56,4 +56,4 @@ STS 通过 AssumeRole 发放 Temporary Credentials，支持最小权限短时会
 
 ### 状态
 
-规划中
+已实现
