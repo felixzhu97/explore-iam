@@ -30,7 +30,7 @@ IAM 管理员需要维护 Principal 体系：IAM User、Group、Role，作为策
 
 ### 状态
 
-规划中
+已实现
 
 ---
 
@@ -56,7 +56,7 @@ IAM 管理员需要维护 Principal 体系：IAM User、Group、Role，作为策
 
 ### 状态
 
-规划中
+已实现
 
 ---
 
@@ -82,4 +82,4 @@ IAM 管理员需要维护 Principal 体系：IAM User、Group、Role，作为策
 
 ### 状态
 
-规划中
+已实现
