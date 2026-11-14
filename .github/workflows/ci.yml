@@ -4,7 +4,6 @@ on:
   push:
     branches: [main, "feat/**", "feature/**", "fix/**", "refactor/**", "docs/**", "test/**", "chore/**", "perf/**", "ci/**"]
   pull_request:
-    branches: [main, "feat/**", "feature/**", "fix/**", "refactor/**", "docs/**", "test/**", "chore/**", "perf/**", "ci/**"]
 
 jobs:
   backend:
@@ -26,6 +25,7 @@ jobs:
       - name: Lint and test
         env:
           GRADLE_OPTS: -Dorg.gradle.internal.test.binary.results-store=false
+        # = pnpm verify:server
         run: ./gradlew checkstyleMain checkstyleTest test --no-daemon
 
   frontend:
@@ -38,5 +38,5 @@ jobs:
 
       - uses: ./.github/actions/setup-web-env
 
-      - run: pnpm typecheck
+      - run: pnpm verify:web
       - run: pnpm build
