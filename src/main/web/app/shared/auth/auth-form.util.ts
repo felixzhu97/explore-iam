@@ -20,10 +20,13 @@ export function readCsrfToken(): string | null {
   }
 }
 
-/** Returns a safe relative continue path from a query value. */
+/**
+ * Returns a safe relative continue path from a query value.
+ * Mirrors ContinueUrlAuthenticationSuccessHandler.isSafeRelativePath on the server.
+ */
 export function safeContinuePath(value: string | null | undefined): string | null {
   const path = value?.trim() || null;
-  if (!path?.startsWith('/') || path.startsWith('//')) {
+  if (!path?.startsWith('/') || path.startsWith('//') || path.includes('://') || path.includes('\\')) {
     return null;
   }
   return path;

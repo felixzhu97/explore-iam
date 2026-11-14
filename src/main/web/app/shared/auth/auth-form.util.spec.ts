@@ -23,6 +23,13 @@ describe('safeContinuePath', () => {
   ])('should reject a %s when it could leave the site', (_label, value) => {
     expect(safeContinuePath(value)).toBeNull();
   });
+
+  it.each([
+    ['backslash path', '/\\evil.example'],
+    ['embedded scheme', '/redirect?to=https://evil.example'],
+  ])('should reject a %s when the server would reject it too', (_label, value) => {
+    expect(safeContinuePath(value)).toBeNull();
+  });
 });
 
 describe('readCsrfToken', () => {
