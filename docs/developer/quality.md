@@ -8,7 +8,7 @@ Grades: **A** tests + rules + docs current · **B** one gap · **C** two or more
 | Area | Unit tests | Architecture rules | Docs | Grade |
 |------|-----------|--------------------|------|-------|
 | Audit | JUnit | audit reached only through events | Guideline | A |
-| Backend layering | — | ArchUnit: no port/adapter packages, no feature cycles, audit via events | `AGENTS.md`, C4 | B |
+| Backend layering | — | ArchUnit: dependency direction, naming, entity mapping, time, controller contract, no feature cycles, audit via events | `AGENTS.md`, C4 | A |
 | Identity / MFA | JUnit | covered by layer rules | Glossary, Guideline, C4 | A |
 | Policy | JUnit (2 classes) | covered by layer rules | Glossary, Guideline, C4 | A |
 | STS | — | covered by layer rules | Glossary, Guideline, C4 | B |

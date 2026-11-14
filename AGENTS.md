@@ -15,7 +15,7 @@ Start here, then follow links. This file is a map; detail lives in `docs/`.
 | `src/main/java/com/iam/<feature>/` | Feature modules: `identity`, `policy`, `sts`, `federation`, `scim`, `audit` |
 | `src/main/java/com/iam/common/` | Shared kernel (base entities, domain events, exceptions) |
 | `src/main/resources/` | `application*.yml`, Liquibase changelog in `db/changelog/` |
-| `src/test/java/com/iam/common/ArchitectureRulesTest.java` | ArchUnit rules — the mechanical form of the hard rules below |
+| `src/test/java/com/iam/architecture/` | ArchUnit rules — the mechanical form of the hard rules below |
 | `src/main/web/app/` | Angular login SPA and console pages (standalone components) |
 | `src/main/ios/` | SwiftUI app |
 | `docs/Glossary.md` | Ubiquitous language — name code after Preferred Terms |
