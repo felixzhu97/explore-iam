@@ -13,5 +13,5 @@ Grades: **A** tests + rules + docs current · **B** one gap · **C** two or more
 | Policy | JUnit (2 classes) | covered by layer rules | Glossary, Guideline, C4 | A |
 | STS | — | covered by layer rules | Glossary, Guideline, C4 | B |
 | Federation / SCIM | JUnit | covered by layer rules | Guideline, user guide | A |
-| Login SPA | — | — | README | C |
+| Login SPA | Vitest (auth form helpers) | angular-eslint recommended + accessibility | README | B |
 | iOS app | XCTest | — | README | C |

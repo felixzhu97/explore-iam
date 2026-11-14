@@ -200,7 +200,7 @@ export class LoginVerifyPageComponent implements OnInit {
   }
 
   #toPublicKeyRequest(options: Record<string, unknown>): PublicKeyCredentialRequestOptions {
-    const allowCredentials = options['allowCredentials'] as Array<Record<string, unknown>> | undefined;
+    const allowCredentials = options['allowCredentials'] as Record<string, unknown>[] | undefined;
     return {
       challenge: this.#b64urlToBuffer(String(options['challenge'])),
       rpId: options['rpId'] as string | undefined,

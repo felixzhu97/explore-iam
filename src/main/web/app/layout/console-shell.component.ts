@@ -106,7 +106,13 @@ type UserSubmenu = 'profile' | 'billing' | 'appearance' | 'language' | 'timezone
           </button>
 
           @if (userMenuOpen()) {
-            <div class="console-user-menu" role="menu" (click)="$event.stopPropagation()">
+            <div
+              class="console-user-menu"
+              role="menu"
+              tabindex="-1"
+              (click)="$event.stopPropagation()"
+              (keydown.escape)="closeUserMenu()"
+            >
               <div class="console-user-menu-email">{{ username() }}</div>
               <div class="console-user-menu-sep"></div>
 
@@ -456,7 +462,7 @@ export class ConsoleShellComponent implements OnInit {
   }
 
   @HostListener('document:click')
-  onDocumentClick(): void {
+  closeUserMenu(): void {
     this.userMenuOpen.set(false);
     this.submenu.set(null);
   }

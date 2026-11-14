@@ -31,7 +31,7 @@ Start here, then follow links. This file is a map; detail lives in `docs/`.
 |------|---------|
 | Verify everything (run before every commit) | `pnpm verify` |
 | Backend only: style, tests, ArchUnit | `pnpm verify:server` |
-| Frontend only: types | `pnpm verify:web` |
+| Frontend only: types, lint, unit tests | `pnpm verify:web` |
 | Start backend (→ :9100) | `./gradlew bootRun` |
 | Start SPA with live proxy (→ :4201) | `pnpm start` |
 

@@ -172,13 +172,14 @@ export interface UserView {
       @if (createOpen()) {
         <div
           class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4"
-          (click)="createOpen.set(false)"
+          tabindex="-1"
+          (click)="$event.target === $event.currentTarget && createOpen.set(false)"
+          (keydown.escape)="createOpen.set(false)"
         >
           <form
             class="${CARD} w-full max-w-sm p-5"
             role="dialog"
             aria-labelledby="create-user-title"
-            (click)="$event.stopPropagation()"
             (ngSubmit)="createUser()"
           >
             <h2 id="create-user-title" class="text-base font-semibold">创建用户</h2>
@@ -218,13 +219,14 @@ export interface UserView {
       @if (pendingDelete(); as user) {
         <div
           class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4"
-          (click)="pendingDelete.set(null)"
+          tabindex="-1"
+          (click)="$event.target === $event.currentTarget && pendingDelete.set(null)"
+          (keydown.escape)="pendingDelete.set(null)"
         >
           <div
             class="${CARD} w-full max-w-sm p-5"
             role="alertdialog"
             aria-labelledby="delete-user-title"
-            (click)="$event.stopPropagation()"
           >
             <h2 id="delete-user-title" class="text-base font-semibold">删除 {{ user.username }}？</h2>
             <p class="mt-2 text-sm text-[var(--console-muted)]">
