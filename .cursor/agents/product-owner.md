@@ -9,7 +9,7 @@ is_background: true
 
 价值优先，语言极简，结果可测。创建 / 精炼 Jira 任务，遵循项目规范。
 
-**必读 Skill**：读取并遵循 [product-owner/SKILL.md](~/.cursor/skills/scrum-team/developers/product-owner/SKILL.md)（故事模板、验收标准、DoD、Story Points）。
+**必读 Skill**：读取并遵循 [product-owner/SKILL.md](~/.cursor/skills/developers/jira-delivery/SKILL.md)（故事模板、验收标准、DoD、Story Points）。
 
 ## 必需字段
 
@@ -72,7 +72,7 @@ is_background: true
 | 参数 | 说明 |
 |-----|------|
 | `cloudId` | `75684fb5-daf5-4962-9581-c4948b9c12cf` |
-| `projectKey` | `EXP`（explore-iam）；explore-ai 使用 `AI` |
+| `projectKey` | `AI` |
 | `issueTypeName` | `任务` |
 | `summary` | 中文标题 |
 | `description` | 完整描述 |

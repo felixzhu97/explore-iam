@@ -32,6 +32,9 @@ Start here, then follow links. This file is a map; detail lives in `docs/`.
 | Verify everything (run before every commit) | `pnpm verify` |
 | Backend only: style, tests, ArchUnit | `pnpm verify:server` |
 | Frontend only: types, lint, unit tests | `pnpm verify:web` |
+| Docs only: relative Markdown links | `pnpm verify:docs` |
+| Start backend + SPA in background, wait until healthy | `scripts/dev-up.sh` (`stop`, `status`) |
+| Logs from `dev-up` | `logs/backend.log`, `logs/frontend.log` |
 | Start backend (→ :9100) | `./gradlew bootRun` |
 | Start SPA with live proxy (→ :4201) | `pnpm start` |
 
@@ -70,3 +73,8 @@ When an ArchUnit rule fails, its message ends with `Fix:` — do that.
 - Multi-step plan: `docs/developer/exec-plans/` (see its README)
 - Known debt: `docs/developer/tech-debt.md`
 - Module health: `docs/developer/quality.md`
+
+## Agents
+
+Team agent definitions in `.cursor/agents/` are synced from the
+`public` meta-repo — edit them there, not here.

@@ -13,9 +13,10 @@
     "lint": "ng lint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "verify": "pnpm verify:server && pnpm verify:web",
+    "verify": "pnpm verify:docs && pnpm verify:server && pnpm verify:web",
     "verify:server": "./gradlew checkstyleMain checkstyleTest test --no-daemon",
     "verify:web": "pnpm typecheck && pnpm lint && pnpm test",
+    "verify:docs": "node scripts/check-doc-links.mjs",
     "prepare": "husky"
   },
   "dependencies": {
