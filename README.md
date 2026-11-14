@@ -5,6 +5,11 @@
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1-green.svg)](https://spring.io/projects/spring-boot)
 [![Angular](https://img.shields.io/badge/Angular-22-red.svg)](https://angular.dev/)
 
+> **Moved.** Development continues in
+> [explore-workspace](https://github.com/felixzhu97/explore-workspace) under
+> `iam/`. This repository stays available for the current deployment until
+> it moves too; please open new issues and pull requests there.
+
 `explore-iam` is a reusable identity and access module. Use it so people and services can authenticate once, receive tokens through standard protocols, and obtain only the access a job needs.
 
 The module issues and validates OpenID Connect tokens for relying parties, models lasting principals as IAM User, Group, and Role, evaluates identity-based policy, issues short-lived STS sessions after AssumeRole, and keeps management and authorization outcomes auditable. An Angular login SPA covers form sign-in and the OAuth authorize path.
